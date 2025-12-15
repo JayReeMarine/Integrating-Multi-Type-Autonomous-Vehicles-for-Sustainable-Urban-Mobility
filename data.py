@@ -1,37 +1,81 @@
-from __future__ import annotations
+from models import ActiveVehicle, PassiveVehicle
 
-from dataclasses import dataclass
-from typing import Literal
+# -----------------------
+# Global configuration
+# -----------------------
 
-@dataclass(frozen=True, slots=True)
-class ActiveVehicle:
-    """Active Vehicle (AV): can tow multiple PVs."""
-    id: str
-    entry_point: int
-    exit_point: int
-    capacity: int
+L_MIN: int = 10  # minimum shared distance for platooning
 
-    @property
-    def vehicle_type(self) -> Literal["AV"]:
-        return "AV"
+# -----------------------
+# Mock Active Vehicles
+# -----------------------
 
-    def __post_init__(self) -> None:
-        if self.entry_point >= self.exit_point:
-            raise ValueError(f"AV({self.id}) entry_point must be < exit_point")
-        if self.capacity <= 0:
-            raise ValueError(f"AV({self.id}) capacity must be positive")
+ACTIVE_VEHICLES = [
+    ActiveVehicle(
+        id="AV1",
+        entry_point=0,
+        exit_point=80,
+        capacity=2,
+    ),
+    ActiveVehicle(
+        id="AV2",
+        entry_point=20,
+        exit_point=100,
+        capacity=1,
+    ),
+    ActiveVehicle(
+        id="AV3",
+        entry_point=10,
+        exit_point=70,
+        capacity=3,
+    ),
+]
 
-@dataclass(frozen=True, slots=True)
-class PassiveVehicle:
-    """Passive Vehicle (PV): can be towed by an AV."""
-    id: str
-    entry_point: int
-    exit_point: int
 
-    @property
-    def vehicle_type(self) -> Literal["PV"]:
-        return "PV"
+# -----------------------
+# Mock Passive Vehicles
+# -----------------------
 
-    def __post_init__(self) -> None:
-        if self.entry_point >= self.exit_point:
-            raise ValueError(f"PV({self.id}) entry_point must be < exit_point")
+PASSIVE_VEHICLES = [
+    PassiveVehicle(
+        id="PV1",
+        entry_point=5,
+        exit_point=60,
+    ),
+    PassiveVehicle(
+        id="PV2",
+        entry_point=15,
+        exit_point=50,
+    ),
+    PassiveVehicle(
+        id="PV3",
+        entry_point=30,
+        exit_point=90,
+    ),
+    PassiveVehicle(
+        id="PV4",
+        entry_point=0,
+        exit_point=40,
+    ),
+    PassiveVehicle(
+        id="PV5",
+        entry_point=45,
+        exit_point=85,
+    ),
+]
+
+
+# -----------------------
+# Helper accessor
+# -----------------------
+
+def load_mock_data():
+    """
+    Returns mock data for greedy / Hungarian algorithms.
+
+    Returns:
+        avs (list[ActiveVehicle])
+        pvs (list[PassiveVehicle])
+        l_min (int)
+    """
+    return ACTIVE_VEHICLES, PASSIVE_VEHICLES, L_MIN

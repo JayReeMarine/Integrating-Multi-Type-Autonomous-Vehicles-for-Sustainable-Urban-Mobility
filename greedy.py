@@ -6,13 +6,17 @@ from typing import Optional, List, Tuple, Set, Dict
 from models import ActiveVehicle, PassiveVehicle
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class Assignment:
     """result of assigning a PV to an AV by using greedy algorithm"""
     pv: PassiveVehicle
     av: ActiveVehicle
     cp: int  # coupling point
     dp: int  # decoupling point
+    
+    @property
+    def saved_distance(self) -> int:
+        return self.dp - self.cp
 
 
 def compute_shared_segment(av: ActiveVehicle, pv: PassiveVehicle) -> Optional[Tuple[int, int]]:
@@ -31,7 +35,7 @@ def compute_energy_saving(cp:int, dp: int) -> float:
     """simple version of energy saving calculation"""
     return dp - cp
 
-def greedy_platoon_matching(avs: ActiveVehicle, pvs: PassiveVehicle, l_min: int) -> Tuple[List[Assignment], float]:
+def greedy_platoon_matching(avs: List[ActiveVehicle], pvs: List[PassiveVehicle], l_min: int) -> Tuple[List[Assignment], float]:
     """
     Greedy Maximum-weight platoon Matching
 
@@ -57,10 +61,10 @@ def greedy_platoon_matching(avs: ActiveVehicle, pvs: PassiveVehicle, l_min: int)
             candidates.append((saving, av, pv, cp, dp))
     
     # 2. sort candidates by energy saving (descending order)
-    candidates.sort(ket=lambda x: x[0], reverse=True)
+    candidates.sort(key=lambda x: x[0], reverse=True)
 
     # 3. Assign based on sort order
-    assignments = List[Assignment] = []
+    assignments: List[Assignment] = []
     used_pvs: Set[str] = set()
     av_load: Dict[str, int] = {av.id:0 for av in avs}
 

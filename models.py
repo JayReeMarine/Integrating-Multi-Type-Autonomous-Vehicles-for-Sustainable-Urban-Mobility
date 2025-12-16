@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class ActiveVehicle:
     """Active Vehicle (AV): can tow multiple PVs."""
     id: str
@@ -21,7 +21,7 @@ class ActiveVehicle:
         if self.capacity <= 0:
             raise ValueError(f"AV({self.id}) capacity must be positive")
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class PassiveVehicle:
     """Passive Vehicle (PV): can be towed by an AV."""
     id: str

@@ -18,6 +18,8 @@ class Assignment:
     def saved_distance(self) -> int:
         return self.dp - self.cp
 
+# we have to assign path in future
+#eg.g for whole path
 
 def compute_shared_segment(av: ActiveVehicle, pv: PassiveVehicle) -> Optional[Tuple[int, int]]:
     """
@@ -84,6 +86,7 @@ def greedy_platoon_matching(avs: List[ActiveVehicle], pvs: List[PassiveVehicle],
         total_saving += saving
     
     return assignments, total_saving
+
 
 
 

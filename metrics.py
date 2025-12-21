@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 
 from models import ActiveVehicle, PassiveVehicle
 from greedy import Assignment
@@ -57,3 +57,36 @@ def compute_saving_stats(
     saving_percent = (saved / baseline_total * 100.0) if baseline_total > 0 else 0.0
 
     return baseline_total, greedy_total, saving_percent
+
+
+def compute_extended_metrics(
+    avs: List[ActiveVehicle],
+    pvs: List[PassiveVehicle],
+    assignments: List[Assignment],
+    baseline_total: int,
+    greedy_total: int,
+    runtime_sec: float,
+) -> Dict[str, float]:
+    """
+    Compute extended evaluation metrics.
+    """
+    matched_pvs = len(assignments)
+    total_pvs = len(pvs)
+
+    saved_distance = baseline_total - greedy_total
+
+    matched_ratio = matched_pvs / total_pvs if total_pvs > 0 else 0.0
+    avg_saved_per_pv = (
+        saved_distance / matched_pvs if matched_pvs > 0 else 0.0
+    )
+
+    return {
+        "Baseline Distance": baseline_total,
+        "Greedy Distance": greedy_total,
+        "Saved Distance": saved_distance,
+        "Saving (%)": (saved_distance / baseline_total * 100.0)
+        if baseline_total > 0 else 0.0,
+        "Matched PV Ratio": matched_ratio,
+        "Avg Saved / PV": avg_saved_per_pv,
+        "Runtime (ms)": runtime_sec * 1000.0,
+    }

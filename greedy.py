@@ -33,11 +33,11 @@ def compute_shared_segment(av: ActiveVehicle, pv: PassiveVehicle) -> Optional[Tu
         return None
     return cp, dp
 
-def compute_energy_saving(cp:int, dp: int) -> float:
+def compute_energy_saving(cp:int, dp: int) -> int:
     """simple version of energy saving calculation"""
     return dp - cp
 
-def greedy_platoon_matching(avs: List[ActiveVehicle], pvs: List[PassiveVehicle], l_min: int) -> Tuple[List[Assignment], float]:
+def greedy_platoon_matching(avs: List[ActiveVehicle], pvs: List[PassiveVehicle], l_min: int) -> Tuple[List[Assignment], int]:
     """
     Greedy Maximum-weight platoon Matching
 

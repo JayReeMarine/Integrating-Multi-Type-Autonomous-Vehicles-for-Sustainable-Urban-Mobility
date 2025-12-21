@@ -7,6 +7,10 @@ from metrics import (
     greedy_total_powered_distance,
     compute_extended_metrics,
 )
+from analysis import (
+    analyze_trip_distribution,
+    analyze_feasible_pairs,
+)
 
 
 def print_metrics_table(metrics: dict):
@@ -40,6 +44,11 @@ def main():
         min_trip_length=MIN_TRIP_LENGTH,
         seed=SEED,
     )
+
+    # Data distribution analysis
+    analyze_trip_distribution(avs, HIGHWAY_LENGTH, label="AV")
+    analyze_trip_distribution(pvs, HIGHWAY_LENGTH, label="PV")
+    analyze_feasible_pairs(avs, pvs, l_min)
 
     # Baseline
     baseline_total = baseline_total_powered_distance(avs, pvs)

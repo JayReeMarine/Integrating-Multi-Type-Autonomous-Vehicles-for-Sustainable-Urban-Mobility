@@ -1,4 +1,5 @@
 import time
+import csv
 
 from data import generate_mock_data
 from greedy import greedy_platoon_matching
@@ -12,69 +13,134 @@ from analysis import (
     analyze_feasible_pairs,
 )
 
+# -----------------------
+# CSV configuration
+# -----------------------
 
-def print_metrics_table(metrics: dict):
-    print("\n=== Experiment Results ===")
-    print("-" * 50)
-    for key, value in metrics.items():
-        if isinstance(value, float):
-            print(f"{key:<25}: {value:>10.2f}")
-        else:
-            print(f"{key:<25}: {value}")
-    print("-" * 50)
+CSV_FILE = "experiment_results.csv"
+
+CSV_FIELDS = [
+    "num_av",
+    "num_pv",
+    "runtime_sec",
+    "baseline_total_distance",
+    "greedy_total_distance",
+    "total_saving",
+    "matched_pv",
+    "matched_ratio",
+    "avg_saving_per_pv",
+]
+
+# -----------------------
+# Experiment scenarios
+# -----------------------
+
+SCENARIOS = [
+    {"num_av": 5, "num_pv": 20},
+    {"num_av": 50, "num_pv": 200},
+    {"num_av": 500, "num_pv": 2000},
+]
 
 
 def main():
     # -----------------------
-    # Experiment parameters
+    # Global experiment parameters
     # -----------------------
-    NUM_AV = 5
-    NUM_PV = 20
     HIGHWAY_LENGTH = 100
     AV_CAPACITY_RANGE = (1, 3)
     MIN_TRIP_LENGTH = 10
     SEED = 42
 
-    # Generate data
-    avs, pvs, l_min = generate_mock_data(
-        num_av=NUM_AV,
-        num_pv=NUM_PV,
-        highway_length=HIGHWAY_LENGTH,
-        av_capacity_range=AV_CAPACITY_RANGE,
-        min_trip_length=MIN_TRIP_LENGTH,
-        seed=SEED,
-    )
+    # -----------------------
+    # Prepare CSV file
+    # -----------------------
+    with open(CSV_FILE, "w", newline="") as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=CSV_FIELDS)
+        writer.writeheader()
 
-    # Data distribution analysis
-    analyze_trip_distribution(avs, HIGHWAY_LENGTH, label="AV")
-    analyze_trip_distribution(pvs, HIGHWAY_LENGTH, label="PV")
-    analyze_feasible_pairs(avs, pvs, l_min)
+        # -----------------------
+        # Run scenarios
+        # -----------------------
+        for idx, scenario in enumerate(SCENARIOS):
+            num_av = scenario["num_av"]
+            num_pv = scenario["num_pv"]
 
-    # Baseline
-    baseline_total = baseline_total_powered_distance(avs, pvs)
+            print(f"\n=== Running Scenario {idx + 1} ===")
+            print(f"AV = {num_av}, PV = {num_pv}")
 
-    # Greedy runtime measurement
-    start_time = time.perf_counter()
-    assignments, _ = greedy_platoon_matching(avs, pvs, l_min)
-    end_time = time.perf_counter()
+            # -----------------------
+            # Data generation
+            # -----------------------
+            avs, pvs, l_min = generate_mock_data(
+                num_av=num_av,
+                num_pv=num_pv,
+                highway_length=HIGHWAY_LENGTH,
+                av_capacity_range=AV_CAPACITY_RANGE,
+                min_trip_length=MIN_TRIP_LENGTH,
+                seed=SEED,
+            )
 
-    runtime = end_time - start_time
+            # -----------------------
+            # Data sanity check (Task 2)
+            # Only run for the smallest scenario
+            # -----------------------
+            if idx == 0:
+                analyze_trip_distribution(avs, HIGHWAY_LENGTH, label="AV")
+                analyze_trip_distribution(pvs, HIGHWAY_LENGTH, label="PV")
+                analyze_feasible_pairs(avs, pvs, l_min)
 
-    # Greedy powered distance
-    greedy_total = greedy_total_powered_distance(avs, pvs, assignments)
+            # -----------------------
+            # Baseline computation
+            # -----------------------
+            baseline_total = baseline_total_powered_distance(avs, pvs)
 
-    # Metrics
-    metrics = compute_extended_metrics(
-        avs=avs,
-        pvs=pvs,
-        assignments=assignments,
-        baseline_total=baseline_total,
-        greedy_total=greedy_total,
-        runtime_sec=runtime,
-    )
+            # -----------------------
+            # Greedy algorithm + runtime
+            # -----------------------
+            start_time = time.perf_counter()
+            assignments, _ = greedy_platoon_matching(avs, pvs, l_min)
+            runtime = time.perf_counter() - start_time
 
-    # Print table
-    print_metrics_table(metrics)
+            greedy_total = greedy_total_powered_distance(
+                avs, pvs, assignments
+            )
+
+            # -----------------------
+            # Metrics
+            # -----------------------
+            metrics = compute_extended_metrics(
+                avs=avs,
+                pvs=pvs,
+                assignments=assignments,
+                baseline_total=baseline_total,
+                greedy_total=greedy_total,
+                runtime_sec=runtime,
+            )
+
+            # -----------------------
+            # Save results to CSV
+            # -----------------------
+            writer.writerow({
+                "num_av": num_av,
+                "num_pv": num_pv,
+                "runtime_sec": runtime,
+                "baseline_total_distance": baseline_total,
+                "greedy_total_distance": greedy_total,
+                "total_saving": metrics["total_saving"],
+                "matched_pv": metrics["matched_pv"],
+                "matched_ratio": metrics["matched_ratio"],
+                "avg_saving_per_pv": metrics["avg_saving_per_pv"],
+            })
+
+            # -----------------------
+            # Console summary
+            # -----------------------
+            print(f"Runtime (sec): {runtime:.4f}")
+            print(f"Total saving : {metrics['total_saving']:.2f}")
+            print(f"Matched PV   : {metrics['matched_pv']} "
+                  f"({metrics['matched_ratio']:.2f})")
+
+    print(f"\nAll experiments completed. Results saved to {CSV_FILE}")
 
 
 if __name__ == "__main__":

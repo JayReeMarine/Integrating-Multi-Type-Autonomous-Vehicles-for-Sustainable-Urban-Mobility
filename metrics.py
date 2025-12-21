@@ -69,24 +69,28 @@ def compute_extended_metrics(
 ) -> Dict[str, float]:
     """
     Compute extended evaluation metrics.
+    Keys are standardized for CSV / plotting.
     """
     matched_pvs = len(assignments)
     total_pvs = len(pvs)
 
-    saved_distance = baseline_total - greedy_total
-
+    total_saving = baseline_total - greedy_total
     matched_ratio = matched_pvs / total_pvs if total_pvs > 0 else 0.0
-    avg_saved_per_pv = (
-        saved_distance / matched_pvs if matched_pvs > 0 else 0.0
+    avg_saving_per_pv = (
+        total_saving / matched_pvs if matched_pvs > 0 else 0.0
     )
 
     return {
-        "Baseline Distance": baseline_total,
-        "Greedy Distance": greedy_total,
-        "Saved Distance": saved_distance,
-        "Saving (%)": (saved_distance / baseline_total * 100.0)
-        if baseline_total > 0 else 0.0,
-        "Matched PV Ratio": matched_ratio,
-        "Avg Saved / PV": avg_saved_per_pv,
-        "Runtime (ms)": runtime_sec * 1000.0,
+        "baseline_total": baseline_total,
+        "greedy_total": greedy_total,
+        "total_saving": total_saving,
+        "saving_percent": (
+            total_saving / baseline_total * 100.0
+            if baseline_total > 0 else 0.0
+        ),
+        "matched_pv": matched_pvs,
+        "matched_ratio": matched_ratio,
+        "avg_saving_per_pv": avg_saving_per_pv,
+        "runtime_sec": runtime_sec,
     }
+

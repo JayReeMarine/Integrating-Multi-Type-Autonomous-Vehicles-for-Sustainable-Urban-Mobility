@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import List, Tuple, Dict
 
-from models import ActiveVehicle, PassiveVehicle
-from greedy import Assignment
+from core.models import ActiveVehicle, PassiveVehicle
+from core.greedy import Assignment
 
 
 def trip_length(entry: int, exit: int) -> int:

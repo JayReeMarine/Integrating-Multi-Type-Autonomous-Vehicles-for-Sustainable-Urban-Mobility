@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Optional, List, Tuple, Set, Dict
 
-from models import ActiveVehicle, PassiveVehicle
+from core.models import ActiveVehicle, PassiveVehicle
 
 
 @dataclass(frozen=True)

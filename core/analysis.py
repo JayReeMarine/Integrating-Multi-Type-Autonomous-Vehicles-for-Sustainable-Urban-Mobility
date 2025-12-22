@@ -10,8 +10,8 @@
 # --------------------------------------------------
 
 from typing import List
-from models import ActiveVehicle, PassiveVehicle
-from greedy import compute_shared_segment
+from core.models import ActiveVehicle, PassiveVehicle
+from core.greedy import compute_shared_segment
 
 
 # --------------------------------------------------

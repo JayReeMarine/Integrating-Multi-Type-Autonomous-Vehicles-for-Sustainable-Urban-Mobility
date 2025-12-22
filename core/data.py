@@ -1,4 +1,4 @@
-from models import ActiveVehicle, PassiveVehicle
+from core.models import ActiveVehicle, PassiveVehicle
 import random
 from typing import List, Tuple
 
@@ -94,4 +94,4 @@ def generate_mock_data(
             )
         )
 
-    return avs, pvs, min_trip_length
+    return avs, pvs, L_MIN

@@ -1,5 +1,13 @@
 # Integrating-Multi-Type-Autonomous-Vehicles-for-Sustainable-Urban-Mobility
 
+# To run main file
+
+python -m experiments.main
+
+# To run the Graph
+
+python visualization/plot.py
+
 
 # 1. Greedy Platoon Matching — Parameters and Outputs 
 

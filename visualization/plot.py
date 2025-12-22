@@ -15,7 +15,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 
-CSV_FILE = "experiment_results.csv"
+CSV_FILE = "data/experiment_results.csv"
 
 
 def load_results(csv_file: str) -> pd.DataFrame:

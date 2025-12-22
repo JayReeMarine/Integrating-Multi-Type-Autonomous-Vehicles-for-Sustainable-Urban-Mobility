@@ -1,14 +1,14 @@
 import time
 import csv
 
-from data import generate_mock_data
-from greedy import greedy_platoon_matching
-from metrics import (
+from core.data import generate_mock_data
+from core.greedy import greedy_platoon_matching
+from core.metrics import (
     baseline_total_powered_distance,
     greedy_total_powered_distance,
     compute_extended_metrics,
 )
-from analysis import (
+from core.analysis import (
     analyze_trip_distribution,
     analyze_feasible_pairs,
 )
@@ -17,7 +17,7 @@ from analysis import (
 # CSV configuration
 # -----------------------
 
-CSV_FILE = "experiment_results.csv"
+CSV_FILE = "data/experiment_results.csv"
 
 CSV_FIELDS = [
     "num_av",

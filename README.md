@@ -6,7 +6,7 @@ python -m experiments.main
 
 # To run the Graph
 
-python visualization/plot.py
+python -m visualization.plot
 
 
 # 1. Greedy Platoon Matching — Parameters and Outputs 

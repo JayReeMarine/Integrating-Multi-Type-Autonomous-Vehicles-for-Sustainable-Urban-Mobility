@@ -37,7 +37,12 @@ CSV_FIELDS = [
 
 SCENARIOS = [
     {"num_av": 5, "num_pv": 20},
+    {"num_av": 10, "num_pv": 50},
+    {"num_av": 20, "num_pv": 100},
     {"num_av": 50, "num_pv": 200},
+    {"num_av": 80, "num_pv": 400},
+    {"num_av": 160, "num_pv": 800},
+    {"num_av": 320, "num_pv": 1600},
     {"num_av": 500, "num_pv": 2000},
 ]
 
@@ -46,9 +51,9 @@ def main():
     # -----------------------
     # Global experiment parameters
     # -----------------------
-    HIGHWAY_LENGTH = 100
-    AV_CAPACITY_RANGE = (1, 3)
-    MIN_TRIP_LENGTH = 10
+    HIGHWAY_LENGTH = 100 # should have other expereiment with vary length
+    AV_CAPACITY_RANGE = (1, 3) # may have one experiment - new graph
+    MIN_TRIP_LENGTH = 10 # no need to change
     SEED = 42
 
     # -----------------------

@@ -1,12 +1,9 @@
-# --------------------------------------------------
-# Plot experiment results from experiment_results.csv
-# --------------------------------------------------
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
 
-CSV_FILE = "data/results/greedy.csv" 
-FIG_DIR = "visualization/figures/greedy"  
+CSV_FILE = "data/results/greedy/pv_av_sweep.csv"
+FIG_DIR = "visualization/figures/greedy/pv_av"
 
 
 def load_results(csv_file: str) -> pd.DataFrame:
@@ -15,7 +12,7 @@ def load_results(csv_file: str) -> pd.DataFrame:
 
 
 def _save_plot(filename: str) -> None:
-    """Save current matplotlib figure into visualization/figures/greedy/."""
+    """Save current matplotlib figure into FIG_DIR."""
     os.makedirs(FIG_DIR, exist_ok=True)
     path = os.path.join(FIG_DIR, filename)
     plt.tight_layout()
@@ -23,19 +20,14 @@ def _save_plot(filename: str) -> None:
     print(f"Saved figure: {path}")
 
 
-# --------------------------------------------------
-# PV sweep plots (Fix AV, increase PV)
-# --------------------------------------------------
-
 def plot_pv_sweep(df: pd.DataFrame) -> None:
-    """Create multi-line plots for PV sweep (line=Fixed AV)."""
+    """PV sweep plots (Fix AV, increase PV). Lines = fixed AV."""
     pv_df = df[df["scenario_type"] == "pv_sweep"].copy()
     if pv_df.empty:
         print("No pv_sweep data found in CSV.")
         return
 
     pv_df = pv_df.sort_values(["fixed_value", "num_pv"])
-
     pv_df = pv_df.groupby(["fixed_value", "num_pv"], as_index=False).mean(numeric_only=True)
 
     # 1) PV vs Runtime
@@ -86,11 +78,10 @@ def plot_pv_sweep(df: pd.DataFrame) -> None:
     _save_plot("pv_sweep_avg_saving_per_pv.png")
     plt.close()
 
-    # 5) PV vs Saving Percent (= total_saving / baseline_total_distance)
-    # If you already store saving_percent in CSV, use df["saving_percent"] directly.
-    # Here we compute it safely in case it doesn't exist.
+    # 5) PV vs Saving Percent
     if "saving_percent" not in pv_df.columns:
-        pv_df["saving_percent"] = pv_df["total_saving"] / pv_df["baseline_total_distance"]
+        # NOTE: if saving_percent is a percentage already, multiply by 100 accordingly.
+        pv_df["saving_percent"] = pv_df["total_saving"] / pv_df["baseline_total_distance"] * 100.0
 
     plt.figure()
     for fixed_av, group in pv_df.groupby("fixed_value"):
@@ -104,12 +95,8 @@ def plot_pv_sweep(df: pd.DataFrame) -> None:
     plt.close()
 
 
-# --------------------------------------------------
-# AV sweep plots (Fix PV, increase AV)
-# --------------------------------------------------
-
 def plot_av_sweep(df: pd.DataFrame) -> None:
-    """Create multi-line plots for AV sweep (line=Fixed PV)."""
+    """AV sweep plots (Fix PV, increase AV). Lines = fixed PV."""
     av_df = df[df["scenario_type"] == "av_sweep"].copy()
     if av_df.empty:
         print("No av_sweep data found in CSV.")
@@ -168,13 +155,13 @@ def plot_av_sweep(df: pd.DataFrame) -> None:
 
     # 5) AV vs Saving Percent
     if "saving_percent" not in av_df.columns:
-        av_df["saving_percent"] = av_df["total_saving"] / av_df["baseline_total_distance"]
+        av_df["saving_percent"] = av_df["total_saving"] / av_df["baseline_total_distance"] * 100.0
 
     plt.figure()
     for fixed_pv, group in av_df.groupby("fixed_value"):
         plt.plot(group["num_av"], group["saving_percent"], marker="o", label=f"PV={int(fixed_pv)}")
     plt.xlabel("Number of AVs")
-    plt.ylabel("Total Saving Percent")
+    plt.ylabel("Total Saving Percent (%)")
     plt.title("AV Sweep: Saving Percent vs AV (lines = fixed PV)")
     plt.grid(True)
     plt.legend()
@@ -182,10 +169,9 @@ def plot_av_sweep(df: pd.DataFrame) -> None:
     plt.close()
 
 
-def main():
+def main() -> None:
     df = load_results(CSV_FILE)
-
-    print("Loaded experiment results:")
+    print("Loaded PV/AV sweep results:")
     print(df.head(10))
     print(f"Total rows: {len(df)}")
 

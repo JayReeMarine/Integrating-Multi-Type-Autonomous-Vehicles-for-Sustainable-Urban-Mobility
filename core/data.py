@@ -8,33 +8,6 @@ from typing import List, Tuple
 
 L_MIN: int = 10  # minimum shared distance for platooning
 
-
-# -----------------------
-# Static mock data (debug / sanity check)
-# -----------------------
-
-ACTIVE_VEHICLES = [
-    ActiveVehicle(id="AV1", entry_point=0, exit_point=80, capacity=2),
-    ActiveVehicle(id="AV2", entry_point=20, exit_point=100, capacity=1),
-    ActiveVehicle(id="AV3", entry_point=10, exit_point=70, capacity=3),
-]
-
-PASSIVE_VEHICLES = [
-    PassiveVehicle(id="PV1", entry_point=5, exit_point=60),
-    PassiveVehicle(id="PV2", entry_point=15, exit_point=50),
-    PassiveVehicle(id="PV3", entry_point=30, exit_point=90),
-    PassiveVehicle(id="PV4", entry_point=0, exit_point=40),
-    PassiveVehicle(id="PV5", entry_point=45, exit_point=85),
-]
-
-
-def load_mock_data():
-    """
-    Returns fixed mock data (for debugging / sanity checking).
-    """
-    return ACTIVE_VEHICLES, PASSIVE_VEHICLES, L_MIN
-
-
 # -----------------------
 # Generated mock data (experiment use)
 # -----------------------

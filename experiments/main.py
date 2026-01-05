@@ -24,6 +24,7 @@ CSV_FIELDS = [
     # Scenario identifiers
     "scenario_type",   # "pv_sweep" or "av_sweep"
     "fixed_value",     # fixed AV (for pv_sweep) or fixed PV (for av_sweep)
+    "seed",            # random seed used
 
     # Experiment sizes
     "num_av",
@@ -122,7 +123,7 @@ def main():
     HIGHWAY_LENGTH = 100
     AV_CAPACITY_RANGE = (1, 3)
     MIN_TRIP_LENGTH = 10
-    SEED = 42
+    SEEDS = [42, 43, 44, 45, 46]
 
     # Ensure output folder exists
     os.makedirs(os.path.dirname(CSV_FILE), exist_ok=True)
@@ -146,24 +147,25 @@ def main():
             for num_pv in PV_SWEEP_PVS:
                 num_av = fixed_av
 
-                print(f"\n[pv_sweep] fixed AV={fixed_av} | AV={num_av}, PV={num_pv}")
+                for seed in SEEDS: 
+                    print(f"\n[pv_sweep] fixed AV={fixed_av} | AV={num_av}, PV={num_pv} | seed={seed}")
 
-                row = run_one_scenario(
-                    num_av=num_av,
-                    num_pv=num_pv,
-                    highway_length=HIGHWAY_LENGTH,
-                    av_capacity_range=AV_CAPACITY_RANGE,
-                    min_trip_length=MIN_TRIP_LENGTH,
-                    seed=SEED,
-                    run_task2_checks=(not did_task2_once),
-                )
-                did_task2_once = True
+                    row = run_one_scenario(
+                        num_av=num_av,
+                        num_pv=num_pv,
+                        highway_length=HIGHWAY_LENGTH,
+                        av_capacity_range=AV_CAPACITY_RANGE,
+                        min_trip_length=MIN_TRIP_LENGTH,
+                        seed=seed,
+                        run_task2_checks=(not did_task2_once),
+                    )
+                    did_task2_once = True
 
-                # Add identifiers
-                row["scenario_type"] = "pv_sweep"
-                row["fixed_value"] = fixed_av
+                    row["scenario_type"] = "pv_sweep"
+                    row["fixed_value"] = fixed_av
+                    row["seed"] = seed 
 
-                writer.writerow(row)
+                    writer.writerow(row)
 
                 # Console summary
                 print(f"Runtime (sec): {row['runtime_sec']:.4f}")
@@ -182,22 +184,24 @@ def main():
             for num_av in AV_SWEEP_AVS:
                 num_pv = fixed_pv
 
-                print(f"\n[av_sweep] fixed PV={fixed_pv} | AV={num_av}, PV={num_pv}")
+                for seed in SEEDS:
+                    print(f"\n[av_sweep] fixed PV={fixed_pv} | AV={num_av}, PV={num_pv} | seed={seed}")
 
-                row = run_one_scenario(
-                    num_av=num_av,
-                    num_pv=num_pv,
-                    highway_length=HIGHWAY_LENGTH,
-                    av_capacity_range=AV_CAPACITY_RANGE,
-                    min_trip_length=MIN_TRIP_LENGTH,
-                    seed=SEED,
-                    run_task2_checks=False,  # already done once
-                )
+                    row = run_one_scenario(
+                        num_av=num_av,
+                        num_pv=num_pv,
+                        highway_length=HIGHWAY_LENGTH,
+                        av_capacity_range=AV_CAPACITY_RANGE,
+                        min_trip_length=MIN_TRIP_LENGTH,
+                        seed=seed, 
+                        run_task2_checks=False,
+                    )
 
-                row["scenario_type"] = "av_sweep"
-                row["fixed_value"] = fixed_pv
+                    row["scenario_type"] = "av_sweep"
+                    row["fixed_value"] = fixed_pv
+                    row["seed"] = seed
 
-                writer.writerow(row)
+                    writer.writerow(row)
 
                 # Console summary
                 print(f"Runtime (sec): {row['runtime_sec']:.4f}")

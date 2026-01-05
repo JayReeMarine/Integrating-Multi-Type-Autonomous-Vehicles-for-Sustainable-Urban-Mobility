@@ -18,7 +18,7 @@ from core.analysis import (
 # CSV configuration
 # -----------------------
 
-CSV_FILE = "data/experiment_results.csv"
+CSV_FILE = "data/results/greedy.csv"
 
 CSV_FIELDS = [
     # Scenario identifiers
@@ -37,6 +37,7 @@ CSV_FIELDS = [
     "matched_pv",
     "matched_ratio",
     "avg_saving_per_pv",
+    "saving_percent",
 ]
 
 # -----------------------
@@ -109,6 +110,7 @@ def run_one_scenario(
         "matched_pv": metrics["matched_pv"],
         "matched_ratio": metrics["matched_ratio"],
         "avg_saving_per_pv": metrics["avg_saving_per_pv"],
+        "saving_percent": metrics["saving_percent"],
     }
     return row
 

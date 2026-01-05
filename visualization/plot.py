@@ -5,8 +5,8 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 
-CSV_FILE = "data/experiment_results.csv"
-FIG_DIR = "visualization/figures"
+CSV_FILE = "data/results/greedy.csv" 
+FIG_DIR = "visualization/figures/greedy"  
 
 
 def load_results(csv_file: str) -> pd.DataFrame:
@@ -15,7 +15,7 @@ def load_results(csv_file: str) -> pd.DataFrame:
 
 
 def _save_plot(filename: str) -> None:
-    """Save current matplotlib figure into visualization/figures/."""
+    """Save current matplotlib figure into visualization/figures/greedy/."""
     os.makedirs(FIG_DIR, exist_ok=True)
     path = os.path.join(FIG_DIR, filename)
     plt.tight_layout()
@@ -34,7 +34,6 @@ def plot_pv_sweep(df: pd.DataFrame) -> None:
         print("No pv_sweep data found in CSV.")
         return
 
-    # Ensure sorting for nice lines
     pv_df = pv_df.sort_values(["fixed_value", "num_pv"])
 
     # 1) PV vs Runtime
@@ -71,6 +70,35 @@ def plot_pv_sweep(df: pd.DataFrame) -> None:
     plt.grid(True)
     plt.legend()
     _save_plot("pv_sweep_matched_ratio.png")
+    plt.close()
+
+    # ✅ 4) PV vs Avg Saving Per Matched PV
+    plt.figure()
+    for fixed_av, group in pv_df.groupby("fixed_value"):
+        plt.plot(group["num_pv"], group["avg_saving_per_pv"], marker="o", label=f"AV={int(fixed_av)}")
+    plt.xlabel("Number of PVs")
+    plt.ylabel("Avg Saving per Matched PV")
+    plt.title("PV Sweep: Avg Saving per Matched PV vs PV (lines = fixed AV)")
+    plt.grid(True)
+    plt.legend()
+    _save_plot("pv_sweep_avg_saving_per_pv.png")
+    plt.close()
+
+    # ✅ 5) PV vs Saving Percent (= total_saving / baseline_total_distance)
+    # If you already store saving_percent in CSV, use df["saving_percent"] directly.
+    # Here we compute it safely in case it doesn't exist.
+    if "saving_percent" not in pv_df.columns:
+        pv_df["saving_percent"] = pv_df["total_saving"] / pv_df["baseline_total_distance"]
+
+    plt.figure()
+    for fixed_av, group in pv_df.groupby("fixed_value"):
+        plt.plot(group["num_pv"], group["saving_percent"], marker="o", label=f"AV={int(fixed_av)}")
+    plt.xlabel("Number of PVs")
+    plt.ylabel("Total Saving Percent")
+    plt.title("PV Sweep: Saving Percent vs PV (lines = fixed AV)")
+    plt.grid(True)
+    plt.legend()
+    _save_plot("pv_sweep_saving_percent.png")
     plt.close()
 
 
@@ -121,6 +149,33 @@ def plot_av_sweep(df: pd.DataFrame) -> None:
     plt.grid(True)
     plt.legend()
     _save_plot("av_sweep_matched_ratio.png")
+    plt.close()
+
+    # ✅ 4) AV vs Avg Saving Per Matched PV
+    plt.figure()
+    for fixed_pv, group in av_df.groupby("fixed_value"):
+        plt.plot(group["num_av"], group["avg_saving_per_pv"], marker="o", label=f"PV={int(fixed_pv)}")
+    plt.xlabel("Number of AVs")
+    plt.ylabel("Avg Saving per Matched PV")
+    plt.title("AV Sweep: Avg Saving per Matched PV vs AV (lines = fixed PV)")
+    plt.grid(True)
+    plt.legend()
+    _save_plot("av_sweep_avg_saving_per_pv.png")
+    plt.close()
+
+    # ✅ 5) AV vs Saving Percent
+    if "saving_percent" not in av_df.columns:
+        av_df["saving_percent"] = av_df["total_saving"] / av_df["baseline_total_distance"]
+
+    plt.figure()
+    for fixed_pv, group in av_df.groupby("fixed_value"):
+        plt.plot(group["num_av"], group["saving_percent"], marker="o", label=f"PV={int(fixed_pv)}")
+    plt.xlabel("Number of AVs")
+    plt.ylabel("Total Saving Percent")
+    plt.title("AV Sweep: Saving Percent vs AV (lines = fixed PV)")
+    plt.grid(True)
+    plt.legend()
+    _save_plot("av_sweep_saving_percent.png")
     plt.close()
 
 

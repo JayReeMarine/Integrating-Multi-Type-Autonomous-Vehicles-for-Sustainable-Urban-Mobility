@@ -10,7 +10,7 @@ def run_length_sweep(*, output_csv: str) -> None:
     FIXED_NUM_PV = 800
 
     # Highway length sweep parameters
-    HIGHWAY_LENGTHS = [50, 75, 100, 150, 200, 300, 500, 750, 1000, 1500, 2000]
+    HIGHWAY_LENGTHS = [50, 100, 200, 400, 800, 1600, 3200]
 
     AV_CAPACITY_RANGE = (1, 3)
     MIN_TRIP_LENGTH = 10

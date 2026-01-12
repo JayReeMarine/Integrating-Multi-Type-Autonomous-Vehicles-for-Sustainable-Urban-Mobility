@@ -1,5 +1,9 @@
 # Integrating-Multi-Type-Autonomous-Vehicles-for-Sustainable-Urban-Mobility
 
+# Initial setup
+
+source venv/bin/activate
+
 # To run main file
 
 python -m experiments.main

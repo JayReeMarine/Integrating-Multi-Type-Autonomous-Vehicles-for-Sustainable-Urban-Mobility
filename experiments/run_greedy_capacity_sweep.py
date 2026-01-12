@@ -33,7 +33,7 @@ CSV_FIELDS = [
     "saving_percent",
 ]
 
-AV_CAPACITY_RANGES = [(1, 3), (1, 5), (1, 10), (1, 20)]
+AV_CAPACITY_RANGES = [(1, 2), (1, 4), (1, 8), (1, 16), (1, 32)]
 
 
 def run_one_scenario(

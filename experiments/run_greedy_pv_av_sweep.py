@@ -3,11 +3,11 @@ import csv
 
 from experiments.common import CSV_FIELDS, run_one_scenario
 
-PV_SWEEP_FIXED_AVS = [5, 20, 50, 160, 500]
-PV_SWEEP_PVS = [20, 50, 100, 200, 400, 800, 1600, 2000]
+PV_SWEEP_FIXED_AVS = [20, 80, 320, 640]
+PV_SWEEP_PVS = [50, 100, 200, 400, 800, 1600]
 
-AV_SWEEP_FIXED_PVS = [50, 200, 800, 2000]
-AV_SWEEP_AVS = [5, 10, 20, 50, 80, 160, 320, 500]
+AV_SWEEP_FIXED_PVS = [200, 400, 800, 1600]
+AV_SWEEP_AVS = [10, 20, 40, 80, 160, 320]
 
 
 def run_pv_av_sweep(*, output_csv: str) -> None:

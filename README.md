@@ -4,9 +4,10 @@
 
 python -m experiments.main
 
+50 100 200 400
 # To run the Graph
 
-python -m visualization.plot
+python -m visualization.plot_all
 
 
 # 1. Greedy Platoon Matching — Parameters and Outputs 

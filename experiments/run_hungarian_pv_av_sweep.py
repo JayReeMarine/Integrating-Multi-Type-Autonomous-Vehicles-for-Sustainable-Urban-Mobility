@@ -4,18 +4,26 @@ import csv
 from experiments.common import CSV_FIELDS, ScenarioParams, run_one_scenario
 from core.hungarian import hungarian_platoon_matching
 
-PV_SWEEP_FIXED_AVS = [20, 80, 320, 640]
-PV_SWEEP_PVS = [50, 100, 200, 400, 800, 1600]
+# Original values (for later use - too large for Hungarian)
+# PV_SWEEP_FIXED_AVS = [20, 80, 320, 640]
+# PV_SWEEP_PVS = [50, 100, 200, 400, 800, 1600]
+# AV_SWEEP_FIXED_PVS = [200, 400, 800, 1600]
+# AV_SWEEP_AVS = [10, 20, 40, 80, 160, 320]
 
-AV_SWEEP_FIXED_PVS = [200, 400, 800, 1600]
-AV_SWEEP_AVS = [10, 20, 40, 80, 160, 320]
+# Medium scale values (optimized for Hungarian algorithm)
+PV_SWEEP_FIXED_AVS = [20, 80, 320]  # Reduced from 4 to 2 values
+PV_SWEEP_PVS = [50, 100, 200, 400]  # Reduced from 6 to 3 values
+AV_SWEEP_FIXED_PVS = [200, 400, 800]  # Reduced from 4 to 2 values  
+AV_SWEEP_AVS = [10, 20, 40, 80]  # Reduced from 6 to 4 values
 
 
 def run_pv_av_sweep(*, output_csv: str) -> None:
     HIGHWAY_LENGTH = 100
     AV_CAPACITY_RANGE = (1, 3)
     MIN_TRIP_LENGTH = 10
-    SEEDS = [42, 43, 44, 45, 46]
+    
+    # Reduced seeds for faster testing
+    SEEDS = [42, 43]  # Only 2 seeds instead of 5
 
     os.makedirs(os.path.dirname(output_csv), exist_ok=True)
 

@@ -1,5 +1,5 @@
 import time
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Literal
 
 from core.data import generate_mock_data
 from core.greedy import greedy_platoon_matching
@@ -9,6 +9,10 @@ from core.metrics import (
     compute_extended_metrics,
 )
 from core.analysis import analyze_trip_distribution, analyze_feasible_pairs
+
+from core.hungarian import hungarian_platoon_matching
+
+Algorithm = Literal["greedy", "hungarian"]
 
 CSV_FIELDS = [
     # Scenario identifiers
@@ -45,11 +49,8 @@ def run_one_scenario(
     min_trip_length: int,
     seed: int,
     run_task2_checks: bool,
+    algorithm: Algorithm = "greedy",
 ) -> Dict:
-    """
-    Run one experiment scenario and return a flat dict for CSV writing.
-    This is shared across pv/av/length/capacity sweeps.
-    """
     avs, pvs, l_min = generate_mock_data(
         num_av=num_av,
         num_pv=num_pv,
@@ -67,17 +68,24 @@ def run_one_scenario(
     baseline_total = baseline_total_powered_distance(avs, pvs)
 
     start_time = time.perf_counter()
-    assignments, _ = greedy_platoon_matching(avs, pvs, l_min)
+
+    if algorithm == "greedy":
+        assignments, _ = greedy_platoon_matching(avs, pvs, l_min)
+    elif algorithm == "hungarian":
+        assignments, _ = hungarian_platoon_matching(avs, pvs, l_min)
+    else:
+        raise ValueError(f"Unknown algorithm: {algorithm}")
+
     runtime_sec = time.perf_counter() - start_time
 
-    greedy_total = greedy_total_powered_distance(baseline_total, assignments)
+    total_after = greedy_total_powered_distance(baseline_total, assignments)
 
     metrics = compute_extended_metrics(
         avs=avs,
         pvs=pvs,
         assignments=assignments,
         baseline_total=baseline_total,
-        greedy_total=greedy_total,
+        greedy_total=total_after,
         runtime_sec=runtime_sec,
     )
 
@@ -91,10 +99,11 @@ def run_one_scenario(
         "capacity_max": cap_max,
         "runtime_sec": runtime_sec,
         "baseline_total_distance": baseline_total,
-        "greedy_total_distance": greedy_total,
+        "greedy_total_distance": total_after, 
         "total_saving": metrics["total_saving"],
         "matched_pv": metrics["matched_pv"],
         "matched_ratio": metrics["matched_ratio"],
         "avg_saving_per_pv": metrics["avg_saving_per_pv"],
         "saving_percent": metrics["saving_percent"],
+        # "algorithm": algorithm,
     }

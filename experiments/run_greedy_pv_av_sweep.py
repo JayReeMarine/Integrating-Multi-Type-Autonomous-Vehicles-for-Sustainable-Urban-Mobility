@@ -1,7 +1,8 @@
 import os
 import csv
 
-from experiments.common import CSV_FIELDS, run_one_scenario
+from experiments.common import CSV_FIELDS, ScenarioParams, run_one_scenario
+from core.greedy import greedy_platoon_matching
 
 PV_SWEEP_FIXED_AVS = [20, 80, 320, 640]
 PV_SWEEP_PVS = [50, 100, 200, 400, 800, 1600]
@@ -35,17 +36,23 @@ def run_pv_av_sweep(*, output_csv: str) -> None:
                 num_av = fixed_av
 
                 for seed in SEEDS:
-                    row = run_one_scenario(
+                    params = ScenarioParams(
                         num_av=num_av,
                         num_pv=num_pv,
                         highway_length=HIGHWAY_LENGTH,
                         av_capacity_range=AV_CAPACITY_RANGE,
                         min_trip_length=MIN_TRIP_LENGTH,
                         seed=seed,
+                    )
+
+                    row = run_one_scenario(
+                        params=params,
+                        matcher=greedy_platoon_matching,
                         run_task2_checks=(not did_task2_once),
                     )
                     did_task2_once = True
 
+                    row["algorithm"] = "greedy"
                     row["scenario_type"] = "pv_sweep"
                     row["fixed_value"] = fixed_av
                     row["seed"] = seed
@@ -58,16 +65,22 @@ def run_pv_av_sweep(*, output_csv: str) -> None:
                 num_pv = fixed_pv
 
                 for seed in SEEDS:
-                    row = run_one_scenario(
+                    params = ScenarioParams(
                         num_av=num_av,
                         num_pv=num_pv,
                         highway_length=HIGHWAY_LENGTH,
                         av_capacity_range=AV_CAPACITY_RANGE,
                         min_trip_length=MIN_TRIP_LENGTH,
                         seed=seed,
+                    )
+
+                    row = run_one_scenario(
+                        params=params,
+                        matcher=greedy_platoon_matching,
                         run_task2_checks=False,
                     )
 
+                    row["algorithm"] = "greedy"
                     row["scenario_type"] = "av_sweep"
                     row["fixed_value"] = fixed_pv
                     row["seed"] = seed

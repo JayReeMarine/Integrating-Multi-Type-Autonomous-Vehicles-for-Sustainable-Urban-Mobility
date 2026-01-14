@@ -16,7 +16,11 @@ def run_length_sweep(*, output_csv: str) -> None:
     # FIXED_NUM_AV = 80  # Reduced from 160
     # FIXED_NUM_PV = 200  # Reduced from 800
     # HIGHWAY_LENGTHS = [50, 100, 200, 400]  # Removed very large values
-    SEEDS = [42, 43]  # Only 2 seeds instead of 5
+    # Reduced seeds for quick testing
+    # SEEDS = [42, 43]  # Only 2 seeds instead of 5
+
+    # Original seeds (for comprehensive comparison with Greedy)
+    SEEDS = [42, 43, 44, 45, 46]  # Same as Greedy for fair comparison
 
     AV_CAPACITY_RANGE = (1, 3)
     MIN_TRIP_LENGTH = 10

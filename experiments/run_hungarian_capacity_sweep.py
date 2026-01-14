@@ -4,11 +4,11 @@ import csv
 from experiments.common import CSV_FIELDS, ScenarioParams, run_one_scenario
 from core.hungarian import hungarian_platoon_matching
 
-# Original values (for later use - some too large for Hungarian)
-# AV_CAPACITY_RANGES = [(1, 2), (1, 4), (1, 8), (1, 16), (1, 32)]
+# Original values (for comprehensive comparison with Greedy)
+AV_CAPACITY_RANGES = [(1, 2), (1, 4), (1, 8), (1, 16), (1, 32)]  # Same as Greedy
 
-# Optimized ranges (focus on meaningful comparisons)
-AV_CAPACITY_RANGES = [(1, 2), (1, 4), (1, 8), (1, 16)]  # Removed very large capacities
+# Optimized ranges for quick testing
+# AV_CAPACITY_RANGES = [(1, 2), (1, 4), (1, 8), (1, 16)]  # Removed very large capacities
 
 
 def run_capacity_sweep(*, output_csv: str) -> None:
@@ -18,7 +18,11 @@ def run_capacity_sweep(*, output_csv: str) -> None:
     # Moderate scale values (optimized for Hungarian algorithm)
     FIXED_NUM_AV = 50  # Keep original - manageable size
     FIXED_NUM_PV = 200  # Keep original - reasonable for comparison
-    SEEDS = [42, 43]  # Only 2 seeds instead of 5
+    # Original seeds (for comprehensive comparison with Greedy)
+    SEEDS = [42, 43, 44, 45, 46]  # Same as Greedy for fair comparison
+    
+    # Reduced seeds for quick testing
+    # SEEDS = [42, 43]  # Only 2 seeds instead of 5
 
     os.makedirs(os.path.dirname(output_csv), exist_ok=True)
 

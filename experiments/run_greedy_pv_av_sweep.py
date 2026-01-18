@@ -2,7 +2,7 @@ import os
 import csv
 
 from experiments.common import CSV_FIELDS, ScenarioParams, run_one_scenario
-from core.greedy import greedy_platoon_matching
+from core.greedy_multi import greedy_multi_av_matching  # Changed: single -> multi AV matching
 
 PV_SWEEP_FIXED_AVS = [20, 80, 320, 640]
 PV_SWEEP_PVS = [50, 100, 200, 400, 800, 1600]
@@ -47,7 +47,7 @@ def run_pv_av_sweep(*, output_csv: str) -> None:
 
                     row = run_one_scenario(
                         params=params,
-                        matcher=greedy_platoon_matching,
+                        matcher=greedy_multi_av_matching,
                         run_task2_checks=(not did_task2_once),
                     )
                     did_task2_once = True
@@ -76,7 +76,7 @@ def run_pv_av_sweep(*, output_csv: str) -> None:
 
                     row = run_one_scenario(
                         params=params,
-                        matcher=greedy_platoon_matching,
+                        matcher=greedy_multi_av_matching,
                         run_task2_checks=False,
                     )
 
@@ -87,3 +87,11 @@ def run_pv_av_sweep(*, output_csv: str) -> None:
                     writer.writerow(row)
 
     print(f"\n✅ PV/AV sweep done. Saved to: {output_csv}")
+
+
+def main() -> None:
+    run_pv_av_sweep(output_csv="data/results/greedy/pv_av_sweep.csv")
+
+
+if __name__ == "__main__":
+    main()

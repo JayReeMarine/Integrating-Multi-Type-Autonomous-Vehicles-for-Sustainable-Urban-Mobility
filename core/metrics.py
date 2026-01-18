@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import List, Tuple, Dict, Union
 
 from core.models import ActiveVehicle, PassiveVehicle
-from core.greedy import Assignment
+from core.greedy_multi import SegmentAssignment  # Changed: Assignment -> SegmentAssignment
 
 
 Number = Union[int, float]
@@ -29,7 +29,7 @@ def baseline_total_powered_distance(
 
 def greedy_total_powered_distance(
     baseline_total: int,
-    assignments: List[Assignment],
+    assignments: List[SegmentAssignment],
 ) -> int:
     """
     Greedy: PVs turn off propulsion when being towed in segment (cp->dp),
@@ -44,7 +44,7 @@ def greedy_total_powered_distance(
 def compute_saving_stats(
     avs: List[ActiveVehicle],
     pvs: List[PassiveVehicle],
-    assignments: List[Assignment],
+    assignments: List[SegmentAssignment],
 ) -> Tuple[int, int, float]:
     """
     Returns:
@@ -64,7 +64,7 @@ def compute_saving_stats(
 def compute_extended_metrics(
     avs: List[ActiveVehicle],
     pvs: List[PassiveVehicle],
-    assignments: List[Assignment],
+    assignments: List[SegmentAssignment],
     baseline_total: int,
     greedy_total: int,
     runtime_sec: float,
@@ -80,7 +80,8 @@ def compute_extended_metrics(
       - avg_saving_per_pv
       - (optional) runtime_sec, saving_percent, baseline_total, greedy_total
     """
-    matched_pvs = len(assignments)
+    # Changed: Count unique PVs (one PV can have multiple segment assignments)
+    matched_pvs = len(set(a.pv.id for a in assignments))
     total_pvs = len(pvs)
 
     total_saving = baseline_total - greedy_total

@@ -2,7 +2,7 @@ import os
 import csv
 
 from experiments.common import CSV_FIELDS, ScenarioParams, run_one_scenario
-from core.greedy import greedy_platoon_matching
+from core.greedy_multi import greedy_multi_av_matching  # Changed: single -> multi AV matching
 
 AV_CAPACITY_RANGES = [(1, 2), (1, 4), (1, 8), (1, 16), (1, 32)]
 
@@ -39,7 +39,7 @@ def run_capacity_sweep(*, output_csv: str) -> None:
 
                 row = run_one_scenario(
                     params=params,
-                    matcher=greedy_platoon_matching,
+                    matcher=greedy_multi_av_matching,  # Changed: single -> multi
                     run_task2_checks=(not did_task2_once),
                 )
                 did_task2_once = True

@@ -2,7 +2,7 @@ import os
 import csv
 
 from experiments.common import CSV_FIELDS, ScenarioParams, run_one_scenario
-from core.greedy import greedy_platoon_matching
+from core.greedy_multi import greedy_multi_av_matching  # Changed: single -> multi AV matching
 
 
 def run_length_sweep(*, output_csv: str) -> None:
@@ -41,7 +41,7 @@ def run_length_sweep(*, output_csv: str) -> None:
 
                 row = run_one_scenario(
                     params=params,
-                    matcher=greedy_platoon_matching,
+                    matcher=greedy_multi_av_matching,  # Changed: single -> multi
                     run_task2_checks=False,
                 )
 
@@ -52,3 +52,11 @@ def run_length_sweep(*, output_csv: str) -> None:
                 writer.writerow(row)
 
     print(f"\n Length sweep done. Saved to: {output_csv}")
+
+
+def main() -> None:
+    run_length_sweep(output_csv="data/results/greedy/length_sweep.csv")
+
+
+if __name__ == "__main__":
+    main()

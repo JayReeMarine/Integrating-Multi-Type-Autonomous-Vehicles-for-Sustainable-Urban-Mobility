@@ -7,7 +7,7 @@ from typing import Callable, Dict, Tuple, List, Union
 
 from core.data import generate_mock_data
 from core.models import ActiveVehicle, PassiveVehicle
-from core.greedy import Assignment
+from core.greedy_multi import SegmentAssignment  # Changed: Assignment -> SegmentAssignment
 from core.metrics import (
     baseline_total_powered_distance,
     greedy_total_powered_distance,
@@ -18,9 +18,10 @@ from core.analysis import analyze_trip_distribution, analyze_feasible_pairs
 
 Number = Union[int, float]
 
+# Changed: Matcher now returns 3 values (assignments, total_saving, pv_assignments_dict)
 MatcherFn = Callable[
     [List[ActiveVehicle], List[PassiveVehicle], int],
-    Tuple[List[Assignment], Number],
+    Tuple[List[SegmentAssignment], Number, Dict],
 ]
 
 
@@ -86,7 +87,8 @@ def run_one_scenario(
     baseline_total = baseline_total_powered_distance(avs, pvs)
 
     start_time = time.perf_counter()
-    assignments, _ = matcher(avs, pvs, l_min)
+    # Changed: greedy_multi returns 3 values (assignments, total_saving, pv_assignments)
+    assignments, _, _ = matcher(avs, pvs, l_min)
     runtime_sec = time.perf_counter() - start_time
 
     greedy_total = greedy_total_powered_distance(baseline_total, assignments)

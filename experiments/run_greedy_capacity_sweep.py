@@ -4,7 +4,7 @@ import csv
 from experiments.common import CSV_FIELDS, ScenarioParams, run_one_scenario
 from core.greedy_multi import greedy_multi_av_matching  # Changed: single -> multi AV matching
 
-AV_CAPACITY_RANGES = [(1, 2), (1, 4), (1, 8), (1, 16), (1, 32)]
+AV_CAPACITY_RANGES = [(1, 2), (1, 4), (1, 8), (1, 16)]  # Reduced: removed (1, 32)
 
 
 def run_capacity_sweep(*, output_csv: str) -> None:
@@ -12,7 +12,7 @@ def run_capacity_sweep(*, output_csv: str) -> None:
     MIN_TRIP_LENGTH = 10
     FIXED_NUM_AV = 50
     FIXED_NUM_PV = 200
-    SEEDS = [42, 43, 44, 45, 46]
+    SEEDS = [42, 43, 44]  # Reduced: 5 -> 3 seeds
 
     os.makedirs(os.path.dirname(output_csv), exist_ok=True)
 

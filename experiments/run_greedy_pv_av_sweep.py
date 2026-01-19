@@ -4,18 +4,20 @@ import csv
 from experiments.common import CSV_FIELDS, ScenarioParams, run_one_scenario
 from core.greedy_multi import greedy_multi_av_matching  # Changed: single -> multi AV matching
 
-PV_SWEEP_FIXED_AVS = [20, 80, 320, 640]
-PV_SWEEP_PVS = [50, 100, 200, 400, 800, 1600]
+# Reduced for performance: removed 320, 640 from AVs; removed 800, 1600 from PVs
+PV_SWEEP_FIXED_AVS = [20, 80, 160]
+PV_SWEEP_PVS = [50, 100, 200, 400]
 
-AV_SWEEP_FIXED_PVS = [200, 400, 800, 1600]
-AV_SWEEP_AVS = [10, 20, 40, 80, 160, 320]
+# Reduced: removed 1600 from PVs; removed 320 from AVs
+AV_SWEEP_FIXED_PVS = [200, 400, 800]
+AV_SWEEP_AVS = [10, 20, 40, 80, 160]
 
 
 def run_pv_av_sweep(*, output_csv: str) -> None:
     HIGHWAY_LENGTH = 100
     AV_CAPACITY_RANGE = (1, 3)
     MIN_TRIP_LENGTH = 10
-    SEEDS = [42, 43, 44, 45, 46]
+    SEEDS = [42, 43, 44]  # Reduced: 5 -> 3 seeds
 
     os.makedirs(os.path.dirname(output_csv), exist_ok=True)
 

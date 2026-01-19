@@ -6,16 +6,16 @@ from core.greedy_multi import greedy_multi_av_matching  # Changed: single -> mul
 
 
 def run_length_sweep(*, output_csv: str) -> None:
-    # Fixed AV/PV values for this sweep
-    FIXED_NUM_AV = 160
-    FIXED_NUM_PV = 800
+    # Fixed AV/PV values for this sweep (Reduced for performance)
+    FIXED_NUM_AV = 80   # Reduced: 160 -> 80
+    FIXED_NUM_PV = 400  # Reduced: 800 -> 400
 
-    # Highway length sweep parameters
-    HIGHWAY_LENGTHS = [50, 100, 200, 400, 800, 1600, 3200]  # Adjust scale as needed (relative length)
+    # Highway length sweep parameters (Reduced: removed 1600, 3200)
+    HIGHWAY_LENGTHS = [50, 100, 200, 400, 800]
 
     AV_CAPACITY_RANGE = (1, 3)
     MIN_TRIP_LENGTH = 10
-    SEEDS = [42, 43, 44, 45, 46]
+    SEEDS = [42, 43, 44]  # Reduced: 5 -> 3 seeds
 
     os.makedirs(os.path.dirname(output_csv), exist_ok=True)
 

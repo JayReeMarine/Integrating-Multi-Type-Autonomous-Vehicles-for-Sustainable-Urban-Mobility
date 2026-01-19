@@ -2,27 +2,22 @@ import os
 import csv
 
 from experiments.common import CSV_FIELDS, ScenarioParams, run_one_scenario
-from core.hungarian import hungarian_platoon_matching
+from core.hungarian_multi import hungarian_multi_av_matching  # Changed: single -> multi AV matching
 
 # Original values (for comprehensive comparison with Greedy)
-AV_CAPACITY_RANGES = [(1, 2), (1, 4), (1, 8), (1, 16), (1, 32)]  # Same as Greedy
+# AV_CAPACITY_RANGES = [(1, 2), (1, 4), (1, 8), (1, 16), (1, 32)]
+# SEEDS = [42, 43, 44, 45, 46]
 
-# Optimized ranges for quick testing
-# AV_CAPACITY_RANGES = [(1, 2), (1, 4), (1, 8), (1, 16)]  # Removed very large capacities
+# Reduced values (same as Greedy for fair comparison)
+AV_CAPACITY_RANGES = [(1, 2), (1, 4), (1, 8), (1, 16)]  # Removed (1, 32)
 
 
 def run_capacity_sweep(*, output_csv: str) -> None:
     HIGHWAY_LENGTH = 100
     MIN_TRIP_LENGTH = 10
-    
-    # Moderate scale values (optimized for Hungarian algorithm)
-    FIXED_NUM_AV = 50  # Keep original - manageable size
-    FIXED_NUM_PV = 200  # Keep original - reasonable for comparison
-    # Original seeds (for comprehensive comparison with Greedy)
-    SEEDS = [42, 43, 44, 45, 46]  # Same as Greedy for fair comparison
-    
-    # Reduced seeds for quick testing
-    # SEEDS = [42, 43]  # Only 2 seeds instead of 5
+    FIXED_NUM_AV = 50
+    FIXED_NUM_PV = 200
+    SEEDS = [42, 43, 44]  # Reduced: 5 -> 3 seeds (same as Greedy)
 
     os.makedirs(os.path.dirname(output_csv), exist_ok=True)
 
@@ -49,7 +44,7 @@ def run_capacity_sweep(*, output_csv: str) -> None:
 
                 row = run_one_scenario(
                     params=params,
-                    matcher=hungarian_platoon_matching,
+                    matcher=hungarian_multi_av_matching,  # Changed: single -> multi
                     run_task2_checks=(not did_task2_once),
                 )
                 did_task2_once = True
@@ -62,3 +57,11 @@ def run_capacity_sweep(*, output_csv: str) -> None:
                 writer.writerow(row)
 
     print(f"\n✅ Capacity sweep (Hungarian) done. Saved to: {output_csv}")
+
+
+def main() -> None:
+    run_capacity_sweep(output_csv="data/results/hungarian/capacity_sweep.csv")
+
+
+if __name__ == "__main__":
+    main()

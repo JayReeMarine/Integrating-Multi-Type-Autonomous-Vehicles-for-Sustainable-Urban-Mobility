@@ -1,8 +1,9 @@
 import os
 import csv
+from typing import Optional, Tuple
 
 from experiments.common import CSV_FIELDS, ScenarioParams, run_one_scenario
-from core.greedy_multi import greedy_multi_av_matching  # Changed: single -> multi AV matching
+from core.greedy_multi import greedy_multi_av_matching, DEFAULT_TIME_TOLERANCE
 
 # Reduced for performance: removed 320, 640 from AVs; removed 800, 1600 from PVs
 PV_SWEEP_FIXED_AVS = [20, 80, 160]
@@ -13,7 +14,26 @@ AV_SWEEP_FIXED_PVS = [200, 400, 800]
 AV_SWEEP_AVS = [10, 20, 40, 80, 160]
 
 
-def run_pv_av_sweep(*, output_csv: str) -> None:
+def run_pv_av_sweep(
+    *,
+    output_csv: str,
+    # Step 4: Time constraint parameters
+    enable_time_constraints: bool = False,
+    time_tolerance: float = DEFAULT_TIME_TOLERANCE,
+    time_window: float = 100.0,
+    av_speed_range: Optional[Tuple[float, float]] = None,
+    pv_speed_range: Optional[Tuple[float, float]] = None,
+) -> None:
+    """
+    Run PV/AV count sweep experiment.
+
+    Step 4 Enhancement:
+    - enable_time_constraints: If True, uses time-based matching
+    - time_tolerance: Max time difference for coupling (default: 5.0)
+    - time_window: Time span for vehicle entry (default: 100.0)
+    - av_speed_range: Speed range for AVs (default: (1.0, 1.0))
+    - pv_speed_range: Speed range for PVs (default: (1.0, 1.0))
+    """
     HIGHWAY_LENGTH = 100
     AV_CAPACITY_RANGE = (1, 3)
     MIN_TRIP_LENGTH = 10
@@ -27,9 +47,15 @@ def run_pv_av_sweep(*, output_csv: str) -> None:
         writer = csv.DictWriter(csvfile, fieldnames=CSV_FIELDS)
         writer.writeheader()
 
+        time_mode = "WITH" if enable_time_constraints else "WITHOUT"
         print("\n=======================")
-        print("Running PV/AV sweep (Greedy)")
+        print(f"Running PV/AV sweep (Greedy) {time_mode} time constraints")
         print("=======================")
+        if enable_time_constraints:
+            print(f"  Time tolerance: {time_tolerance}")
+            print(f"  Time window: {time_window}")
+            print(f"  AV speed range: {av_speed_range}")
+            print(f"  PV speed range: {pv_speed_range}")
 
         # 1) PV sweep: fix AV, increase PV
         print("\n--- PV sweep (Fix AV, increase PV) ---")
@@ -45,6 +71,12 @@ def run_pv_av_sweep(*, output_csv: str) -> None:
                         av_capacity_range=AV_CAPACITY_RANGE,
                         min_trip_length=MIN_TRIP_LENGTH,
                         seed=seed,
+                        # Step 4: Time constraint parameters
+                        enable_time_constraints=enable_time_constraints,
+                        time_tolerance=time_tolerance,
+                        time_window=time_window,
+                        av_speed_range=av_speed_range,
+                        pv_speed_range=pv_speed_range,
                     )
 
                     row = run_one_scenario(
@@ -74,6 +106,12 @@ def run_pv_av_sweep(*, output_csv: str) -> None:
                         av_capacity_range=AV_CAPACITY_RANGE,
                         min_trip_length=MIN_TRIP_LENGTH,
                         seed=seed,
+                        # Step 4: Time constraint parameters
+                        enable_time_constraints=enable_time_constraints,
+                        time_tolerance=time_tolerance,
+                        time_window=time_window,
+                        av_speed_range=av_speed_range,
+                        pv_speed_range=pv_speed_range,
                     )
 
                     row = run_one_scenario(
@@ -88,11 +126,19 @@ def run_pv_av_sweep(*, output_csv: str) -> None:
                     row["seed"] = seed
                     writer.writerow(row)
 
-    print(f"\n✅ PV/AV sweep done. Saved to: {output_csv}")
+    print(f"\n PV/AV sweep done. Saved to: {output_csv}")
 
 
 def main() -> None:
-    run_pv_av_sweep(output_csv="data/results/greedy/pv_av_sweep.csv")
+    # Run with time constraints (Step 4)
+    run_pv_av_sweep(
+        output_csv="data/results/greedy/pv_av_sweep.csv",
+        enable_time_constraints=True,
+        time_tolerance=5.0,
+        time_window=100.0,
+        av_speed_range=(0.8, 1.2),  # AV speed varies ±20%
+        pv_speed_range=(0.8, 1.2),  # PV speed varies ±20%
+    )
 
 
 if __name__ == "__main__":

@@ -7,6 +7,11 @@ Key Changes from Original:
 1. Track "remaining segments" instead of "used PVs"
 2. New SegmentAssignment dataclass for segment-level matching
 3. PV can have multiple assignments across different route segments
+
+Step 4 Enhancement: Time-based constraints
+- Each vehicle has entry_time and speed
+- Matching requires time synchronization at coupling point
+- Time tolerance parameter allows for realistic matching windows
 """
 
 from __future__ import annotations
@@ -15,6 +20,15 @@ from dataclasses import dataclass, field
 from typing import Optional, List, Tuple, Dict
 
 from core.models import ActiveVehicle, PassiveVehicle
+
+
+# =============================================================================
+# TIME CONSTRAINT CONFIGURATION (Step 4)
+# =============================================================================
+
+# Default time tolerance for coupling (time units)
+# AV and PV must arrive at coupling point within this time window
+DEFAULT_TIME_TOLERANCE: float = 5.0
 
 
 # =============================================================================
@@ -53,11 +67,17 @@ class SegmentAssignment:
         PV1 (entry=1, exit=5) could have:
         - SegmentAssignment(pv=PV1, av=AV1, cp=1, dp=3)  # segment 1→3
         - SegmentAssignment(pv=PV1, av=AV2, cp=3, dp=5)  # segment 3→5
+
+    Step 4 Enhancement:
+        - coupling_time: Time when AV and PV meet at coupling point
+        - decoupling_time: Time when PV is released at decoupling point
     """
     pv: PassiveVehicle
     av: ActiveVehicle
     cp: int  # coupling point (start of this segment)
     dp: int  # decoupling point (end of this segment)
+    coupling_time: float = 0.0    # Time at coupling point (Step 4)
+    decoupling_time: float = 0.0  # Time at decoupling point (Step 4)
 
     @property
     def saved_distance(self) -> int:
@@ -68,6 +88,11 @@ class SegmentAssignment:
     def segment(self) -> Segment:
         """The segment this assignment covers."""
         return Segment(self.cp, self.dp)
+
+    @property
+    def towing_duration(self) -> float:
+        """Duration of towing (Step 4)."""
+        return self.decoupling_time - self.coupling_time
 
 
 @dataclass
@@ -83,70 +108,154 @@ class PVRoutingState:
         Initial uncovered: [(0, 10)]
         After matching to AV1 for segment (2, 6):
         Uncovered becomes: [(0, 2), (6, 10)]  # two remaining segments
+
+    Step 4 Enhancement:
+        - Each uncovered segment also tracks its entry_time (when PV arrives at segment start)
+        - uncovered_segments: List[(start, end, entry_time)]
     """
     pv: PassiveVehicle
-    uncovered_segments: List[Tuple[int, int]] = field(default_factory=list)
+    uncovered_segments: List[Tuple[int, int, float]] = field(default_factory=list)
 
     def __post_init__(self):
         if not self.uncovered_segments:
             # Initially, entire route is uncovered
-            self.uncovered_segments = [(self.pv.entry_point, self.pv.exit_point)]
+            # (start_point, end_point, time_at_start)
+            self.uncovered_segments = [
+                (self.pv.entry_point, self.pv.exit_point, self.pv.entry_time)
+            ]
 
     @property
     def total_uncovered_distance(self) -> int:
         """Total distance still not matched to any AV."""
-        return sum(end - start for start, end in self.uncovered_segments)
+        return sum(end - start for start, end, _ in self.uncovered_segments)
 
     @property
     def is_fully_covered(self) -> bool:
         """Check if PV's entire route is covered by AVs."""
         return len(self.uncovered_segments) == 0
 
-    def get_overlap_with_av(self, av: ActiveVehicle) -> Optional[Tuple[int, int]]:
+    def get_time_at_point(self, point: int) -> Optional[float]:
+        """
+        Calculate when PV reaches a given point based on current routing state.
+
+        Step 4: This accounts for previous towing segments where PV traveled
+        at AV's speed rather than its own speed.
+        """
+        for seg_start, seg_end, seg_entry_time in self.uncovered_segments:
+            if seg_start <= point <= seg_end:
+                # PV is self-driving in this segment
+                return seg_entry_time + (point - seg_start) / self.pv.speed
+        return None
+
+    def get_overlap_with_av(
+        self,
+        av: ActiveVehicle,
+        time_tolerance: float = DEFAULT_TIME_TOLERANCE,
+        enable_time_constraints: bool = False
+    ) -> Optional[Tuple[int, int, float, float]]:
         """
         Find the best overlapping segment between this PV's uncovered portions
         and the given AV's route.
 
-        Returns the longest overlapping segment, or None if no valid overlap.
+        Step 4 Enhancement:
+        - When enable_time_constraints=True, also checks time feasibility
+        - AV and PV must arrive at coupling point within time_tolerance
+
+        Returns:
+            Tuple of (cp, dp, coupling_time, decoupling_time) or None
+            - cp: coupling point
+            - dp: decoupling point
+            - coupling_time: when both vehicles meet at cp
+            - decoupling_time: when towing ends at dp
         """
         best_overlap = None
         best_length = 0
 
-        for seg_start, seg_end in self.uncovered_segments:
-            # Compute overlap between uncovered segment and AV route
+        for seg_start, seg_end, seg_entry_time in self.uncovered_segments:
+            # Compute spatial overlap between uncovered segment and AV route
             cp = max(seg_start, av.entry_point)
             dp = min(seg_end, av.exit_point)
 
-            if dp > cp and (dp - cp) > best_length:
-                best_overlap = (cp, dp)
-                best_length = dp - cp
+            if dp <= cp:
+                continue  # No spatial overlap
+
+            segment_length = dp - cp
+
+            if enable_time_constraints:
+                # Step 4: Time-based feasibility check
+                # Calculate when PV arrives at potential coupling point
+                pv_time_at_cp = seg_entry_time + (cp - seg_start) / self.pv.speed
+
+                # Calculate when AV arrives at potential coupling point
+                av_time_at_cp = av.time_at_point(cp)
+                if av_time_at_cp is None:
+                    continue
+
+                # Check if times are within tolerance
+                time_diff = abs(pv_time_at_cp - av_time_at_cp)
+                if time_diff > time_tolerance:
+                    continue  # Time mismatch - cannot couple
+
+                # Coupling time is when both vehicles can meet (the later arrival)
+                coupling_time = max(pv_time_at_cp, av_time_at_cp)
+
+                # After coupling, PV travels at AV's speed
+                towing_duration = (dp - cp) / av.speed
+                decoupling_time = coupling_time + towing_duration
+
+                # Verify AV can reach decoupling point
+                av_time_at_dp = av.time_at_point(dp)
+                if av_time_at_dp is None:
+                    continue
+            else:
+                # No time constraints - use default values
+                coupling_time = 0.0
+                decoupling_time = 0.0
+
+            if segment_length > best_length:
+                best_overlap = (cp, dp, coupling_time, decoupling_time)
+                best_length = segment_length
 
         return best_overlap
 
-    def mark_segment_covered(self, cp: int, dp: int) -> None:
+    def mark_segment_covered(
+        self,
+        cp: int,
+        dp: int,
+        coupling_time: float = 0.0,
+        decoupling_time: float = 0.0,
+        av_speed: float = 1.0
+    ) -> None:
         """
         Mark a segment as covered (matched to an AV).
         Updates uncovered_segments by removing the covered portion.
 
-        Example:
-            uncovered: [(0, 10)]
-            mark_segment_covered(3, 7)
-            result: [(0, 3), (7, 10)]
+        Step 4 Enhancement:
+        - Updates entry times for remaining segments based on towing
+        - After being towed, PV resumes self-driving at decoupling point
+
+        Args:
+            cp: coupling point
+            dp: decoupling point
+            coupling_time: when coupling occurs (Step 4)
+            decoupling_time: when decoupling occurs (Step 4)
+            av_speed: speed of AV during towing (Step 4)
         """
         new_uncovered = []
 
-        for seg_start, seg_end in self.uncovered_segments:
+        for seg_start, seg_end, seg_entry_time in self.uncovered_segments:
             if dp <= seg_start or cp >= seg_end:
                 # No overlap, keep segment as is
-                new_uncovered.append((seg_start, seg_end))
+                new_uncovered.append((seg_start, seg_end, seg_entry_time))
             else:
                 # There is overlap, split the segment
                 if seg_start < cp:
-                    # Left portion remains uncovered
-                    new_uncovered.append((seg_start, cp))
+                    # Left portion remains uncovered (before coupling)
+                    new_uncovered.append((seg_start, cp, seg_entry_time))
                 if dp < seg_end:
-                    # Right portion remains uncovered
-                    new_uncovered.append((dp, seg_end))
+                    # Right portion remains uncovered (after decoupling)
+                    # PV resumes self-driving at decoupling_time
+                    new_uncovered.append((dp, seg_end, decoupling_time))
 
         self.uncovered_segments = new_uncovered
 
@@ -221,22 +330,33 @@ class AVCapacityState:
 
 def compute_shared_segment_multi(
     av: ActiveVehicle,
-    pv_state: PVRoutingState
-) -> Optional[Tuple[int, int]]:
+    pv_state: PVRoutingState,
+    time_tolerance: float = DEFAULT_TIME_TOLERANCE,
+    enable_time_constraints: bool = False
+) -> Optional[Tuple[int, int, float, float]]:
     """
     Compute the best shared segment between AV and PV's uncovered portions.
 
     Difference from original:
     - Original: looks at PV's full route
     - This: looks at PV's UNCOVERED segments only
+
+    Step 4 Enhancement:
+    - Also considers time feasibility when enable_time_constraints=True
+
+    Returns:
+        Tuple of (cp, dp, coupling_time, decoupling_time) or None
     """
-    return pv_state.get_overlap_with_av(av)
+    return pv_state.get_overlap_with_av(av, time_tolerance, enable_time_constraints)
 
 
 def greedy_multi_av_matching(
     avs: List[ActiveVehicle],
     pvs: List[PassiveVehicle],
-    l_min: int
+    l_min: int,
+    *,
+    enable_time_constraints: bool = False,
+    time_tolerance: float = DEFAULT_TIME_TOLERANCE
 ) -> Tuple[List[SegmentAssignment], float, Dict[str, List[SegmentAssignment]]]:
     """
     Greedy Multi-AV Platoon Matching
@@ -252,6 +372,15 @@ def greedy_multi_av_matching(
 
     3. CANDIDATE GENERATION:
        - Regenerate candidates each iteration based on current uncovered segments
+
+    Step 4 Enhancement:
+    - enable_time_constraints: If True, considers time feasibility for matching
+    - time_tolerance: Maximum time difference allowed for coupling (default: 5.0)
+
+    When time constraints are enabled:
+    - AV and PV must arrive at coupling point within time_tolerance
+    - This significantly reduces feasible matches, making optimization harder
+    - Hungarian algorithm may show more benefit over Greedy in this scenario
 
     Returns:
         - assignments: List of SegmentAssignment
@@ -280,7 +409,8 @@ def greedy_multi_av_matching(
         iteration += 1
 
         # Generate candidates based on CURRENT uncovered segments
-        candidates: List[Tuple[int, ActiveVehicle, PassiveVehicle, int, int]] = []
+        # Step 4: Extended tuple to include time information
+        candidates: List[Tuple[int, ActiveVehicle, PassiveVehicle, int, int, float, float]] = []
 
         for av in avs:
             av_state = av_states[av.id]
@@ -292,12 +422,14 @@ def greedy_multi_av_matching(
                 if pv_state.is_fully_covered:
                     continue
 
-                # Find overlap with UNCOVERED portions
-                overlap = compute_shared_segment_multi(av, pv_state)
+                # Find overlap with UNCOVERED portions (Step 4: with time constraints)
+                overlap = compute_shared_segment_multi(
+                    av, pv_state, time_tolerance, enable_time_constraints
+                )
                 if overlap is None:
                     continue
 
-                cp, dp = overlap
+                cp, dp, coupling_time, decoupling_time = overlap
                 segment_length = dp - cp
 
                 # Check minimum length constraint
@@ -308,8 +440,10 @@ def greedy_multi_av_matching(
                 if not av_state.can_accommodate_segment(cp, dp):
                     continue
 
-                # Valid candidate
-                candidates.append((segment_length, av, pv, cp, dp))
+                # Valid candidate (Step 4: include time info)
+                candidates.append((
+                    segment_length, av, pv, cp, dp, coupling_time, decoupling_time
+                ))
 
         # No more valid candidates - we're done
         if not candidates:
@@ -319,15 +453,21 @@ def greedy_multi_av_matching(
         candidates.sort(key=lambda x: x[0], reverse=True)
 
         # Take the best candidate
-        saving, av, pv, cp, dp = candidates[0]
+        saving, av, pv, cp, dp, coupling_time, decoupling_time = candidates[0]
 
-        # Make the assignment
-        assignment = SegmentAssignment(pv=pv, av=av, cp=cp, dp=dp)
+        # Make the assignment (Step 4: include time info)
+        assignment = SegmentAssignment(
+            pv=pv, av=av, cp=cp, dp=dp,
+            coupling_time=coupling_time,
+            decoupling_time=decoupling_time
+        )
         all_assignments.append(assignment)
         pv_assignments[pv.id].append(assignment)
 
-        # Update states
-        pv_states[pv.id].mark_segment_covered(cp, dp)
+        # Update states (Step 4: pass time info for proper segment tracking)
+        pv_states[pv.id].mark_segment_covered(
+            cp, dp, coupling_time, decoupling_time, av.speed
+        )
         av_states[av.id].add_assignment(cp, dp)
 
         total_saving += saving

@@ -38,6 +38,9 @@ from typing import List, Optional, Tuple, Dict
 
 from core.models import ActiveVehicle, PassiveVehicle
 
+# Step 4: Default time tolerance for coupling
+DEFAULT_TIME_TOLERANCE: float = 5.0
+
 
 # =============================================================================
 # REUSE DATA STRUCTURES FROM greedy_multi.py
@@ -64,20 +67,45 @@ class PVRoutingState:
     """
     Tracks uncovered segments of a PV's route.
     Reused from greedy_multi concept.
+
+    Step 4 Enhancement:
+    - Supports time-based matching constraints
+    - Tracks current_time for sequential segment assignments
     """
     pv: PassiveVehicle
     uncovered_segments: List[Tuple[int, int]] = field(default_factory=list)
+    # Step 4: Track time state for sequential assignments
+    current_time: float = 0.0
 
     def __post_init__(self):
         if not self.uncovered_segments:
             self.uncovered_segments = [(self.pv.entry_point, self.pv.exit_point)]
+        # Step 4: Initialize current_time to PV's entry time
+        if self.current_time == 0.0:
+            self.current_time = self.pv.entry_time
 
     @property
     def is_fully_covered(self) -> bool:
         return len(self.uncovered_segments) == 0
 
-    def get_overlap_with_av(self, av: ActiveVehicle) -> Optional[Tuple[int, int]]:
-        """Find best overlapping segment between uncovered portions and AV route."""
+    def get_overlap_with_av(
+        self,
+        av: ActiveVehicle,
+        enable_time_constraints: bool = False,
+        time_tolerance: float = DEFAULT_TIME_TOLERANCE,
+    ) -> Optional[Tuple[int, int, float, float]]:
+        """
+        Find best overlapping segment between uncovered portions and AV route.
+
+        Step 4 Enhancement:
+        - If enable_time_constraints is True, checks time compatibility
+        - Returns (cp, dp, coupling_time, decoupling_time) or None
+
+        Returns:
+            If time constraints enabled: (cp, dp, coupling_time, decoupling_time)
+            If time constraints disabled: (cp, dp, 0.0, 0.0) for compatibility
+            None if no valid overlap
+        """
         best_overlap = None
         best_length = 0
 
@@ -85,9 +113,35 @@ class PVRoutingState:
             cp = max(seg_start, av.entry_point)
             dp = min(seg_end, av.exit_point)
 
-            if dp > cp and (dp - cp) > best_length:
-                best_overlap = (cp, dp)
-                best_length = dp - cp
+            if dp <= cp:
+                continue
+
+            # Step 4: Time constraint check
+            if enable_time_constraints:
+                # Calculate time at coupling point for both vehicles
+                pv_time_at_cp = self.pv.time_at_point(cp)
+                av_time_at_cp = av.time_at_point(cp)
+
+                if pv_time_at_cp is None or av_time_at_cp is None:
+                    continue
+
+                # Check if they arrive within time tolerance
+                time_diff = abs(pv_time_at_cp - av_time_at_cp)
+                if time_diff > time_tolerance:
+                    continue
+
+                # Calculate coupling and decoupling times
+                coupling_time = max(pv_time_at_cp, av_time_at_cp)
+                decoupling_time = coupling_time + (dp - cp) / av.speed
+
+                if (dp - cp) > best_length:
+                    best_overlap = (cp, dp, coupling_time, decoupling_time)
+                    best_length = dp - cp
+            else:
+                # No time constraints
+                if (dp - cp) > best_length:
+                    best_overlap = (cp, dp, 0.0, 0.0)
+                    best_length = dp - cp
 
         return best_overlap
 
@@ -225,6 +279,8 @@ def _build_cost_matrix_for_iteration(
     pv_states: Dict[str, PVRoutingState],
     av_states: Dict[str, AVCapacityState],
     l_min: int,
+    enable_time_constraints: bool = False,
+    time_tolerance: float = DEFAULT_TIME_TOLERANCE,
 ) -> Tuple[List[List[float]], Dict[Tuple[int, int], Tuple[int, int, int]], List[Tuple[ActiveVehicle, int]]]:
     """
     Build cost matrix for one iteration of Hungarian algorithm.
@@ -268,12 +324,16 @@ def _build_cost_matrix_for_iteration(
             if pv_state.is_fully_covered:
                 continue
 
-            # Get overlap with UNCOVERED segment
-            overlap = pv_state.get_overlap_with_av(av)
+            # Get overlap with UNCOVERED segment (Step 4: with time constraints)
+            overlap = pv_state.get_overlap_with_av(
+                av,
+                enable_time_constraints=enable_time_constraints,
+                time_tolerance=time_tolerance,
+            )
             if overlap is None:
                 continue
 
-            cp, dp = overlap
+            cp, dp, _, _ = overlap  # Unpack with time values (ignored here)
             saving = dp - cp
 
             if saving < l_min:
@@ -334,6 +394,9 @@ def hungarian_multi_av_matching(
     avs: List[ActiveVehicle],
     pvs: List[PassiveVehicle],
     l_min: int,
+    *,
+    enable_time_constraints: bool = False,
+    time_tolerance: float = DEFAULT_TIME_TOLERANCE,
 ) -> Tuple[List[SegmentAssignment], float, Dict[str, List[SegmentAssignment]]]:
     """
     Hungarian Multi-AV Matching Algorithm.
@@ -341,6 +404,10 @@ def hungarian_multi_av_matching(
     Uses iterative Hungarian to optimally match PV segments to AVs.
     Each iteration finds the best assignment given current state,
     then updates PV uncovered segments and AV capacity.
+
+    Step 4 Enhancement:
+    - enable_time_constraints: If True, uses time-based matching
+    - time_tolerance: Max time difference for coupling (default: 5.0)
 
     Returns:
         - assignments: List of SegmentAssignment
@@ -368,9 +435,11 @@ def hungarian_multi_av_matching(
     while iteration < max_iterations:
         iteration += 1
 
-        # Build cost matrix for current state
+        # Build cost matrix for current state (Step 4: with time constraints)
         cost, feasible, slot_to_av = _build_cost_matrix_for_iteration(
-            avs, pvs, pv_states, av_states, l_min
+            avs, pvs, pv_states, av_states, l_min,
+            enable_time_constraints=enable_time_constraints,
+            time_tolerance=time_tolerance,
         )
 
         if not cost or not feasible:

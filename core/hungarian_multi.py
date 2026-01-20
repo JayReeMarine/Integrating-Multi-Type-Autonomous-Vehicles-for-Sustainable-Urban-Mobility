@@ -460,7 +460,7 @@ def hungarian_multi_av_matching(
 
         row_to_col = _hungarian_min_cost(cost)
 
-        assignments_this_round: List[Tuple[SegmentAssignment, int, float, float]] = []  # 🔧 Add time types
+        assignments_this_round: List[Tuple[SegmentAssignment, int, float, float]] = []
 
         for slot_idx in range(min(len(row_to_col), num_slots)):
             col_idx = row_to_col[slot_idx]
@@ -471,30 +471,32 @@ def hungarian_multi_av_matching(
             if (slot_idx, col_idx) not in feasible:
                 continue
 
-            saving, cp, dp, coupling_time, decoupling_time = feasible[(slot_idx, col_idx)]  # 🔧 Unpack all
+            saving, cp, dp, coupling_time, decoupling_time = feasible[(slot_idx, col_idx)]
             av, _ = slot_to_av[slot_idx]
             pv = pvs[col_idx]
 
             assignment = SegmentAssignment(
                 pv=pv, av=av, cp=cp, dp=dp,
-                coupling_time=coupling_time,  # 🔧 ADD
-                decoupling_time=decoupling_time  # 🔧 ADD
+                coupling_time=coupling_time,
+                decoupling_time=decoupling_time
             )
-            assignments_this_round.append((assignment, saving, coupling_time, decoupling_time))  # 🔧 Store time
+            assignments_this_round.append((assignment, saving, coupling_time, decoupling_time))
 
         if not assignments_this_round:
             break
 
-        assignments_this_round.sort(key=lambda x: x[1], reverse=True)
+        # 🔧 FIX: Take ONLY ONE best assignment per round
+        # This ensures each Hungarian solution is applied atomically
+        best_assignment = None
+        best_saving = 0
 
-        for assignment, saving, coupling_time, decoupling_time in assignments_this_round:  # 🔧 Unpack time
+        for assignment, saving, coupling_time, decoupling_time in assignments_this_round:
             pv_id = assignment.pv.id
             cp, dp = assignment.cp, assignment.dp
 
-            # Check if this segment conflicts with PV's current state
+            # Validate
             pv_state = pv_states[pv_id]
             
-            # Verify segment is still uncovered
             overlap_valid = False
             for seg_start, seg_end in pv_state.uncovered_segments:
                 if cp >= seg_start and dp <= seg_end:
@@ -502,22 +504,34 @@ def hungarian_multi_av_matching(
                     break
             
             if not overlap_valid:
-                continue  # Segment no longer available
+                continue
 
-            # Check AV capacity
             av_state = av_states[assignment.av.id]
             if not av_state.can_accommodate_segment(cp, dp):
                 continue
 
-            # ✅ Valid assignment - apply it
-            all_assignments.append(assignment)
-            pv_assignments[pv_id].append(assignment)
-            total_saving += saving
+            # 🔧 NEW: Take only the single best valid assignment
+            if saving > best_saving:
+                best_assignment = assignment
+                best_saving = saving
 
-            # 🔧 FIX: Pass time info to state update
-            pv_states[pv_id].mark_segment_covered(
-                cp, dp, coupling_time, decoupling_time, assignment.av.speed
-            )
-            av_states[assignment.av.id].add_assignment(cp, dp)
+        # 🔧 NEW: Apply only the best assignment
+        if best_assignment is None or best_saving == 0:
+            break
+
+        pv_id = best_assignment.pv.id
+        all_assignments.append(best_assignment)
+        pv_assignments[pv_id].append(best_assignment)
+        total_saving += best_saving
+
+        # Update states
+        pv_states[pv_id].mark_segment_covered(
+            best_assignment.cp, best_assignment.dp,
+            best_assignment.coupling_time, best_assignment.decoupling_time,
+            best_assignment.av.speed
+        )
+        av_states[best_assignment.av.id].add_assignment(
+            best_assignment.cp, best_assignment.dp
+        )
 
     return all_assignments, total_saving, pv_assignments

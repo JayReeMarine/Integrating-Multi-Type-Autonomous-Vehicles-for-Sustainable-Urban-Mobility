@@ -56,6 +56,8 @@ class SegmentAssignment:
     av: ActiveVehicle
     cp: int  # coupling point
     dp: int  # decoupling point
+    coupling_time: Optional[float] = None  # 🔧 ADD
+    decoupling_time: Optional[float] = None  # 🔧 ADD
 
     @property
     def saved_distance(self) -> int:
@@ -74,7 +76,6 @@ class PVRoutingState:
     """
     pv: PassiveVehicle
     uncovered_segments: List[Tuple[int, int]] = field(default_factory=list)
-    # Step 4: Track time state for sequential assignments
     current_time: float = 0.0
 
     def __post_init__(self):
@@ -145,7 +146,14 @@ class PVRoutingState:
 
         return best_overlap
 
-    def mark_segment_covered(self, cp: int, dp: int) -> None:
+    def mark_segment_covered(
+        self,
+        cp: int,
+        dp: int,
+        coupling_time: float = 0.0,
+        decoupling_time: float = 0.0,
+        av_speed: float = 1.0
+    ) -> None:
         """Mark a segment as covered, splitting uncovered segments."""
         new_uncovered = []
 
@@ -159,6 +167,9 @@ class PVRoutingState:
                     new_uncovered.append((dp, seg_end))
 
         self.uncovered_segments = new_uncovered
+        
+        # 🔧 ADD: Update current_time for sequential assignments
+        self.current_time = decoupling_time
 
 
 @dataclass
@@ -281,7 +292,7 @@ def _build_cost_matrix_for_iteration(
     l_min: int,
     enable_time_constraints: bool = False,
     time_tolerance: float = DEFAULT_TIME_TOLERANCE,
-) -> Tuple[List[List[float]], Dict[Tuple[int, int], Tuple[int, int, int]], List[Tuple[ActiveVehicle, int]]]:
+) -> Tuple[List[List[float]], Dict[Tuple[int, int], Tuple[int, int, int, float, float]], List[Tuple[ActiveVehicle, int]]]:
     """
     Build cost matrix for one iteration of Hungarian algorithm.
 
@@ -291,7 +302,7 @@ def _build_cost_matrix_for_iteration(
 
     Returns:
         - cost: Cost matrix for Hungarian
-        - feasible: Dict mapping (slot_idx, pv_idx) -> (saving, cp, dp)
+        - feasible: Dict mapping (slot_idx, pv_idx) -> (saving, cp, dp, coupling_time, decoupling_time)  # 🔧 FIXED
         - slot_to_av: List mapping slot_idx -> (AV, slot_number_for_this_av)
     """
     # Expand AVs into "virtual slots" based on AVAILABLE capacity
@@ -311,7 +322,7 @@ def _build_cost_matrix_for_iteration(
         return [], {}, []
 
     # Compute feasible pairs with current state
-    feasible: Dict[Tuple[int, int], Tuple[int, int, int]] = {}
+    feasible: Dict[Tuple[int, int], Tuple[int, int, int, float, float]] = {}  # 🔧 Add time types
     max_saving = 0
 
     for slot_idx, (av, _) in enumerate(slot_to_av):
@@ -333,7 +344,7 @@ def _build_cost_matrix_for_iteration(
             if overlap is None:
                 continue
 
-            cp, dp, _, _ = overlap  # Unpack with time values (ignored here)
+            cp, dp, coupling_time, decoupling_time = overlap  # 🔧 Keep time values
             saving = dp - cp
 
             if saving < l_min:
@@ -352,7 +363,7 @@ def _build_cost_matrix_for_iteration(
                     break
 
             if existing_key is None:
-                feasible[(slot_idx, pv_idx)] = (saving, cp, dp)
+                feasible[(slot_idx, pv_idx)] = (saving, cp, dp, coupling_time, decoupling_time)  # 🔧 Store time
                 max_saving = max(max_saving, saving)
 
     if max_saving == 0:
@@ -369,7 +380,7 @@ def _build_cost_matrix_for_iteration(
     for slot_idx in range(num_slots):
         for pv_idx in range(num_pv):
             if (slot_idx, pv_idx) in feasible:
-                saving, _, _ = feasible[(slot_idx, pv_idx)]
+                saving, _, _, _, _ = feasible[(slot_idx, pv_idx)]
                 cost[slot_idx][pv_idx] = max_saving - saving + 1
             else:
                 cost[slot_idx][pv_idx] = BIG_M
@@ -435,7 +446,6 @@ def hungarian_multi_av_matching(
     while iteration < max_iterations:
         iteration += 1
 
-        # Build cost matrix for current state (Step 4: with time constraints)
         cost, feasible, slot_to_av = _build_cost_matrix_for_iteration(
             avs, pvs, pv_states, av_states, l_min,
             enable_time_constraints=enable_time_constraints,
@@ -448,11 +458,9 @@ def hungarian_multi_av_matching(
         num_slots = len(slot_to_av)
         num_pv = len(pvs)
 
-        # Solve Hungarian for this iteration
         row_to_col = _hungarian_min_cost(cost)
 
-        # Extract assignments from this iteration
-        assignments_this_round: List[Tuple[SegmentAssignment, int]] = []
+        assignments_this_round: List[Tuple[SegmentAssignment, int, float, float]] = []  # 🔧 Add time types
 
         for slot_idx in range(min(len(row_to_col), num_slots)):
             col_idx = row_to_col[slot_idx]
@@ -463,51 +471,53 @@ def hungarian_multi_av_matching(
             if (slot_idx, col_idx) not in feasible:
                 continue
 
-            saving, cp, dp = feasible[(slot_idx, col_idx)]
+            saving, cp, dp, coupling_time, decoupling_time = feasible[(slot_idx, col_idx)]  # 🔧 Unpack all
             av, _ = slot_to_av[slot_idx]
             pv = pvs[col_idx]
 
-            assignment = SegmentAssignment(pv=pv, av=av, cp=cp, dp=dp)
-            assignments_this_round.append((assignment, saving))
+            assignment = SegmentAssignment(
+                pv=pv, av=av, cp=cp, dp=dp,
+                coupling_time=coupling_time,  # 🔧 ADD
+                decoupling_time=decoupling_time  # 🔧 ADD
+            )
+            assignments_this_round.append((assignment, saving, coupling_time, decoupling_time))  # 🔧 Store time
 
-        # No assignments found - we're done
         if not assignments_this_round:
             break
 
-        # Apply assignments (take all valid assignments from this round)
-        # To maintain Hungarian optimality, we could take just the best one
-        # But taking all valid ones from the optimal matching is also valid
+        assignments_this_round.sort(key=lambda x: x[1], reverse=True)
 
-        # Strategy: Take assignments that don't conflict
-        # (same PV segment can't be assigned twice in same round)
-        used_pv_segments: Dict[str, List[Tuple[int, int]]] = {}
-
-        for assignment, saving in assignments_this_round:
+        for assignment, saving, coupling_time, decoupling_time in assignments_this_round:  # 🔧 Unpack time
             pv_id = assignment.pv.id
             cp, dp = assignment.cp, assignment.dp
 
-            # Check if this segment overlaps with already assigned segment this round
-            if pv_id in used_pv_segments:
-                overlap = False
-                for used_cp, used_dp in used_pv_segments[pv_id]:
-                    if not (dp <= used_cp or cp >= used_dp):
-                        overlap = True
-                        break
-                if overlap:
-                    continue
+            # Check if this segment conflicts with PV's current state
+            pv_state = pv_states[pv_id]
+            
+            # Verify segment is still uncovered
+            overlap_valid = False
+            for seg_start, seg_end in pv_state.uncovered_segments:
+                if cp >= seg_start and dp <= seg_end:
+                    overlap_valid = True
+                    break
+            
+            if not overlap_valid:
+                continue  # Segment no longer available
 
-            # Apply assignment
+            # Check AV capacity
+            av_state = av_states[assignment.av.id]
+            if not av_state.can_accommodate_segment(cp, dp):
+                continue
+
+            # ✅ Valid assignment - apply it
             all_assignments.append(assignment)
             pv_assignments[pv_id].append(assignment)
             total_saving += saving
 
-            # Update states
-            pv_states[pv_id].mark_segment_covered(cp, dp)
+            # 🔧 FIX: Pass time info to state update
+            pv_states[pv_id].mark_segment_covered(
+                cp, dp, coupling_time, decoupling_time, assignment.av.speed
+            )
             av_states[assignment.av.id].add_assignment(cp, dp)
-
-            # Track used segments
-            if pv_id not in used_pv_segments:
-                used_pv_segments[pv_id] = []
-            used_pv_segments[pv_id].append((cp, dp))
 
     return all_assignments, total_saving, pv_assignments

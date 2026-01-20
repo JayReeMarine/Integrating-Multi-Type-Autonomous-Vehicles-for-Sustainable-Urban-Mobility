@@ -97,126 +97,98 @@ class SegmentAssignment:
 
 @dataclass
 class PVRoutingState:
-    """
-    Tracks the routing state of a PV across the matching process.
-
-    Key concept: Instead of marking PV as "used" after one match,
-    we track which segments are still "uncovered" and available for matching.
-
-    Example:
-        PV1: entry=0, exit=10
-        Initial uncovered: [(0, 10)]
-        After matching to AV1 for segment (2, 6):
-        Uncovered becomes: [(0, 2), (6, 10)]  # two remaining segments
-
-    Step 4 Enhancement:
-        - Each uncovered segment also tracks its entry_time (when PV arrives at segment start)
-        - uncovered_segments: List[(start, end, entry_time)]
-    """
+    """Tracks the routing state of a PV across the matching process."""
     pv: PassiveVehicle
     uncovered_segments: List[Tuple[int, int, float]] = field(default_factory=list)
+    covered_segments: List[Tuple[int, int, float, float, float]] = field(default_factory=list)
 
     def __post_init__(self):
         if not self.uncovered_segments:
-            # Initially, entire route is uncovered
-            # (start_point, end_point, time_at_start)
             self.uncovered_segments = [
                 (self.pv.entry_point, self.pv.exit_point, self.pv.entry_time)
             ]
 
     @property
-    def total_uncovered_distance(self) -> int:
-        """Total distance still not matched to any AV."""
-        return sum(end - start for start, end, _ in self.uncovered_segments)
-
-    @property
     def is_fully_covered(self) -> bool:
-        """Check if PV's entire route is covered by AVs."""
         return len(self.uncovered_segments) == 0
 
-    def get_time_at_point(self, point: int) -> Optional[float]:
-        """
-        Calculate when PV reaches a given point based on current routing state.
-
-        Step 4: This accounts for previous towing segments where PV traveled
-        at AV's speed rather than its own speed.
-        """
-        for seg_start, seg_end, seg_entry_time in self.uncovered_segments:
-            if seg_start <= point <= seg_end:
-                # PV is self-driving in this segment
-                return seg_entry_time + (point - seg_start) / self.pv.speed
-        return None
-
+    # 🔧 ADD: Missing method from hungarian_multi.py
     def get_overlap_with_av(
         self,
         av: ActiveVehicle,
         time_tolerance: float = DEFAULT_TIME_TOLERANCE,
-        enable_time_constraints: bool = False
+        enable_time_constraints: bool = False,
     ) -> Optional[Tuple[int, int, float, float]]:
         """
-        Find the best overlapping segment between this PV's uncovered portions
-        and the given AV's route.
-
-        Step 4 Enhancement:
-        - When enable_time_constraints=True, also checks time feasibility
-        - AV and PV must arrive at coupling point within time_tolerance
-
-        Returns:
-            Tuple of (cp, dp, coupling_time, decoupling_time) or None
-            - cp: coupling point
-            - dp: decoupling point
-            - coupling_time: when both vehicles meet at cp
-            - decoupling_time: when towing ends at dp
+        Find best overlapping segment between uncovered portions and AV route.
+        
+        Returns: (cp, dp, coupling_time, decoupling_time) or None
         """
         best_overlap = None
         best_length = 0
 
         for seg_start, seg_end, seg_entry_time in self.uncovered_segments:
-            # Compute spatial overlap between uncovered segment and AV route
             cp = max(seg_start, av.entry_point)
             dp = min(seg_end, av.exit_point)
 
             if dp <= cp:
-                continue  # No spatial overlap
-
-            segment_length = dp - cp
+                continue
 
             if enable_time_constraints:
-                # Step 4: Time-based feasibility check
-                # Calculate when PV arrives at potential coupling point
-                pv_time_at_cp = seg_entry_time + (cp - seg_start) / self.pv.speed
-
-                # Calculate when AV arrives at potential coupling point
+                # Calculate time at coupling point
+                pv_time_at_cp = self.get_time_at_point(cp)
                 av_time_at_cp = av.time_at_point(cp)
-                if av_time_at_cp is None:
+
+                if pv_time_at_cp is None or av_time_at_cp is None:
                     continue
 
-                # Check if times are within tolerance
                 time_diff = abs(pv_time_at_cp - av_time_at_cp)
                 if time_diff > time_tolerance:
-                    continue  # Time mismatch - cannot couple
-
-                # Coupling time is when both vehicles can meet (the later arrival)
-                coupling_time = max(pv_time_at_cp, av_time_at_cp)
-
-                # After coupling, PV travels at AV's speed
-                towing_duration = (dp - cp) / av.speed
-                decoupling_time = coupling_time + towing_duration
-
-                # Verify AV can reach decoupling point
-                av_time_at_dp = av.time_at_point(dp)
-                if av_time_at_dp is None:
                     continue
-            else:
-                # No time constraints - use default values
-                coupling_time = 0.0
-                decoupling_time = 0.0
 
-            if segment_length > best_length:
-                best_overlap = (cp, dp, coupling_time, decoupling_time)
-                best_length = segment_length
+                coupling_time = max(pv_time_at_cp, av_time_at_cp)
+                decoupling_time = coupling_time + (dp - cp) / av.speed
+
+                if (dp - cp) > best_length:
+                    best_overlap = (cp, dp, coupling_time, decoupling_time)
+                    best_length = dp - cp
+            else:
+                if (dp - cp) > best_length:
+                    best_overlap = (cp, dp, 0.0, 0.0)
+                    best_length = dp - cp
 
         return best_overlap
+
+    def get_time_at_point(self, point: int) -> Optional[float]:
+        """
+        🔧 FIXED: Calculate time considering BOTH covered and uncovered segments
+        """
+        # Check if point is in a covered segment (towed by AV)
+        for seg_start, seg_end, coupling_time, decoupling_time, av_speed in self.covered_segments:
+            if seg_start <= point <= seg_end:
+                # Interpolate time within this towed segment
+                progress = (point - seg_start) / (seg_end - seg_start) if seg_end > seg_start else 0
+                return coupling_time + progress * (decoupling_time - coupling_time)
+        
+        # Check if point is in an uncovered segment (self-driving)
+        for seg_start, seg_end, seg_entry_time in self.uncovered_segments:
+            if seg_start <= point <= seg_end:
+                return seg_entry_time + (point - seg_start) / self.pv.speed
+        
+        # Point might be at a boundary - find the closest segment
+        all_segments = (
+            [(s, e, t, t, 0) for s, e, t in self.uncovered_segments] +
+            list(self.covered_segments)
+        )
+        all_segments.sort(key=lambda x: x[0])
+        
+        for i, (seg_start, seg_end, _, _, _) in enumerate(all_segments):
+            if point == seg_start and i > 0:
+                # Point is at start of this segment, use end time of previous segment
+                prev_seg = all_segments[i-1]
+                return prev_seg[3]  # decoupling_time or calculated end time
+        
+        return None
 
     def mark_segment_covered(
         self,
@@ -227,37 +199,24 @@ class PVRoutingState:
         av_speed: float = 1.0
     ) -> None:
         """
-        Mark a segment as covered (matched to an AV).
-        Updates uncovered_segments by removing the covered portion.
-
-        Step 4 Enhancement:
-        - Updates entry times for remaining segments based on towing
-        - After being towed, PV resumes self-driving at decoupling point
-
-        Args:
-            cp: coupling point
-            dp: decoupling point
-            coupling_time: when coupling occurs (Step 4)
-            decoupling_time: when decoupling occurs (Step 4)
-            av_speed: speed of AV during towing (Step 4)
+        🔧 FIXED: Now records covered segment for time tracking
         """
         new_uncovered = []
 
         for seg_start, seg_end, seg_entry_time in self.uncovered_segments:
             if dp <= seg_start or cp >= seg_end:
-                # No overlap, keep segment as is
                 new_uncovered.append((seg_start, seg_end, seg_entry_time))
             else:
-                # There is overlap, split the segment
                 if seg_start < cp:
-                    # Left portion remains uncovered (before coupling)
                     new_uncovered.append((seg_start, cp, seg_entry_time))
                 if dp < seg_end:
-                    # Right portion remains uncovered (after decoupling)
-                    # PV resumes self-driving at decoupling_time
                     new_uncovered.append((dp, seg_end, decoupling_time))
 
         self.uncovered_segments = new_uncovered
+        
+        # 🔧 NEW: Record the covered segment
+        self.covered_segments.append((cp, dp, coupling_time, decoupling_time, av_speed))
+        self.covered_segments.sort(key=lambda x: x[0])  # Keep sorted by start point
 
 
 @dataclass

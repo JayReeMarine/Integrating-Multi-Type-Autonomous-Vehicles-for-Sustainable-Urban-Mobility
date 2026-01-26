@@ -71,26 +71,42 @@ class SegmentAssignment:
 class PVRoutingState:
     """
     Tracks uncovered segments of a PV's route.
-    Reused from greedy_multi concept.
-
-    Step 4 Enhancement:
-    - Supports time-based matching constraints
-    - Tracks current_time for sequential segment assignments
+    
+    🔧 FIX 3: Use same time model as Greedy
     """
     pv: PassiveVehicle
-    uncovered_segments: List[Tuple[int, int]] = field(default_factory=list)
-    current_time: float = 0.0
+    uncovered_segments: List[Tuple[int, int, float]] = field(default_factory=list)  # 🔧 Add time
+    covered_segments: List[Tuple[int, int, float, float, float]] = field(default_factory=list)  # 🔧 NEW
 
     def __post_init__(self):
         if not self.uncovered_segments:
-            self.uncovered_segments = [(self.pv.entry_point, self.pv.exit_point)]
-        # Step 4: Initialize current_time to PV's entry time
-        if self.current_time == 0.0:
-            self.current_time = self.pv.entry_time
+            self.uncovered_segments = [(
+                self.pv.entry_point, 
+                self.pv.exit_point,
+                self.pv.entry_time  # 🔧 ADD
+            )]
 
     @property
     def is_fully_covered(self) -> bool:
         return len(self.uncovered_segments) == 0
+
+    def get_time_at_point(self, point: int) -> Optional[float]:
+        """
+        🔧 NEW: Same implementation as Greedy
+        Calculate time considering BOTH covered and uncovered segments
+        """
+        # Check covered segments (towed by AV)
+        for seg_start, seg_end, coupling_time, decoupling_time, av_speed in self.covered_segments:
+            if seg_start <= point <= seg_end:
+                progress = (point - seg_start) / (seg_end - seg_start) if seg_end > seg_start else 0
+                return coupling_time + progress * (decoupling_time - coupling_time)
+        
+        # Check uncovered segments (self-driving)
+        for seg_start, seg_end, seg_entry_time in self.uncovered_segments:
+            if seg_start <= point <= seg_end:
+                return seg_entry_time + (point - seg_start) / self.pv.speed
+        
+        return None
 
     def get_overlap_with_av(
         self,
@@ -98,43 +114,29 @@ class PVRoutingState:
         enable_time_constraints: bool = False,
         time_tolerance: float = DEFAULT_TIME_TOLERANCE,
     ) -> Optional[Tuple[int, int, float, float]]:
-        """
-        Find best overlapping segment between uncovered portions and AV route.
-
-        Step 4 Enhancement:
-        - If enable_time_constraints is True, checks time compatibility
-        - Returns (cp, dp, coupling_time, decoupling_time) or None
-
-        Returns:
-            If time constraints enabled: (cp, dp, coupling_time, decoupling_time)
-            If time constraints disabled: (cp, dp, 0.0, 0.0) for compatibility
-            None if no valid overlap
-        """
+        """Find best overlapping segment with time constraints."""
         best_overlap = None
         best_length = 0
 
-        for seg_start, seg_end in self.uncovered_segments:
+        for seg_start, seg_end, seg_entry_time in self.uncovered_segments:  # 🔧 Unpack time
             cp = max(seg_start, av.entry_point)
             dp = min(seg_end, av.exit_point)
 
             if dp <= cp:
                 continue
 
-            # Step 4: Time constraint check
             if enable_time_constraints:
-                # Calculate time at coupling point for both vehicles
-                pv_time_at_cp = self.pv.time_at_point(cp)
+                # 🔧 Use get_time_at_point instead of pv.time_at_point
+                pv_time_at_cp = self.get_time_at_point(cp)
                 av_time_at_cp = av.time_at_point(cp)
 
                 if pv_time_at_cp is None or av_time_at_cp is None:
                     continue
 
-                # Check if they arrive within time tolerance
                 time_diff = abs(pv_time_at_cp - av_time_at_cp)
                 if time_diff > time_tolerance:
                     continue
 
-                # Calculate coupling and decoupling times
                 coupling_time = max(pv_time_at_cp, av_time_at_cp)
                 decoupling_time = coupling_time + (dp - cp) / av.speed
 
@@ -142,7 +144,6 @@ class PVRoutingState:
                     best_overlap = (cp, dp, coupling_time, decoupling_time)
                     best_length = dp - cp
             else:
-                # No time constraints
                 if (dp - cp) > best_length:
                     best_overlap = (cp, dp, 0.0, 0.0)
                     best_length = dp - cp
@@ -157,22 +158,25 @@ class PVRoutingState:
         decoupling_time: float = 0.0,
         av_speed: float = 1.0
     ) -> None:
-        """Mark a segment as covered, splitting uncovered segments."""
+        """
+        🔧 FIXED: Record covered segment for time tracking
+        """
         new_uncovered = []
 
-        for seg_start, seg_end in self.uncovered_segments:
+        for seg_start, seg_end, seg_entry_time in self.uncovered_segments:
             if dp <= seg_start or cp >= seg_end:
-                new_uncovered.append((seg_start, seg_end))
+                new_uncovered.append((seg_start, seg_end, seg_entry_time))
             else:
                 if seg_start < cp:
-                    new_uncovered.append((seg_start, cp))
+                    new_uncovered.append((seg_start, cp, seg_entry_time))
                 if dp < seg_end:
-                    new_uncovered.append((dp, seg_end))
+                    new_uncovered.append((dp, seg_end, decoupling_time))  # 🔧 Use decoupling_time
 
         self.uncovered_segments = new_uncovered
         
-        # 🔧 ADD: Update current_time for sequential assignments
-        self.current_time = decoupling_time
+        # 🔧 NEW: Record the covered segment
+        self.covered_segments.append((cp, dp, coupling_time, decoupling_time, av_speed))
+        self.covered_segments.sort(key=lambda x: x[0])
 
 
 @dataclass
@@ -320,17 +324,10 @@ def _build_cost_matrix_for_iteration(
             if not av_state.can_accommodate_segment(cp, dp):
                 continue
 
-            # Valid candidate - but only store once per (av, pv) pair
-            # Use the first slot for this AV that can accommodate
-            existing_key = None
-            for s_idx, (s_av, _) in enumerate(slot_to_av[:slot_idx]):
-                if s_av.id == av.id and (s_idx, pv_idx) in feasible:
-                    existing_key = (s_idx, pv_idx)
-                    break
-
-            if existing_key is None:
-                feasible[(slot_idx, pv_idx)] = (saving, cp, dp, coupling_time, decoupling_time)  # 🔧 Store time
-                max_saving = max(max_saving, saving)
+            # 🔧 FIX 1: Allow multiple slots per (AV, PV) pair
+            # This gives Hungarian full flexibility to choose optimal combinations
+            feasible[(slot_idx, pv_idx)] = (saving, cp, dp, coupling_time, decoupling_time)
+            max_saving = max(max_saving, saving)
 
     if max_saving == 0:
         return [], {}, []
@@ -451,12 +448,10 @@ def hungarian_multi_av_matching(
         if not assignments_this_round:
             break
 
-        # 🔧 IMPROVED: Apply MULTIPLE non-conflicting assignments per round
-        # This restores Hungarian's batch optimization advantage over Greedy
-        # Sort by saving descending to prioritize high-value assignments
-        assignments_this_round.sort(key=lambda x: x[1], reverse=True)
+        # 🔧 FIX 2A: Apply Hungarian solution WITHOUT re-sorting
+        # Sort by slot_idx to maintain Hungarian's optimization order
+        assignments_this_round.sort(key=lambda x: (x[0].pv.id, x[0].cp))  # ✅ Deterministic order
 
-        # Track which PVs are assigned in THIS round (avoid double-assigning same PV)
         assigned_pvs_this_round: set = set()
         assignments_applied = 0
 
@@ -469,11 +464,10 @@ def hungarian_multi_av_matching(
             if pv_id in assigned_pvs_this_round:
                 continue
 
-            # Validate: check if segment is still within uncovered portions
+            # Validate segment overlap
             pv_state = pv_states[pv_id]
-
             overlap_valid = False
-            for seg_start, seg_end in pv_state.uncovered_segments:
+            for seg_start, seg_end, seg_entry_time in pv_state.uncovered_segments:  # ✅ 3개 unpack
                 if cp >= seg_start and dp <= seg_end:
                     overlap_valid = True
                     break
@@ -481,25 +475,24 @@ def hungarian_multi_av_matching(
             if not overlap_valid:
                 continue
 
-            # Check AV capacity (may have been reduced by earlier assignments this round)
+            # Check AV capacity
             av_state = av_states[av_id]
             if not av_state.can_accommodate_segment(cp, dp):
                 continue
 
-            # Valid assignment - apply it
+            # Valid - apply
             assigned_pvs_this_round.add(pv_id)
             all_assignments.append(assignment)
             pv_assignments[pv_id].append(assignment)
             total_saving += saving
             assignments_applied += 1
 
-            # Update states immediately for conflict detection within this round
+            # Update states
             pv_states[pv_id].mark_segment_covered(
                 cp, dp, coupling_time, decoupling_time, assignment.av.speed
             )
             av_states[av_id].add_assignment(cp, dp)
 
-        # If no assignments were made this round, we're done
         if assignments_applied == 0:
             break
 

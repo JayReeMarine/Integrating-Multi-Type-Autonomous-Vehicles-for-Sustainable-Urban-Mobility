@@ -33,11 +33,11 @@ def run_length_sweep(
     FIXED_NUM_PV = 400  # Reduced: 800 -> 400
 
     # Highway length sweep parameters (Reduced: removed 1600, 3200)
-    HIGHWAY_LENGTHS = [50, 100, 200, 400, 800]
+    HIGHWAY_LENGTHS = [50, 100, 200, 400, 800, 1600]
 
     AV_CAPACITY_RANGE = (1, 3)
     MIN_TRIP_LENGTH = 10
-    SEEDS = [42, 43, 44]  # Reduced: 5 -> 3 seeds
+    SEEDS = [42, 43, 44, 45]  # Reduced: 5 -> 4 seeds
 
     os.makedirs(os.path.dirname(output_csv), exist_ok=True)
 

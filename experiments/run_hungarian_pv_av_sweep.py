@@ -13,10 +13,10 @@ from core.hungarian_multi import hungarian_multi_av_matching, DEFAULT_TIME_TOLER
 # SEEDS = [42, 43, 44, 45, 46]
 
 # Reduced values (same as Greedy for fair comparison)
-PV_SWEEP_FIXED_AVS = [20, 80, 160]       # Removed 320, 640
-PV_SWEEP_PVS = [50, 100, 200, 400]       # Removed 800, 1600
-AV_SWEEP_FIXED_PVS = [200, 400, 800]     # Removed 1600
-AV_SWEEP_AVS = [10, 20, 40, 80, 160]     # Removed 320
+PV_SWEEP_FIXED_AVS = [20, 80, 160, 320]       # Removed 320, 640
+PV_SWEEP_PVS = [50, 100, 200, 400, 800]       # Removed 800, 1600
+AV_SWEEP_FIXED_PVS = [200, 400, 800, 1600]     # Removed 1600
+AV_SWEEP_AVS = [10, 20, 40, 80, 160, 320]     # Removed 320
 
 
 def run_pv_av_sweep(
@@ -42,7 +42,7 @@ def run_pv_av_sweep(
     HIGHWAY_LENGTH = 100
     AV_CAPACITY_RANGE = (1, 3)
     MIN_TRIP_LENGTH = 10
-    SEEDS = [42, 43, 44]  # Reduced: 5 -> 3 seeds
+    SEEDS = [42, 43, 44, 45]  # Reduced: 5 -> 3 seeds
 
     os.makedirs(os.path.dirname(output_csv), exist_ok=True)
 

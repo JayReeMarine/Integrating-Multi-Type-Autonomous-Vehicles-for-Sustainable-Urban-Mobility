@@ -32,7 +32,7 @@ def run_capacity_sweep(
     MIN_TRIP_LENGTH = 10
     FIXED_NUM_AV = 50
     FIXED_NUM_PV = 200
-    SEEDS = [42, 43, 44]  # Reduced: 5 -> 3 seeds
+    SEEDS = [42, 43, 44, 45]  # Reduced: 5 -> 4 seeds
 
     os.makedirs(os.path.dirname(output_csv), exist_ok=True)
 

@@ -49,6 +49,12 @@ CSV_FIELDS = [
     "matched_ratio",
     "avg_saving_per_pv",
     "saving_percent",
+
+    # NEW: Utilization metrics
+    "av_utilization",
+    "av_utilization_weighted",
+    "pv_coverage",
+    "pv_coverage_weighted",
 ]
 
 
@@ -156,4 +162,9 @@ def run_one_scenario(
         "matched_ratio": metrics["matched_ratio"],
         "avg_saving_per_pv": metrics["avg_saving_per_pv"],
         "saving_percent": metrics["saving_percent"],
+        # NEW: Utilization metrics
+        "av_utilization": metrics["av_utilization"],
+        "av_utilization_weighted": metrics["av_utilization_weighted"],
+        "pv_coverage": metrics["pv_coverage"],
+        "pv_coverage_weighted": metrics["pv_coverage_weighted"],
     }

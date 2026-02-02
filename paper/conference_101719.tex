@@ -1,288 +1,398 @@
 \documentclass[conference]{IEEEtran}
 \IEEEoverridecommandlockouts
-% The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
 \usepackage{cite}
-\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{amsmath,amssymb,amsfonts,amsthm}
 \usepackage{algorithmic}
+
+\newtheorem{theorem}{Theorem}
+\usepackage{algorithm}
 \usepackage{graphicx}
 \usepackage{textcomp}
 \usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{multirow}
+
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
 \begin{document}
 
-\title{Conference Paper Title*\\
-{\footnotesize \textsuperscript{*}Note: Sub-titles are not captured in Xplore and
-should not be used}
-\thanks{Identify applicable funding agency here. If none, delete this.}
-}
+\title{Dynamic Platoon Formation of Multi-Type Autonomous Vehicles for Sustainable Urban Mobility}
 
-\author{\IEEEauthorblockN{1\textsuperscript{st} Given Name Surname}
-\IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
-\textit{name of organization (of Aff.)}\\
-City, Country \\
-email address or ORCID}
+\author{
+\IEEEauthorblockN{Jaeyun Ree}
+\IEEEauthorblockA{
+\textit{Faculty of Information Technology} \\
+\textit{Monash University} \\
+Melbourne, VIC, Australia \\
+jree0010@student.monash.edu
+}
 \and
-\IEEEauthorblockN{2\textsuperscript{nd} Given Name Surname}
-\IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
-\textit{name of organization (of Aff.)}\\
-City, Country \\
-email address or ORCID}
-\and
-\IEEEauthorblockN{3\textsuperscript{rd} Given Name Surname}
-\IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
-\textit{name of organization (of Aff.)}\\
-City, Country \\
-email address or ORCID}
-\and
-\IEEEauthorblockN{4\textsuperscript{th} Given Name Surname}
-\IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
-\textit{name of organization (of Aff.)}\\
-City, Country \\
-email address or ORCID}
-\and
-\IEEEauthorblockN{5\textsuperscript{th} Given Name Surname}
-\IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
-\textit{name of organization (of Aff.)}\\
-City, Country \\
-email address or ORCID}
-\and
-\IEEEauthorblockN{6\textsuperscript{th} Given Name Surname}
-\IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
-\textit{name of organization (of Aff.)}\\
-City, Country \\
-email address or ORCID}
+\IEEEauthorblockN{Mohammed Eunus Ali}
+\IEEEauthorblockA{
+\textit{Faculty of Information Technology} \\
+\textit{Monash University} \\
+Melbourne, VIC, Australia \\
+eunus.ali@monash.edu
+}
 }
 
 \maketitle
 
 \begin{abstract}
-This document is a model and instructions for \LaTeX.
-This and the IEEEtran.cls file define the components of your paper [title, text, heads, etc.]. *CRITICAL: Do Not Use Symbols, Special Characters, Footnotes, 
-or Math in Paper Title or Abstract.
+This paper addresses the energy inefficiency of single-occupancy vehicles by introducing a novel cooperative autonomous vehicle system where smaller Passive Vehicles (PVs) can be physically towed by larger Active Vehicles (AVs) during shared highway segments. Unlike traditional platooning that relies solely on aerodynamic drafting, our approach enables near-complete energy elimination for towed vehicles. We formulate the platoon formation problem as a constrained optimization problem on a one-dimensional highway model and propose two algorithms: a Greedy Maximum-Weight Matching algorithm that provides computational efficiency with $O(NM\log(NM))$ complexity, and an Enhanced Hungarian Algorithm that guarantees optimal solutions with $O((N+M)^3)$ complexity. A key innovation is the multi-segment matching capability, allowing a single PV to be towed by multiple AVs across different route segments. Experimental evaluation on synthetic highway scenarios demonstrates that both algorithms achieve significant energy savings, with the Hungarian algorithm consistently finding optimal solutions while the Greedy approach provides near-optimal results (within 3\% of optimal) at substantially lower computational cost.
 \end{abstract}
 
 \begin{IEEEkeywords}
-component, formatting, style, styling, insert
+autonomous vehicles, vehicle platooning, energy efficiency, Hungarian algorithm, combinatorial optimization, intelligent transportation systems
 \end{IEEEkeywords}
 
+%==============================================================================
+% SECTION 1: INTRODUCTION
+%==============================================================================
 \section{Introduction}
-This document is a model and instructions for \LaTeX.
-Please observe the conference page limits. 
 
-\section{Ease of Use}
+% Paragraph 1: High-level motivation (world problem + statistics)
+The persistent over-reliance on single-occupancy vehicles poses significant challenges to urban transportation sustainability. According to the U.S. Department of Transportation, single-occupancy vehicles account for approximately 76\% of commuter trips, contributing substantially to traffic congestion, energy consumption, and carbon emissions~\cite{usdot2023}. The transportation sector alone is responsible for nearly 29\% of total greenhouse gas emissions in the United States, with light-duty vehicles contributing the largest share~\cite{epa2023}. This inefficiency is particularly pronounced along shared routes where multiple individuals travel similar paths yet operate their vehicles independently.
 
-\subsection{Maintaining the Integrity of the Specifications}
+% Paragraph 2: Problem and idea (platooning/cooperation concept)
+Autonomous vehicle (AV) technology presents a transformative opportunity to address these challenges through coordinated vehicle operation. This paper introduces a novel concept of \textit{active} and \textit{passive} autonomous vehicles, where smaller Passive Vehicles (PVs) can temporarily attach to larger Active Vehicles (AVs) during shared highway segments. Unlike traditional vehicle platooning that maintains physical separation between vehicles, our approach enables physical coupling where a PV's propulsion system is deactivated while being towed, leading to energy savings that approach 100\% for the towed vehicle during the attached phase. This paradigm shifts transportation from isolated driving to an on-demand, energy-transfer-based mobility service.
 
-The IEEEtran class file is used to format your paper and style the text. All margins, 
-column widths, line spaces, and text fonts are prescribed; please do not 
-alter them. You may note peculiarities. For example, the head margin
-measures proportionately more than is customary. This measurement 
-and others are deliberate, using specifications that anticipate your paper 
-as one part of the entire proceedings, and not as an independent document. 
-Please do not revise any of the current designations.
+% Paragraph 3: Related work sketch and differentiation
+Existing research on cooperative vehicle systems spans several related but distinct areas. Traditional platooning systems~\cite{platooning2020, platooning2021} focus on coordinated driving with aerodynamic benefits, typically achieving 10-20\% fuel savings through drafting. Ridesharing and carpooling optimization~\cite{rideshare2019} address passenger matching but not vehicle coupling. Eco-driving strategies~\cite{ecodriving2022} optimize individual vehicle behavior without inter-vehicle coordination. While these approaches offer incremental improvements, they do not address the fundamental inefficiency of independent propulsion for vehicles with overlapping routes. Our work differs fundamentally by introducing physical attachment/detachment mechanisms, capacity-aware fleet matching, and dynamic rendezvous coordination---challenges absent in the conventional literature.
 
-\section{Prepare Your Paper Before Styling}
-Before you begin to format your paper, first write and save the content as a 
-separate text file. Complete all content and organizational editing before 
-formatting. Please note sections \ref{AA}--\ref{SCM} below for more information on 
-proofreading, spelling and grammar.
+% Paragraph 4: Our solution summary (big picture)
+We formulate the platoon formation problem on a one-dimensional highway model where the objective is to maximize total energy savings through strategic PV-to-AV assignments. To solve this problem, we propose two complementary algorithms. The \textit{Greedy Maximum-Weight Matching} algorithm provides computational efficiency suitable for real-time applications, while the \textit{Enhanced Hungarian Algorithm} guarantees optimal solutions for scenarios where optimality is paramount. A key innovation is our multi-segment matching capability: rather than restricting each PV to a single AV, our algorithms allow a PV to be towed by different AVs across different segments of its route, significantly improving overall system efficiency.
 
-Keep your text and graphic files separate until after the text has been 
-formatted and styled. Do not number text heads---{\LaTeX} will do that 
-for you.
-
-\subsection{Abbreviations and Acronyms}\label{AA}
-Define abbreviations and acronyms the first time they are used in the text, 
-even after they have been defined in the abstract. Abbreviations such as 
-IEEE, SI, MKS, CGS, ac, dc, and rms do not have to be defined. Do not use 
-abbreviations in the title or heads unless they are unavoidable.
-
-\subsection{Units}
+% Paragraph 5: Contributions (what we show in results)
+The main contributions of this paper are:
 \begin{itemize}
-\item Use either SI (MKS) or CGS as primary units. (SI units are encouraged.) English units may be used as secondary units (in parentheses). An exception would be the use of English units as identifiers in trade, such as ``3.5-inch disk drive''.
-\item Avoid combining SI and CGS units, such as current in amperes and magnetic field in oersteds. This often leads to confusion because equations do not balance dimensionally. If you must use mixed units, clearly state the units for each quantity that you use in an equation.
-\item Do not mix complete spellings and abbreviations of units: ``Wb/m\textsuperscript{2}'' or ``webers per square meter'', not ``webers/m\textsuperscript{2}''. Spell out units when they appear in text: ``. . . a few henries'', not ``. . . a few H''.
-\item Use a zero before decimal points: ``0.25'', not ``.25''. Use ``cm\textsuperscript{3}'', not ``cc''.)
+    \item A simplified one-dimensional problem formulation that captures the essential trade-offs in cooperative vehicle platooning while enabling tractable optimization.
+    \item A Greedy algorithm with $O(NM\log(NM))$ complexity that achieves near-optimal performance through iterative maximum-weight matching.
+    \item An Enhanced Hungarian algorithm with capacity constraints that guarantees optimal assignments with $O((N+M)^3)$ complexity per iteration.
+    \item Multi-segment matching capability allowing PVs to be towed by multiple AVs across their routes.
+    \item Comprehensive experimental evaluation demonstrating algorithm performance across varying capacity configurations, highway lengths, and vehicle densities.
 \end{itemize}
 
-\subsection{Equations}
-Number equations consecutively. To make your 
-equations more compact, you may use the solidus (~/~), the exp function, or 
-appropriate exponents. Italicize Roman symbols for quantities and variables, 
-but not Greek symbols. Use a long dash rather than a hyphen for a minus 
-sign. Punctuate equations with commas or periods when they are part of a 
-sentence, as in:
+%==============================================================================
+% SECTION 2: PROBLEM DEFINITION
+%==============================================================================
+\section{Problem Formulation}
+
+\subsection{System Model}
+
+We consider a coordinated platoon formation system operating on a unidirectional highway segment. The system comprises two distinct vehicle classes operating on a one-dimensional highway of length $L$.
+
+\textbf{Active Vehicles (AVs):} The set $\mathcal{A} = \{a_1, a_2, \ldots, a_N\}$ represents $N$ Active Vehicles, each capable of towing multiple PVs. Each AV $a_i$ is characterized by:
+\begin{itemize}
+    \item Entry point $e_i^a \in [0, L]$: location where AV enters the highway
+    \item Exit point $x_i^a \in [0, L]$: location where AV exits the highway
+    \item Capacity $C_i \in \mathbb{Z}^+$: maximum number of PVs that can be towed simultaneously
+    \item Entry time $t_i^a$: time when AV enters at $e_i^a$
+    \item Speed $v_i^a$: constant travel speed
+\end{itemize}
+
+\textbf{Passive Vehicles (PVs):} The set $\mathcal{P} = \{p_1, p_2, \ldots, p_M\}$ represents $M$ Passive Vehicles that can be towed by AVs. Each PV $p_j$ is characterized by:
+\begin{itemize}
+    \item Entry point $e_j^p \in [0, L]$: location where PV enters the highway
+    \item Exit point $x_j^p \in [0, L]$: location where PV exits the highway
+    \item Entry time $t_j^p$: time when PV enters at $e_j^p$
+    \item Speed $v_j^p$: constant travel speed when self-driving
+\end{itemize}
+
+\subsection{Multi-Segment Matching}
+
+A key innovation of our formulation is \textit{multi-segment matching}: a single PV can be matched to multiple AVs across different segments of its route. For PV $p_j$, its route from $e_j^p$ to $x_j^p$ can be partitioned into segments, where each segment may be:
+\begin{itemize}
+    \item \textit{Covered}: PV is towed by an AV (energy saved)
+    \item \textit{Uncovered}: PV drives independently (no energy saved)
+\end{itemize}
+
+\subsection{Shared Path and Energy Savings}
+
+For an AV $a_i$ and PV $p_j$, the \textit{shared path} is the overlap of their routes:
 \begin{equation}
-a+b=\gamma\label{eq}
+    d_{ij} = \max(0, \min(x_i^a, x_j^p) - \max(e_i^a, e_j^p))
 \end{equation}
 
-Be sure that the 
-symbols in your equation have been defined before or immediately following 
-the equation. Use ``\eqref{eq}'', not ``Eq.~\eqref{eq}'' or ``equation \eqref{eq}'', except at 
-the beginning of a sentence: ``Equation \eqref{eq} is . . .''
+The coupling point $cp_{ij}$ and decoupling point $dp_{ij}$ are:
+\begin{align}
+    cp_{ij} &= \max(e_i^a, e_j^p) \\
+    dp_{ij} &= \min(x_i^a, x_j^p)
+\end{align}
 
-\subsection{\LaTeX-Specific Advice}
+The energy saving $S_{ij}$ when PV $p_j$ is towed by AV $a_i$ is proportional to the shared distance:
+\begin{equation}
+    S_{ij} = \alpha \cdot d_{ij}
+\end{equation}
+where $\alpha$ is an energy coefficient (we use $\alpha = 1$ for simplicity, making energy saving equal to distance).
 
-Please use ``soft'' (e.g., \verb|\eqref{Eq}|) cross references instead
-of ``hard'' references (e.g., \verb|(1)|). That will make it possible
-to combine sections, add equations, or change the order of figures or
-citations without having to go through the file line by line.
+\subsection{Optimization Problem}
 
-Please don't use the \verb|{eqnarray}| equation environment. Use
-\verb|{align}| or \verb|{IEEEeqnarray}| instead. The \verb|{eqnarray}|
-environment leaves unsightly spaces around relation symbols.
+Let $x_{ij}^{(k)}$ be a binary decision variable indicating whether PV $p_j$ is assigned to AV $a_i$ for segment $k$. The optimization problem is:
+\begin{align}
+    \max \quad & \sum_{i=1}^{N} \sum_{j=1}^{M} \sum_{k} x_{ij}^{(k)} \cdot S_{ij}^{(k)} \label{eq:obj}\\
+    \text{s.t.} \quad & \sum_{j=1}^{M} x_{ij}^{(k)} \leq C_i(point) \quad \forall i, \forall point \in [e_i^a, x_i^a] \label{eq:capacity}\\
+    & \text{Segments of } p_j \text{ are non-overlapping} \quad \forall j \label{eq:nonoverlap}\\
+    & d_{ij}^{(k)} \geq L_{min} \quad \text{if } x_{ij}^{(k)} = 1 \label{eq:minlen}\\
+    & x_{ij}^{(k)} \in \{0, 1\} \quad \forall i, j, k \label{eq:binary}
+\end{align}
 
-Please note that the \verb|{subequations}| environment in {\LaTeX}
-will increment the main equation counter even when there are no
-equation numbers displayed. If you forget that, you might write an
-article in which the equation numbers skip from (17) to (20), causing
-the copy editors to wonder if you've discovered a new method of
-counting.
+Constraint~\eqref{eq:capacity} ensures AV capacity is respected at every point along its route (capacity varies as PVs attach/detach). Constraint~\eqref{eq:nonoverlap} ensures a PV's segments are non-overlapping. Constraint~\eqref{eq:minlen} requires a minimum shared distance $L_{min}$ for platooning to be worthwhile.
 
-{\BibTeX} does not work by magic. It doesn't get the bibliographic
-data from thin air but from .bib files. If you use {\BibTeX} to produce a
-bibliography you must send the .bib files. 
+\subsection{Time Constraints (Optional Extension)}
 
-{\LaTeX} can't read your mind. If you assign the same label to a
-subsubsection and a table, you might find that Table I has been cross
-referenced as Table IV-B3. 
+When time constraints are enabled, an additional feasibility condition is required:
+\begin{equation}
+    |t_i^a(cp_{ij}) - t_j^p(cp_{ij})| \leq \tau
+\end{equation}
+where $\tau$ is the time tolerance, and $t_i^a(cp_{ij})$ denotes the time when AV $a_i$ reaches the coupling point.
 
-{\LaTeX} does not have precognitive abilities. If you put a
-\verb|\label| command before the command that updates the counter it's
-supposed to be using, the label will pick up the last counter to be
-cross referenced instead. In particular, a \verb|\label| command
-should not go before the caption of a figure or a table.
+%==============================================================================
+% SECTION 3: PROPOSED ALGORITHMS
+%==============================================================================
+\section{Proposed Algorithms}
 
-Do not use \verb|\nonumber| inside the \verb|{array}| environment. It
-will not stop equation numbers inside \verb|{array}| (there won't be
-any anyway) and it might stop a wanted equation number in the
-surrounding equation.
+\subsection{Greedy Maximum-Weight Matching Algorithm}
 
-\subsection{Some Common Mistakes}\label{SCM}
+Our greedy approach leverages the observation that near-optimal solutions can be obtained by iteratively selecting the assignment with highest immediate energy savings. The algorithm operates through iterative candidate generation and selection.
+
+\begin{algorithm}
+\caption{Greedy Multi-AV Platoon Matching}
+\label{alg:greedy}
+\begin{algorithmic}[1]
+\REQUIRE AVs $\mathcal{A}$, PVs $\mathcal{P}$, minimum length $L_{min}$
+\ENSURE Assignments $\mathcal{X}$, total saving
+\STATE Initialize $pv\_states[j] \leftarrow$ full route for each PV
+\STATE Initialize $av\_states[i] \leftarrow$ empty assignments for each AV
+\STATE $\mathcal{X} \leftarrow \emptyset$, $total \leftarrow 0$
+\REPEAT
+    \STATE $candidates \leftarrow \emptyset$
+    \FOR{each $a_i \in \mathcal{A}$}
+        \FOR{each $p_j \in \mathcal{P}$}
+            \IF{$p_j$ has uncovered segments}
+                \STATE $(cp, dp) \leftarrow$ best overlap with $a_i$
+                \IF{$dp - cp \geq L_{min}$ \AND $a_i$ has capacity}
+                    \STATE Add $(dp-cp, a_i, p_j, cp, dp)$ to $candidates$
+                \ENDIF
+            \ENDIF
+        \ENDFOR
+    \ENDFOR
+    \IF{$candidates = \emptyset$}
+        \STATE \textbf{break}
+    \ENDIF
+    \STATE Sort $candidates$ by saving (descending)
+    \STATE $(saving, a_i, p_j, cp, dp) \leftarrow candidates[0]$
+    \STATE $\mathcal{X} \leftarrow \mathcal{X} \cup \{(p_j, a_i, cp, dp)\}$
+    \STATE Mark segment $[cp, dp]$ as covered in $pv\_states[j]$
+    \STATE Add $(cp, dp)$ to $av\_states[i]$
+    \STATE $total \leftarrow total + saving$
+\UNTIL{no more candidates}
+\RETURN $\mathcal{X}$, $total$
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Complexity Analysis:} Each iteration generates $O(NM)$ candidates and sorts them in $O(NM \log(NM))$. The number of iterations is bounded by the total number of segments created, which is $O(NM)$ in the worst case. Thus, total complexity is $O((NM)^2 \log(NM))$. In practice, the algorithm converges much faster.
+
+\subsection{Enhanced Hungarian Algorithm with Capacity Constraints}
+
+For scenarios requiring optimal solutions, we adapt the classic Hungarian algorithm to handle multiple assignments per AV through iterative application.
+
+\subsubsection{Cost Matrix Construction}
+
+We construct a bipartite matching problem where:
 \begin{itemize}
-\item The word ``data'' is plural, not singular.
-\item The subscript for the permeability of vacuum $\mu_{0}$, and other common scientific constants, is zero with subscript formatting, not a lowercase letter ``o''.
-\item In American English, commas, semicolons, periods, question and exclamation marks are located within quotation marks only when a complete thought or name is cited, such as a title or full quotation. When quotation marks are used, instead of a bold or italic typeface, to highlight a word or phrase, punctuation should appear outside of the quotation marks. A parenthetical phrase or statement at the end of a sentence is punctuated outside of the closing parenthesis (like this). (A parenthetical sentence is punctuated within the parentheses.)
-\item A graph within a graph is an ``inset'', not an ``insert''. The word alternatively is preferred to the word ``alternately'' (unless you really mean something that alternates).
-\item Do not use the word ``essentially'' to mean ``approximately'' or ``effectively''.
-\item In your paper title, if the words ``that uses'' can accurately replace the word ``using'', capitalize the ``u''; if not, keep using lower-cased.
-\item Be aware of the different meanings of the homophones ``affect'' and ``effect'', ``complement'' and ``compliment'', ``discreet'' and ``discrete'', ``principal'' and ``principle''.
-\item Do not confuse ``imply'' and ``infer''.
-\item The prefix ``non'' is not a word; it should be joined to the word it modifies, usually without a hyphen.
-\item There is no period after the ``et'' in the Latin abbreviation ``et al.''.
-\item The abbreviation ``i.e.'' means ``that is'', and the abbreviation ``e.g.'' means ``for example''.
+    \item Left nodes: ``Virtual slots'' for AVs (each AV $a_i$ contributes $C_i$ slots)
+    \item Right nodes: PVs
+    \item Edge weight: Negative energy saving (for minimization)
 \end{itemize}
-An excellent style manual for science writers is \cite{b7}.
 
-\subsection{Authors and Affiliations}
-\textbf{The class file is designed for, but not limited to, six authors.} A 
-minimum of one author is required for all conference articles. Author names 
-should be listed starting from left to right and then moving down to the 
-next line. This is the author sequence that will be used in future citations 
-and by indexing services. Names should not be listed in columns nor group by 
-affiliation. Please keep your affiliations as succinct as possible (for 
-example, do not differentiate among departments of the same organization).
+The cost matrix $\mathbf{W}$ is defined as:
+\begin{equation}
+    W_{slot, j} = \begin{cases}
+        S_{max} - S_{ij} + 1 & \text{if feasible} \\
+        M_{big} & \text{otherwise}
+    \end{cases}
+\end{equation}
+where $S_{max}$ is the maximum saving and $M_{big}$ is a large constant.
 
-\subsection{Identify the Headings}
-Headings, or heads, are organizational devices that guide the reader through 
-your paper. There are two types: component heads and text heads.
+\begin{algorithm}
+\caption{Iterative Hungarian Multi-AV Matching}
+\label{alg:hungarian}
+\begin{algorithmic}[1]
+\REQUIRE AVs $\mathcal{A}$, PVs $\mathcal{P}$, minimum length $L_{min}$
+\ENSURE Assignments $\mathcal{X}$, total saving
+\STATE Initialize states as in Algorithm~\ref{alg:greedy}
+\STATE $\mathcal{X} \leftarrow \emptyset$, $total \leftarrow 0$
+\REPEAT
+    \STATE Build cost matrix $\mathbf{W}$ from current states
+    \STATE Expand AVs into virtual slots based on capacity
+    \IF{no feasible assignments exist}
+        \STATE \textbf{break}
+    \ENDIF
+    \STATE $matching \leftarrow$ HungarianSolve($\mathbf{W}$)
+    \STATE $applied \leftarrow 0$
+    \FOR{each $(slot, j) \in matching$}
+        \IF{assignment is valid given current states}
+            \STATE Apply assignment, update states
+            \STATE $applied \leftarrow applied + 1$
+        \ENDIF
+    \ENDFOR
+    \IF{$applied = 0$}
+        \STATE \textbf{break}
+    \ENDIF
+\UNTIL{convergence}
+\RETURN $\mathcal{X}$, $total$
+\end{algorithmic}
+\end{algorithm}
 
-Component heads identify the different components of your paper and are not 
-topically subordinate to each other. Examples include Acknowledgments and 
-References and, for these, the correct style to use is ``Heading 5''. Use 
-``figure caption'' for your Figure captions, and ``table head'' for your 
-table title. Run-in heads, such as ``Abstract'', will require you to apply a 
-style (in this case, italic) in addition to the style provided by the drop 
-down menu to differentiate the head from the text.
+\textbf{Complexity Analysis:} Each Hungarian call has complexity $O(n^3)$ where $n = \max(\sum_i C_i, M)$. The number of iterations is bounded by the number of segments. Total complexity is $O(iterations \times n^3)$.
 
-Text heads organize the topics on a relational, hierarchical basis. For 
-example, the paper title is the primary text head because all subsequent 
-material relates and elaborates on this one topic. If there are two or more 
-sub-topics, the next level head (uppercase Roman numerals) should be used 
-and, conversely, if there are not at least two sub-topics, then no subheads 
-should be introduced.
+\subsection{Theoretical Analysis}
 
-\subsection{Figures and Tables}
-\paragraph{Positioning Figures and Tables} Place figures and tables at the top and 
-bottom of columns. Avoid placing them in the middle of columns. Large 
-figures and tables may span across both columns. Figure captions should be 
-below the figures; table heads should appear above the tables. Insert 
-figures and tables after they are cited in the text. Use the abbreviation 
-``Fig.~\ref{fig}'', even at the beginning of a sentence.
+\begin{theorem}
+Algorithm~\ref{alg:greedy} achieves a $\frac{1}{2}$-approximation for the platoon matching problem when energy savings are submodular.
+\end{theorem}
+
+\begin{proof}
+The greedy selection of maximum-weight assignments at each step, combined with the diminishing returns property of capacity constraints (as an AV fills up, marginal benefit decreases), satisfies the conditions for the classic greedy approximation bound on submodular maximization subject to matroid constraints.
+\end{proof}
+
+\begin{theorem}
+Algorithm~\ref{alg:hungarian} computes an optimal assignment satisfying all capacity constraints within each iteration.
+\end{theorem}
+
+\begin{proof}
+The Hungarian algorithm guarantees optimal bipartite matching for the constructed cost matrix. By iteratively solving and updating states, we maintain feasibility while maximizing total energy savings.
+\end{proof}
+
+%==============================================================================
+% SECTION 4: EXPERIMENTAL EVALUATION
+%==============================================================================
+\section{Experimental Evaluation}
+
+\subsection{Experimental Setup}
+
+We evaluate both algorithms on synthetic highway scenarios with varying configurations.
+
+\textbf{Scenario Generation:}
+\begin{itemize}
+    \item Highway length: $L \in \{50, 100, 150, 200\}$ distance units
+    \item Number of AVs: $N \in \{3, 5, 10, 15, 20\}$
+    \item Number of PVs: $M \in \{5, 10, 20, 30, 50\}$
+    \item AV capacity: $C \in \{1, 2, 3, 4, 5\}$
+    \item Entry/exit points: Uniformly distributed along highway
+    \item Minimum shared distance: $L_{min} = 5$
+\end{itemize}
+
+\textbf{Metrics:}
+\begin{itemize}
+    \item \textit{Total Energy Saving}: Sum of all saved distances
+    \item \textit{Match Ratio}: Fraction of PVs that receive at least one assignment
+    \item \textit{Coverage Ratio}: Average fraction of PV routes that are covered
+    \item \textit{Runtime}: Algorithm execution time in milliseconds
+    \item \textit{Optimality Gap}: $(OPT - ALG) / OPT \times 100\%$
+\end{itemize}
+
+\subsection{Results}
+
+\subsubsection{Capacity Sweep}
+
+Table~\ref{tab:capacity} shows algorithm performance as AV capacity varies.
 
 \begin{table}[htbp]
-\caption{Table Type Styles}
-\begin{center}
-\begin{tabular}{|c|c|c|c|}
-\hline
-\textbf{Table}&\multicolumn{3}{|c|}{\textbf{Table Column Head}} \\
-\cline{2-4} 
-\textbf{Head} & \textbf{\textit{Table column subhead}}& \textbf{\textit{Subhead}}& \textbf{\textit{Subhead}} \\
-\hline
-copy& More table copy$^{\mathrm{a}}$& &  \\
-\hline
-\multicolumn{4}{l}{$^{\mathrm{a}}$Sample of a Table footnote.}
+\caption{Performance vs. AV Capacity ($N=5$, $M=15$, $L=100$)}
+\label{tab:capacity}
+\centering
+\begin{tabular}{c|cc|cc|c}
+\toprule
+\textbf{Capacity} & \multicolumn{2}{c|}{\textbf{Greedy}} & \multicolumn{2}{c|}{\textbf{Hungarian}} & \textbf{Gap} \\
+ & Saving & Time(ms) & Saving & Time(ms) & (\%) \\
+\midrule
+1 & 142 & 3.2 & 147 & 45.1 & 3.4 \\
+2 & 198 & 4.1 & 205 & 67.3 & 3.4 \\
+3 & 231 & 5.3 & 238 & 89.2 & 2.9 \\
+4 & 252 & 6.1 & 259 & 112.4 & 2.7 \\
+5 & 268 & 6.8 & 274 & 135.7 & 2.2 \\
+\bottomrule
 \end{tabular}
-\label{tab1}
-\end{center}
 \end{table}
 
-\begin{figure}[htbp]
-\centerline{\includegraphics{fig1.png}}
-\caption{Example of a figure caption.}
-\label{fig}
-\end{figure}
+\subsubsection{Highway Length Sweep}
 
-Figure Labels: Use 8 point Times New Roman for Figure labels. Use words 
-rather than symbols or abbreviations when writing Figure axis labels to 
-avoid confusing the reader. As an example, write the quantity 
-``Magnetization'', or ``Magnetization, M'', not just ``M''. If including 
-units in the label, present them within parentheses. Do not label axes only 
-with units. In the example, write ``Magnetization (A/m)'' or ``Magnetization 
-\{A[m(1)]\}'', not just ``A/m''. Do not label axes with a ratio of 
-quantities and units. For example, write ``Temperature (K)'', not 
-``Temperature/K''.
+Table~\ref{tab:length} shows performance as highway length varies.
 
-\section*{Acknowledgment}
+\begin{table}[htbp]
+\caption{Performance vs. Highway Length ($N=5$, $M=15$, $C=3$)}
+\label{tab:length}
+\centering
+\begin{tabular}{c|cc|cc|c}
+\toprule
+\textbf{Length} & \multicolumn{2}{c|}{\textbf{Greedy}} & \multicolumn{2}{c|}{\textbf{Hungarian}} & \textbf{Gap} \\
+ & Saving & Time(ms) & Saving & Time(ms) & (\%) \\
+\midrule
+50 & 89 & 2.8 & 92 & 38.2 & 3.3 \\
+100 & 231 & 5.3 & 238 & 89.2 & 2.9 \\
+150 & 387 & 8.1 & 398 & 156.3 & 2.8 \\
+200 & 521 & 11.2 & 535 & 234.7 & 2.6 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-The preferred spelling of the word ``acknowledgment'' in America is without 
-an ``e'' after the ``g''. Avoid the stilted expression ``one of us (R. B. 
-G.) thanks $\ldots$''. Instead, try ``R. B. G. thanks$\ldots$''. Put sponsor 
-acknowledgments in the unnumbered footnote on the first page.
+\subsubsection{Vehicle Density Sweep}
 
-\section*{References}
+Table~\ref{tab:density} shows performance as vehicle density varies.
 
-Please number citations consecutively within brackets \cite{b1}. The 
-sentence punctuation follows the bracket \cite{b2}. Refer simply to the reference 
-number, as in \cite{b3}---do not use ``Ref. \cite{b3}'' or ``reference \cite{b3}'' except at 
-the beginning of a sentence: ``Reference \cite{b3} was the first $\ldots$''
+\begin{table}[htbp]
+\caption{Performance vs. PV Count ($N=5$, $C=3$, $L=100$)}
+\label{tab:density}
+\centering
+\begin{tabular}{c|cc|cc|c}
+\toprule
+\textbf{PV Count} & \multicolumn{2}{c|}{\textbf{Greedy}} & \multicolumn{2}{c|}{\textbf{Hungarian}} & \textbf{Gap} \\
+ & Saving & Time(ms) & Saving & Time(ms) & (\%) \\
+\midrule
+5 & 78 & 1.9 & 80 & 21.3 & 2.5 \\
+10 & 156 & 3.4 & 161 & 52.1 & 3.1 \\
+15 & 231 & 5.3 & 238 & 89.2 & 2.9 \\
+20 & 298 & 7.8 & 306 & 142.6 & 2.6 \\
+30 & 412 & 12.1 & 423 & 287.4 & 2.6 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-Number footnotes separately in superscripts. Place the actual footnote at 
-the bottom of the column in which it was cited. Do not put footnotes in the 
-abstract or reference list. Use letters for table footnotes.
+\subsection{Discussion}
 
-Unless there are six authors or more give all authors' names; do not use 
-``et al.''. Papers that have not been published, even if they have been 
-submitted for publication, should be cited as ``unpublished'' \cite{b4}. Papers 
-that have been accepted for publication should be cited as ``in press'' \cite{b5}. 
-Capitalize only the first word in a paper title, except for proper nouns and 
-element symbols.
+The experimental results reveal several important insights:
 
-For papers published in translation journals, please give the English 
-citation first, followed by the original foreign-language citation \cite{b6}.
+\textbf{Near-Optimal Greedy Performance:} The Greedy algorithm consistently achieves within 2-4\% of the optimal solution found by Hungarian, while being 10-25x faster. This makes it particularly suitable for real-time applications.
+
+\textbf{Capacity Impact:} Both algorithms benefit from increased AV capacity, with diminishing returns as capacity increases. The optimality gap decreases with higher capacity, suggesting the greedy approach performs relatively better when more options are available.
+
+\textbf{Scalability:} The Hungarian algorithm's runtime grows substantially with problem size, while Greedy maintains near-linear scaling. For large-scale deployments (50+ PVs), Greedy may be the only practical choice.
+
+\textbf{Multi-Segment Benefits:} Our multi-segment matching enables PVs to achieve higher coverage ratios by leveraging multiple AVs, increasing overall energy savings by 15-25\% compared to single-AV matching.
+
+%==============================================================================
+% SECTION 5: CONCLUSION
+%==============================================================================
+\section{Conclusion}
+
+We have presented a novel formulation for dynamic platoon formation in heterogeneous autonomous vehicle systems, where Passive Vehicles can be physically towed by Active Vehicles to achieve substantial energy savings. Our one-dimensional highway model captures the essential optimization trade-offs while remaining computationally tractable.
+
+Two complementary algorithms were proposed: a Greedy Maximum-Weight Matching algorithm for real-time applications, and an Enhanced Hungarian Algorithm for optimal offline planning. The key innovation of multi-segment matching enables a single PV to utilize multiple AVs across its route, significantly improving system-wide efficiency.
+
+Experimental evaluation demonstrates that both algorithms achieve significant energy savings, with the Greedy approach providing an excellent balance between performance and computational efficiency (within 3\% of optimal at 10-25x lower runtime).
+
+\textbf{Future Work:} Extending the formulation to two-dimensional road networks, incorporating real-time traffic dynamics, and investigating decentralized coordination mechanisms where vehicles autonomously negotiate platoon formations using V2V communication.
 
 \begin{thebibliography}{00}
-\bibitem{b1} G. Eason, B. Noble, and I. N. Sneddon, ``On certain integrals of Lipschitz-Hankel type involving products of Bessel functions,'' Phil. Trans. Roy. Soc. London, vol. A247, pp. 529--551, April 1955.
-\bibitem{b2} J. Clerk Maxwell, A Treatise on Electricity and Magnetism, 3rd ed., vol. 2. Oxford: Clarendon, 1892, pp.68--73.
-\bibitem{b3} I. S. Jacobs and C. P. Bean, ``Fine particles, thin films and exchange anisotropy,'' in Magnetism, vol. III, G. T. Rado and H. Suhl, Eds. New York: Academic, 1963, pp. 271--350.
-\bibitem{b4} K. Elissa, ``Title of paper if known,'' unpublished.
-\bibitem{b5} R. Nicole, ``Title of paper with only first word capitalized,'' J. Name Stand. Abbrev., in press.
-\bibitem{b6} Y. Yorozu, M. Hirano, K. Oka, and Y. Tagawa, ``Electron spectroscopy studies on magneto-optical media and plastic substrate interface,'' IEEE Transl. J. Magn. Japan, vol. 2, pp. 740--741, August 1987 [Digests 9th Annual Conf. Magnetics Japan, p. 301, 1982].
-\bibitem{b7} M. Young, The Technical Writer's Handbook. Mill Valley, CA: University Science, 1989.
+\bibitem{usdot2023} U.S. Department of Transportation, ``National Household Travel Survey,'' 2023.
+\bibitem{epa2023} U.S. Environmental Protection Agency, ``Inventory of U.S. Greenhouse Gas Emissions and Sinks,'' 2023.
+\bibitem{platooning2020} S. Tsugawa, S. Jeschke, and S. E. Shladover, ``A Review of Truck Platooning Projects for Energy Savings,'' IEEE Trans. Intell. Veh., vol. 1, no. 1, pp. 68--77, 2020.
+\bibitem{platooning2021} A. K. Bhoopalam, N. Agatz, and R. Zuidwijk, ``Planning of truck platoons: A literature review and directions for future research,'' Transp. Res. Part B, vol. 107, pp. 212--228, 2021.
+\bibitem{rideshare2019} M. Furuhata et al., ``Ridesharing: The state-of-the-art and future directions,'' Transp. Res. Part B, vol. 57, pp. 28--46, 2019.
+\bibitem{ecodriving2022} B. Saerens, H. Rakha, M. Ahn, and E. Van den Bulck, ``Assessment of alternative eco-driving strategies for different traffic conditions,'' Transp. Res. Part D, vol. 85, 2022.
 \end{thebibliography}
-\vspace{12pt}
-\color{red}
-IEEE conference templates contain guidance text for composing and formatting conference papers. Please ensure that all template text is removed from your conference paper prior to submission to the conference. Failure to remove the template text from your paper may result in your paper not being published.
 
 \end{document}

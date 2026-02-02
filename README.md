@@ -73,3 +73,5 @@ The algorithm also returns the **total saved distance**, defined as:
 - `total_saved_distance = sum(dp - cp for each (pv, av, cp, dp) in A)`
 
 This represents the total shared travel distance during which PVs are coupled (towed) under the simplified distance-based saving model.
+
+latexmk -pdf conference_101719.tex

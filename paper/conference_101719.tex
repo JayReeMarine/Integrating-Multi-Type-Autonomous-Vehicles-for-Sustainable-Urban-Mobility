@@ -45,7 +45,7 @@ eunus.ali@monash.edu
 \maketitle
 
 \begin{abstract}
-This paper addresses the energy inefficiency of single-occupancy vehicles by introducing a novel cooperative autonomous vehicle system where smaller Passive Vehicles (PVs) can be physically towed by larger Active Vehicles (AVs) during shared highway segments. Unlike traditional platooning that relies solely on aerodynamic drafting, our approach enables propulsion energy elimination for towed vehicles during attached segments. We formulate the platoon formation problem as a constrained optimization problem on a one-dimensional highway model and propose two algorithms: a Greedy Maximum-Weight Matching algorithm and an Iterative Linear Assignment (ILA) algorithm using the Jonker--Volgenant method. A key innovation is the multi-segment matching capability, allowing a single PV to be towed by multiple AVs across different route segments. Experimental evaluation on synthetic scenarios with up to 400 PVs and 80 AVs demonstrates that both algorithms achieve 25--52\% distance coverage (proportional to energy savings under constant per-distance propulsion) depending on capacity, with ILA providing both optimality guarantees and superior runtime performance (5--15$\times$ faster) due to highly optimized compiled implementations.
+This paper addresses the energy inefficiency of single-occupancy vehicles by introducing a novel cooperative autonomous vehicle system where smaller Passive Vehicles (PVs) can be physically towed by larger Active Vehicles (AVs) during shared highway segments. Unlike traditional platooning that relies solely on aerodynamic drafting, our approach enables propulsion energy elimination for towed vehicles during attached segments. We formulate the platoon formation problem as a constrained optimization problem on a one-dimensional highway model and propose two algorithms: a Greedy Maximum-Weight Matching algorithm and an Iterative Linear Assignment (ILA) algorithm using the Jonker--Volgenant method. A key innovation is the multi-segment matching capability, allowing a single PV to be towed by multiple AVs across different route segments. Experimental evaluation on synthetic scenarios with up to 400 PVs and 80 AVs demonstrates that both algorithms achieve 25--52\% distance coverage (proportional to energy savings under constant per-distance propulsion) depending on capacity, with ILA providing per-iteration optimality (optimal solutions to each bipartite subproblem) and superior runtime performance (5--15$\times$ faster) due to highly optimized compiled implementations.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -188,6 +188,8 @@ For PV $p_j$, its route from $e_j^p$ to $x_j^p$ can be partitioned into segments
     \item \textit{Uncovered}: PV drives independently (no energy saved)
 \end{itemize}
 
+\textbf{Progressive Coverage Assumption:} Our algorithms process towing segments in spatial order along the highway. Each PV maintains a \textit{current left boundary} $\ell_j$ (initially $e_j^p$) representing the leftmost uncovered position. When PV $p_j$ is assigned to AV $a_i$, the towing segment starts at $\max(e_i^a, \ell_j)$ and $\ell_j$ advances to the decoupling point. This ensures uncovered regions are always contiguous suffix intervals $[\ell_j, x_j^p]$, simplifying state management while capturing the natural left-to-right progression of vehicles along the highway.
+
 \subsection{Optimization Problem}
 
 Let $\mathcal{X}$ denote the set of all segment assignments $(p_j, a_i, s, e)$ where PV $p_j$ is towed by AV $a_i$ over segment $[s, e]$. The optimization problem is:
@@ -209,11 +211,11 @@ Let $\mathcal{X}$ denote the set of all segment assignments $(p_j, a_i, s, e)$ w
 
 \begin{lemma}[Critical Points Sufficiency]
 \label{lem:critical}
-The point-wise capacity constraint \eqref{eq:capacity} can be verified by checking only the finite set of critical points $\mathcal{C}_i = \{e_i^a, x_i^a\} \cup \{cp_{ij}, dp_{ij} : j \in [M]\}$ for each AV $a_i$.
+Fix an AV $a_i$ and let $\mathcal{X}_i = \{(p_j, a_i, s, e) \in \mathcal{X}\}$ be the assignments to $a_i$. Define the critical set $\mathcal{C}_i = \{e_i^a, x_i^a\} \cup \{s, e : (p_j, a_i, s, e) \in \mathcal{X}_i\}$. Then the point-wise capacity constraint \eqref{eq:capacity} holds for all $x \in [e_i^a, x_i^a]$ if and only if it holds for all $x \in \mathcal{C}_i$.
 \end{lemma}
 
 \begin{proof}
-The number of PVs towed by AV $a_i$ is a step function over $x \in [e_i^a, x_i^a]$, changing only at coupling points (increment) and decoupling points (decrement). Between consecutive critical points, the count is constant. Thus, if capacity is satisfied at all critical points, it is satisfied everywhere.
+The number of PVs towed by AV $a_i$ is a step function over $x \in [e_i^a, x_i^a]$, incrementing at segment start points $s$ and decrementing at segment end points $e$. Between consecutive critical points, the count is constant. Thus, capacity satisfaction at all critical points implies satisfaction everywhere.
 \end{proof}
 
 \subsection{Time Constraints}
@@ -226,6 +228,8 @@ When temporal synchronization is required:
 where $t_i^a(cp_{ij}) = t_i^a + (cp_{ij} - e_i^a)/v_i^a$ is when AV $a_i$ reaches the coupling point. In our experiments, we use $\tau = 5$ time units with vehicle speeds varying $\pm 20\%$ around a baseline.
 
 \textbf{Speed Synchronization Policy:} Once coupled at the coupling point $cp_{ij}$, the PV adopts the AV's speed $v_i^a$ for the duration of the towing segment. This policy ensures that feasibility depends solely on synchronization at the coupling point and the existence of a shared route overlap. Decoupling occurs automatically when either vehicle reaches its exit point or when the shared segment ends.
+
+\textbf{State Update for Multi-Segment Matching:} Each PV maintains state $(\ell_j, \hat{t}_j)$ where $\ell_j$ is the current position and $\hat{t}_j$ is the arrival time at $\ell_j$. Initially, $\ell_j = e_j^p$ and $\hat{t}_j = t_j^p$. After being towed by AV $a_i$ from $cp$ to $dp$, the state updates to $\ell_j \leftarrow dp$ and $\hat{t}_j \leftarrow \hat{t}_j + (cp - \ell_j)/v_j^p + (dp - cp)/v_i^a$. For subsequent AV candidates, the PV's arrival time at a new coupling point $cp'$ is $\hat{t}_j + (cp' - \ell_j)/v_j^p$.
 
 \subsection{Illustrative Example}
 \label{sec:toyexample}
@@ -303,7 +307,7 @@ Figure~\ref{fig:toyexample} illustrates a concrete instance with 2 AVs and 3 PVs
 \section{Proposed Algorithms}
 \label{sec:algorithms}
 
-We present two algorithms: a greedy approach for baseline comparison and a Hungarian-based approach for optimality.
+We present two algorithms: a greedy approach for baseline comparison and an assignment-based batch matching approach (ILA) that achieves per-iteration optimality.
 
 \subsection{Greedy Maximum-Weight Matching}
 

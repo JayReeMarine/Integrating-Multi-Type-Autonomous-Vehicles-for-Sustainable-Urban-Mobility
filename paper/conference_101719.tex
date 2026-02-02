@@ -45,7 +45,7 @@ eunus.ali@monash.edu
 \maketitle
 
 \begin{abstract}
-This paper addresses the energy inefficiency of single-occupancy vehicles by introducing a novel cooperative autonomous vehicle system where smaller Passive Vehicles (PVs) can be physically towed by larger Active Vehicles (AVs) during shared highway segments. Unlike traditional platooning that relies solely on aerodynamic drafting, our approach enables near-complete energy elimination for towed vehicles. We formulate the platoon formation problem as a constrained optimization problem on a one-dimensional highway model and propose two algorithms: a Greedy Maximum-Weight Matching algorithm and an Enhanced Hungarian Algorithm. A key innovation is the multi-segment matching capability, allowing a single PV to be towed by multiple AVs across different route segments. Experimental evaluation on synthetic scenarios with up to 400 PVs and 80 AVs demonstrates that both algorithms achieve 25--52\% energy savings depending on capacity, with the Hungarian algorithm providing both optimality guarantees and superior runtime performance (5--15$\times$ faster) due to efficient matrix operations.
+This paper addresses the energy inefficiency of single-occupancy vehicles by introducing a novel cooperative autonomous vehicle system where smaller Passive Vehicles (PVs) can be physically towed by larger Active Vehicles (AVs) during shared highway segments. Unlike traditional platooning that relies solely on aerodynamic drafting, our approach enables propulsion energy elimination for towed vehicles during attached segments. We formulate the platoon formation problem as a constrained optimization problem on a one-dimensional highway model and propose two algorithms: a Greedy Maximum-Weight Matching algorithm and an Iterative Linear Assignment (ILA) algorithm using the Jonker--Volgenant method. A key innovation is the multi-segment matching capability, allowing a single PV to be towed by multiple AVs across different route segments. Experimental evaluation on synthetic scenarios with up to 400 PVs and 80 AVs demonstrates that both algorithms achieve 25--52\% distance coverage (proportional to energy savings under constant per-distance propulsion) depending on capacity, with ILA providing both optimality guarantees and superior runtime performance (5--15$\times$ faster) due to highly optimized compiled implementations.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -58,25 +58,25 @@ autonomous vehicles, vehicle platooning, energy efficiency, Hungarian algorithm,
 \section{Introduction}
 
 % Paragraph 1: High-level motivation (world problem + statistics)
-The persistent over-reliance on single-occupancy vehicles poses significant challenges to urban transportation sustainability. According to the U.S. Department of Transportation, single-occupancy vehicles account for approximately 76\% of commuter trips, contributing substantially to traffic congestion, energy consumption, and carbon emissions~\cite{usdot2022}. The transportation sector alone is responsible for nearly 29\% of total greenhouse gas emissions in the United States, with light-duty vehicles contributing the largest share~\cite{epa2023}. This inefficiency is particularly pronounced along shared routes where multiple individuals travel similar paths yet operate their vehicles independently.
+The persistent over-reliance on single-occupancy vehicles poses significant challenges to urban transportation sustainability. According to the U.S. Department of Transportation's National Household Travel Survey, drive-alone trips account for the vast majority of commute travel, contributing substantially to traffic congestion, energy consumption, and carbon emissions~\cite{usdot2022}. The transportation sector alone is responsible for nearly 29\% of total greenhouse gas emissions in the United States, with light-duty vehicles contributing the largest share~\cite{epa2023}. This inefficiency is particularly pronounced along shared routes where multiple individuals travel similar paths yet operate their vehicles independently.
 
 % Paragraph 2: Problem and idea (platooning/cooperation concept)
-Autonomous vehicle (AV) technology presents a transformative opportunity to address these challenges through coordinated vehicle operation. This paper introduces a novel concept of \textit{active} and \textit{passive} autonomous vehicles, where smaller Passive Vehicles (PVs) can temporarily attach to larger Active Vehicles (AVs) during shared highway segments. Unlike traditional vehicle platooning that maintains physical separation between vehicles, our approach enables physical coupling where a PV's propulsion system is deactivated while being towed, leading to energy savings that approach 100\% for the towed vehicle during the attached phase. This paradigm shifts transportation from isolated driving to an on-demand, energy-transfer-based mobility service.
+Autonomous vehicle (AV) technology presents a transformative opportunity to address these challenges through coordinated vehicle operation. This paper introduces a novel concept of \textit{active} and \textit{passive} autonomous vehicles, where smaller Passive Vehicles (PVs) can temporarily attach to larger Active Vehicles (AVs) during shared highway segments. Unlike traditional vehicle platooning that maintains physical separation between vehicles, our approach enables physical coupling where a PV's propulsion system is deactivated while being towed, eliminating propulsion energy consumption for the towed vehicle during attached segments. In our model, we abstract energy savings as proportional to distance covered while towed; extending to physics-based energy models incorporating rolling resistance and aerodynamic drag is left for future work. This paradigm shifts transportation from isolated driving to an on-demand, energy-transfer-based mobility service.
 
 % Paragraph 3: Related work sketch and differentiation
 Existing research on cooperative vehicle systems spans several related but distinct areas. Traditional platooning systems~\cite{tsugawa2016review,bergenhem2012overview} focus on coordinated driving with aerodynamic benefits, typically achieving 10--20\% fuel savings through drafting. Ridesharing and carpooling optimization~\cite{furuhata2013ridesharing,agatz2012optimization} address passenger matching but not vehicle coupling. Eco-driving strategies~\cite{sciarretta2020energy,hellstrom2009look} optimize individual vehicle behavior without inter-vehicle coordination. The assignment problem we address relates to the classic bipartite matching literature~\cite{kuhn1955hungarian,munkres1957algorithms}, though our multi-segment matching with capacity constraints introduces novel complexity. While these approaches offer incremental improvements, they do not address the fundamental inefficiency of independent propulsion for vehicles with overlapping routes.
 
 % Paragraph 4: Our solution summary (big picture)
-We formulate the platoon formation problem on a one-dimensional highway model where the objective is to maximize total energy savings through strategic PV-to-AV assignments. To solve this problem, we propose two complementary algorithms. The \textit{Greedy Maximum-Weight Matching} algorithm provides an intuitive baseline through iterative selection, while the \textit{Enhanced Hungarian Algorithm} guarantees optimal solutions. Surprisingly, our experiments reveal that the Hungarian algorithm is not only optimal but also faster (5--15$\times$) due to efficient matrix operations in modern numerical libraries~\cite{scipy2020}. A key innovation is our multi-segment matching capability: rather than restricting each PV to a single AV, our algorithms allow a PV to be towed by different AVs across different segments of its route.
+We formulate the platoon formation problem on a one-dimensional highway model where the objective is to maximize total distance coverage (as a proxy for energy savings) through strategic PV-to-AV assignments. To solve this problem, we propose two complementary algorithms. The \textit{Greedy Maximum-Weight Matching} algorithm provides an intuitive baseline through iterative selection, while the \textit{Iterative Linear Assignment (ILA)} algorithm using SciPy's \texttt{linear\_sum\_assignment} (Jonker--Volgenant algorithm~\cite{scipy2020}) guarantees optimal solutions per iteration. Surprisingly, our experiments reveal that ILA is not only optimal but also faster (5--15$\times$) due to highly optimized compiled C implementations that avoid the repeated sorting overhead inherent in greedy approaches. A key innovation is our multi-segment matching capability: rather than restricting each PV to a single AV, our algorithms allow a PV to be towed by different AVs across different segments of its route.
 
 % Paragraph 5: Contributions (what we show in results)
 The main contributions of this paper are:
 \begin{itemize}
-    \item A formal one-dimensional problem formulation that captures the essential trade-offs in cooperative vehicle platooning, with precise mathematical notation and constraint specification.
-    \item A Greedy algorithm with provable $\frac{1}{2}$-approximation that serves as an intuitive baseline for iterative matching.
-    \item An Enhanced Hungarian algorithm with capacity constraints that provides both optimal solutions and superior runtime performance.
-    \item Multi-segment matching capability allowing PVs to be towed by multiple AVs across their routes, with point-wise capacity tracking.
-    \item Comprehensive experimental evaluation on scenarios with 50--80 AVs, 200--400 PVs, demonstrating 25--52\% energy savings.
+    \item A formal one-dimensional problem formulation that captures the essential trade-offs in cooperative vehicle platooning, including multi-segment matching and point-wise capacity constraints.
+    \item A Greedy algorithm that serves as an intuitive baseline with empirically competitive performance.
+    \item An Iterative Linear Assignment (ILA) algorithm using the Jonker--Volgenant method~\cite{scipy2020} that achieves per-iteration optimality with capacity constraints via virtual slot expansion.
+    \item Multi-segment matching capability allowing PVs to be towed by multiple AVs across their routes, with point-wise capacity tracking at each highway position.
+    \item Comprehensive experimental evaluation on scenarios with 50--80 AVs, 200--400 PVs, demonstrating 25--52\% distance coverage savings.
 \end{itemize}
 
 %==============================================================================
@@ -86,9 +86,9 @@ The main contributions of this paper are:
 
 \subsection{Vehicle Platooning}
 
-Vehicle platooning has received significant attention in both academia and industry. Tsugawa et al.~\cite{tsugawa2016review} provide a comprehensive review of truck platooning projects, reporting fuel savings of 10--20\% through aerodynamic drafting. The PATH project~\cite{shladover2015cooperative} demonstrated automated highway systems with close-following platoons. European projects SARTRE~\cite{bergenhem2012overview} and COMPANION~\cite{alam2015heavy} explored multi-brand platooning for commercial vehicles.
+Vehicle platooning has received significant attention in both academia and industry. Tsugawa et al.~\cite{tsugawa2016review} provide a comprehensive review of truck platooning projects, reporting fuel savings of 10--20\% through aerodynamic drafting. The PATH project~\cite{shladover2009cooperative} demonstrated automated highway systems with close-following platoons. The European project SARTRE~\cite{bergenhem2012overview} explored multi-brand platooning for commercial vehicles with heterogeneous manufacturers.
 
-However, all existing platooning approaches maintain physical separation between vehicles---the ``platoon'' is virtual, maintained through V2V communication and coordinated control. Our approach fundamentally differs by enabling \textit{physical coupling}, where smaller vehicles are towed by larger ones, achieving near-100\% energy savings for the towed vehicle rather than incremental aerodynamic benefits.
+However, all existing platooning approaches maintain physical separation between vehicles---the ``platoon'' is virtual, maintained through V2V communication and coordinated control. Our approach fundamentally differs by enabling \textit{physical coupling}, where smaller vehicles are towed by larger ones. In our simplified model, this eliminates PV propulsion energy during towing segments; system-level energy analysis incorporating AV towing load is deferred to future work.
 
 \subsection{Ridesharing and Vehicle Routing}
 
@@ -102,7 +102,7 @@ Our contribution extends this literature by introducing: (1) multi-segment match
 
 \subsection{Cooperative Autonomous Vehicles}
 
-Recent work on cooperative autonomous vehicles explores coordination mechanisms beyond platooning. Cooperative adaptive cruise control (CACC)~\cite{ploeg2011design} enables string-stable following. Intersection management~\cite{dresner2008multiagent} coordinates crossing without traffic signals. Cooperative lane changing~\cite{wang2019cooperative} optimizes merge maneuvers.
+Recent work on cooperative autonomous vehicles explores coordination mechanisms beyond platooning. Cooperative adaptive cruise control (CACC)~\cite{ploeg2011design} enables string-stable following. Intersection management~\cite{dresner2008multiagent} coordinates crossing without traffic signals. These coordination mechanisms focus on maintaining separation while our work addresses physical coupling.
 
 Our work introduces a new cooperation paradigm: physical towing between heterogeneous vehicle types. This requires solving a novel matching problem with spatial and temporal constraints not present in existing cooperative driving literature.
 
@@ -190,22 +190,31 @@ For PV $p_j$, its route from $e_j^p$ to $x_j^p$ can be partitioned into segments
 
 \subsection{Optimization Problem}
 
-Let $x_{ij}^{(k)} \in \{0, 1\}$ indicate whether PV $p_j$ is assigned to AV $a_i$ for segment $k$. The optimization problem is:
+Let $\mathcal{X}$ denote the set of all segment assignments $(p_j, a_i, s, e)$ where PV $p_j$ is towed by AV $a_i$ over segment $[s, e]$. The optimization problem is:
 
 \begin{align}
-    \max \quad & \sum_{i=1}^{N} \sum_{j=1}^{M} \sum_{k} x_{ij}^{(k)} \cdot S_{ij}^{(k)} \label{eq:obj}\\
-    \text{s.t.} \quad & \sum_{j: point \in [cp_{ij}, dp_{ij}]} x_{ij}^{(k)} \leq C_i \quad \forall i, point \label{eq:capacity}\\
-    & \text{Segments of } p_j \text{ non-overlapping} \quad \forall j \label{eq:nonoverlap}\\
-    & d_{ij}^{(k)} \geq L_{min} \quad \text{if } x_{ij}^{(k)} = 1 \label{eq:minlen}\\
-    & x_{ij}^{(k)} \in \{0, 1\} \quad \forall i, j, k \label{eq:binary}
+    \max \quad & \sum_{(p_j, a_i, s, e) \in \mathcal{X}} (e - s) \label{eq:obj}\\
+    \text{s.t.} \quad & \left|\{(p_j, a_i, s, e) \in \mathcal{X} : x \in [s, e]\}\right| \leq C_i \notag\\
+    & \qquad \forall i \in [N], \forall x \in [e_i^a, x_i^a] \label{eq:capacity}\\
+    & \text{Segments for each } p_j \text{ are pairwise disjoint} \label{eq:nonoverlap}\\
+    & (e - s) \geq L_{min} \quad \forall (p_j, a_i, s, e) \in \mathcal{X} \label{eq:minlen}
 \end{align}
 
 \textbf{Constraint Interpretation:}
 \begin{itemize}
-    \item \textbf{Capacity} \eqref{eq:capacity}: At any point, an AV cannot tow more than $C_i$ PVs. This is a \textit{point-wise} constraint---capacity varies as PVs attach/detach.
-    \item \textbf{Non-overlap} \eqref{eq:nonoverlap}: A PV cannot be towed by two AVs simultaneously.
-    \item \textbf{Minimum length} \eqref{eq:minlen}: Shared distance must exceed $L_{min}$ to justify coupling overhead.
+    \item \textbf{Point-wise Capacity} \eqref{eq:capacity}: At any position $x$ along AV $a_i$'s route, the number of simultaneously towed PVs cannot exceed $C_i$. This is the key constraint that distinguishes our problem from standard bipartite matching---an AV's effective capacity varies along its route as PVs attach and detach.
+    \item \textbf{Non-overlap} \eqref{eq:nonoverlap}: A PV cannot be towed by two AVs simultaneously at any position.
+    \item \textbf{Minimum length} \eqref{eq:minlen}: Each towing segment must exceed $L_{min}$ to justify coupling overhead.
 \end{itemize}
+
+\begin{lemma}[Critical Points Sufficiency]
+\label{lem:critical}
+The point-wise capacity constraint \eqref{eq:capacity} can be verified by checking only the finite set of critical points $\mathcal{C}_i = \{e_i^a, x_i^a\} \cup \{cp_{ij}, dp_{ij} : j \in [M]\}$ for each AV $a_i$.
+\end{lemma}
+
+\begin{proof}
+The number of PVs towed by AV $a_i$ is a step function over $x \in [e_i^a, x_i^a]$, changing only at coupling points (increment) and decoupling points (decrement). Between consecutive critical points, the count is constant. Thus, if capacity is satisfied at all critical points, it is satisfied everywhere.
+\end{proof}
 
 \subsection{Time Constraints}
 
@@ -215,6 +224,8 @@ When temporal synchronization is required:
     \label{eq:time}
 \end{equation}
 where $t_i^a(cp_{ij}) = t_i^a + (cp_{ij} - e_i^a)/v_i^a$ is when AV $a_i$ reaches the coupling point. In our experiments, we use $\tau = 5$ time units with vehicle speeds varying $\pm 20\%$ around a baseline.
+
+\textbf{Speed Synchronization Policy:} Once coupled at the coupling point $cp_{ij}$, the PV adopts the AV's speed $v_i^a$ for the duration of the towing segment. This policy ensures that feasibility depends solely on synchronization at the coupling point and the existence of a shared route overlap. Decoupling occurs automatically when either vehicle reaches its exit point or when the shared segment ends.
 
 \subsection{Illustrative Example}
 \label{sec:toyexample}
@@ -336,29 +347,42 @@ Algorithm~\ref{alg:greedy} operates in three phases:
 
 \subsubsection{Complexity}
 
-Each iteration: $O(NM)$ candidates, $O(NM \log NM)$ sorting. Iterations bounded by $O(NM)$. Total: $O((NM)^2 \log NM)$ worst-case.
+Each iteration generates $O(NM)$ candidates and requires $O(NM \log NM)$ sorting. The number of iterations is bounded by the total number of possible segments---in the worst case $O(NM)$ when each PV is matched to multiple AVs sequentially. Total worst-case complexity: $O((NM)^2 \log NM)$.
 
-\subsection{Enhanced Hungarian Algorithm}
+\textbf{Why Greedy is Slow in Practice:} Unlike batch algorithms, greedy must regenerate and re-sort candidates after each assignment because point-wise capacity constraints may invalidate previously feasible candidates. This repeated sorting overhead dominates runtime in our experiments.
+
+\subsection{Iterative Linear Assignment (ILA) Algorithm}
 
 \subsubsection{Key Insight}
 
-The Hungarian algorithm~\cite{kuhn1955hungarian} solves bipartite matching optimally in $O(n^3)$. We adapt it via: (1) virtual slot expansion for capacity, (2) iterative application for multi-segment.
+The classic Hungarian algorithm~\cite{kuhn1955hungarian} solves bipartite matching optimally in $O(n^3)$. Modern implementations, such as SciPy's \texttt{linear\_sum\_assignment}, use the Jonker--Volgenant algorithm (a shortest augmenting path method)~\cite{scipy2020} which handles rectangular matrices efficiently. We adapt this via: (1) virtual slot expansion for capacity constraints, (2) iterative application for multi-segment matching.
 
 \subsubsection{Virtual Slot Expansion}
 
 Expand each AV $a_i$ into $C_i$ virtual slots:
 \begin{itemize}
     \item \textbf{Left nodes:} $\sum_{i=1}^{N} C_i$ virtual slots
-    \item \textbf{Right nodes:} $M$ PVs (or uncovered segments)
-    \item \textbf{Edge weight:} $-S_{ij}$ (for minimization)
+    \item \textbf{Right nodes:} $M$ PVs (or their current uncovered segments)
+    \item \textbf{Edge weight:} $-S_{ij}$ (for minimization formulation)
 \end{itemize}
+
+\subsubsection{Cost Matrix Construction}
+
+The cost matrix $\mathbf{W} \in \mathbb{R}^{(\sum_i C_i) \times M}$ is constructed as follows. For each virtual slot $k$ belonging to AV $a_i$ and each PV $p_j$:
+\begin{equation}
+W_{kj} = \begin{cases}
+-d_{ij}^{curr} & \text{if feasible (overlap } \geq L_{min}\text{, time ok)} \\
++\infty & \text{otherwise}
+\end{cases}
+\end{equation}
+where $d_{ij}^{curr} = \max(0, \min(x_i^a, x_j^p) - \max(e_i^a, \ell_j))$ is the overlap between AV $a_i$'s route and PV $p_j$'s \textit{current uncovered interval} $[\ell_j, x_j^p]$. Feasibility requires: (1) $d_{ij}^{curr} \geq L_{min}$, (2) time synchronization~\eqref{eq:time} is satisfied, and (3) adding this assignment does not violate capacity at any critical point (Lemma~\ref{lem:critical}).
 
 \subsubsection{Iterative Algorithm}
 
-Algorithm~\ref{alg:hungarian} applies Hungarian matching iteratively, updating states after each round.
+Algorithm~\ref{alg:hungarian} applies ILA iteratively, updating states after each round.
 
 \begin{algorithm}[htbp]
-\caption{Iterative Hungarian Multi-AV Matching}
+\caption{Iterative Linear Assignment (ILA) for Multi-AV Matching}
 \label{alg:hungarian}
 \begin{algorithmic}[1]
 \REQUIRE AVs $\mathcal{A}$, PVs $\mathcal{P}$, minimum length $L_{min}$
@@ -370,7 +394,7 @@ Algorithm~\ref{alg:hungarian} applies Hungarian matching iteratively, updating s
     \IF{no feasible assignments}
         \STATE \textbf{break}
     \ENDIF
-    \STATE $matching \leftarrow$ \textsc{Hungarian}($\mathbf{W}$) \COMMENT{scipy.optimize}
+    \STATE $matching \leftarrow$ \textsc{LinearSumAssignment}($\mathbf{W}$)
     \FOR{each valid $(slot, j) \in matching$}
         \STATE Apply assignment, update states
     \ENDFOR
@@ -381,27 +405,27 @@ Algorithm~\ref{alg:hungarian} applies Hungarian matching iteratively, updating s
 
 \subsubsection{Implementation Note}
 
-We use \texttt{scipy.optimize.linear\_sum\_assignment}~\cite{scipy2020}, which implements an efficient $O(n^3)$ Hungarian algorithm with highly optimized C code. This results in the Hungarian algorithm being \textit{faster} than Greedy despite its theoretical complexity, as shown in Section~\ref{sec:experiments}.
+We use \texttt{scipy.optimize.linear\_sum\_assignment}~\cite{scipy2020}, which implements the Jonker--Volgenant algorithm with highly optimized compiled C code. This results in ILA being \textit{faster} than Greedy in practice, despite the $O(n^3)$ per-iteration complexity. The speedup comes from: (1) batch processing all assignments in one iteration via optimized linear algebra, (2) avoiding the repeated $O(NM \log NM)$ sorting required by Greedy after each assignment.
 
 \subsection{Theoretical Analysis}
 
-\begin{theorem}
-\label{thm:greedy}
-Algorithm~\ref{alg:greedy} achieves a $\frac{1}{2}$-approximation for single-segment matching.
-\end{theorem}
-
-\begin{proof}
-Under single-segment restriction, the problem reduces to weighted matching with capacity constraints---a submodular maximization under matroid constraints, for which greedy achieves $\frac{1}{2}$-approximation~\cite{fisher1978analysis}.
-\end{proof}
+\textit{Remark on Approximation Guarantees:} Under restrictive conditions---single-segment matching only, uniform AV capacity across the entire route (no point-wise variation), and no time constraints---the greedy algorithm achieves a $\frac{1}{2}$-approximation via reduction to submodular maximization~\cite{fisher1978analysis}. However, our full problem with multi-segment matching, point-wise capacity, and time tolerance does not satisfy these conditions. We therefore present the greedy algorithm as an empirical baseline rather than claiming formal approximation guarantees for the general case.
 
 \begin{theorem}
 \label{thm:hungarian}
-Algorithm~\ref{alg:hungarian} computes optimal assignments within each iteration.
+Algorithm~\ref{alg:hungarian} computes ILAs within each iteration (per-iteration optimality).
 \end{theorem}
 
 \begin{proof}
-The Hungarian algorithm guarantees optimal bipartite matching. Iterative application with monotonically shrinking PV states ensures convergence to a locally optimal solution.
+Given the current uncovered intervals for all PVs, the cost matrix $\mathbf{W}$ encodes all feasible assignments. The Jonker--Volgenant algorithm guarantees an optimal bipartite matching for this matrix. Since PV uncovered intervals shrink monotonically, the algorithm converges.
 \end{proof}
+
+\begin{lemma}[Global Optimality Caveat]
+\label{lem:global}
+Algorithm~\ref{alg:hungarian} does not guarantee global optimality for the multi-segment problem. The iterative decomposition may lock in early assignments that preclude better global solutions.
+\end{lemma}
+
+\textit{Remark:} Despite lacking global optimality guarantees, our experiments show that the iterative ILA consistently matches or exceeds greedy performance. The decomposition is a practical trade-off between solution quality and computational tractability.
 
 %==============================================================================
 % SECTION 5: EXPERIMENTAL EVALUATION
@@ -413,7 +437,7 @@ The Hungarian algorithm guarantees optimal bipartite matching. Iterative applica
 
 \subsubsection{Implementation}
 
-Both algorithms are implemented in Python 3.9 using NumPy and SciPy~\cite{scipy2020}. The Hungarian algorithm uses \texttt{scipy.optimize.linear\_sum\_assignment}. All experiments run on an Intel Core i7 with 16GB RAM.
+Both algorithms are implemented in Python 3.11 using NumPy 1.26 and SciPy 1.11~\cite{scipy2020}. The ILA algorithm uses \texttt{scipy.optimize.linear\_sum\_assignment} (Jonker--Volgenant implementation). All experiments run single-threaded on an Apple M4 Pro with 16GB unified memory under macOS 15.0.
 
 \subsubsection{Scenario Generation}
 
@@ -444,10 +468,11 @@ Vehicle entry/exit points are uniformly distributed along the highway. Entry tim
 \subsubsection{Metrics}
 
 \begin{itemize}
-    \item \textbf{Total Saving}: Sum of saved distances across all assignments
-    \item \textbf{Matched Ratio}: Fraction of PVs receiving $\geq 1$ assignment
-    \item \textbf{Saving \%}: $\frac{\text{Total Saving}}{\text{Baseline Distance}} \times 100$
-    \item \textbf{Runtime}: Execution time in seconds
+    \item \textbf{Baseline Distance}: $\sum_{j=1}^{M} (x_j^p - e_j^p)$, the total distance all PVs would travel independently without any towing. This serves as the denominator for percentage calculations.
+    \item \textbf{Total Saving}: Sum of towed distances across all assignments, i.e., $\sum_{(p_j, a_i, s, e) \in \mathcal{X}} (e - s)$.
+    \item \textbf{Matched Ratio}: Fraction of PVs receiving at least one assignment.
+    \item \textbf{Saving \%}: $\frac{\text{Total Saving}}{\text{Baseline Distance}} \times 100$. Under the assumption of constant per-distance propulsion energy, this equals the percentage of PV propulsion energy eliminated.
+    \item \textbf{Runtime}: Wall-clock execution time in seconds.
 \end{itemize}
 
 \subsection{Results}
@@ -462,7 +487,7 @@ Table~\ref{tab:capacity} shows performance as AV capacity varies ($N=50$, $M=200
 \centering
 \begin{tabular}{c|ccc|ccc}
 \toprule
-& \multicolumn{3}{c|}{\textbf{Greedy}} & \multicolumn{3}{c}{\textbf{Hungarian}} \\
+& \multicolumn{3}{c|}{\textbf{Greedy}} & \multicolumn{3}{c}{\textbf{ILA}} \\
 $C$ & Save & \% & Time(s) & Save & \% & Time(s) \\
 \midrule
 $[1,2]$ & 1946 & 24.5 & 0.23 & 1974 & 24.8 & \textbf{0.02} \\
@@ -475,7 +500,7 @@ $[1,16]$ & 4091 & 51.4 & 0.45 & 4159 & 52.3 & \textbf{0.16} \\
 
 \textbf{Key Observations:}
 \begin{itemize}
-    \item Hungarian achieves 0.3--1.9\% higher savings while being 2.8--11.5$\times$ faster
+    \item ILA achieves 0.3--1.9\% higher savings while being 2.8--11.5$\times$ faster
     \item Both algorithms scale linearly with capacity
     \item Saving \% improves from 24.5\% to 52.3\% as capacity increases from 2 to 16
 \end{itemize}
@@ -490,7 +515,7 @@ Table~\ref{tab:length} shows performance as highway length varies ($N=80$, $M=40
 \centering
 \begin{tabular}{c|ccc|ccc}
 \toprule
-& \multicolumn{3}{c|}{\textbf{Greedy}} & \multicolumn{3}{c}{\textbf{Hungarian}} \\
+& \multicolumn{3}{c|}{\textbf{Greedy}} & \multicolumn{3}{c}{\textbf{ILA}} \\
 $L$ & Save & \% & Time(s) & Save & \% & Time(s) \\
 \midrule
 50 & 2996 & 31.4 & 1.98 & 3017 & 31.6 & \textbf{0.07} \\
@@ -506,46 +531,74 @@ $L$ & Save & \% & Time(s) & Save & \% & Time(s) \\
 \textbf{Key Observations:}
 \begin{itemize}
     \item Saving \% decreases with highway length (sparser vehicle overlap)
-    \item Hungarian is 5--28$\times$ faster across all lengths
+    \item ILA is 5--28$\times$ faster across all lengths
     \item Absolute savings increase but efficiency drops for longer highways
 \end{itemize}
 
 \subsubsection{Algorithm Comparison Visualization}
 
-Figure~\ref{fig:comparison} shows capacity sweep results graphically.
+Figures~\ref{fig:comparison} and~\ref{fig:length_saving} show performance comparisons graphically.
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.95\columnwidth]{../visualization/figures/comparison/plots/capacity/capacity_saving_percent_comparison.png}
-    \caption{Energy saving percentage vs. AV capacity for both algorithms. Hungarian consistently matches or exceeds Greedy while being faster.}
+    \caption{Distance saving percentage vs. AV capacity for both algorithms. ILA consistently matches or exceeds greedy while being faster.}
     \label{fig:comparison}
 \end{figure}
 
-\subsubsection{Scalability Analysis}
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\columnwidth]{../visualization/figures/comparison/plots/length/length_saving_percent_comparison.png}
+    \caption{Distance saving percentage vs. highway length. Both algorithms show decreasing efficiency as highways lengthen due to sparser vehicle overlap.}
+    \label{fig:length_saving}
+\end{figure}
 
-Figure~\ref{fig:runtime} shows runtime comparison across scenarios.
+\subsubsection{Scalability and Runtime Analysis}
+
+Figures~\ref{fig:runtime} and~\ref{fig:capacity_relative} show runtime comparisons across scenarios.
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.95\columnwidth]{../visualization/figures/comparison/plots/length/length_relative_performance.png}
-    \caption{Relative performance (Hungarian/Greedy) across highway lengths. Values $<$1 indicate Hungarian is faster and/or achieves higher savings.}
+    \caption{Relative performance (Optimal/Greedy) across highway lengths. Values $<$1 indicate ILA is faster and/or achieves higher savings.}
     \label{fig:runtime}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\columnwidth]{../visualization/figures/comparison/plots/capacity/capacity_relative_performance.png}
+    \caption{Relative performance across capacity values. ILA algorithm maintains consistent speedup (2.8--11.5$\times$) across all capacity settings.}
+    \label{fig:capacity_relative}
 \end{figure}
 
 \subsection{Discussion}
 
-\textbf{Why is Hungarian Faster?} Counter-intuitively, the Hungarian algorithm outperforms Greedy in runtime despite worse theoretical complexity. This is due to:
+\textbf{Why is Optimal Assignment Faster?} Counter-intuitively, ILA outperforms Greedy in runtime despite $O(n^3)$ per-iteration complexity. This is due to:
 \begin{enumerate}
-    \item \texttt{scipy.optimize.linear\_sum\_assignment} uses highly optimized C code
-    \item Greedy requires repeated sorting ($O(NM \log NM)$ per iteration)
-    \item Hungarian processes all assignments in batches via matrix operations
+    \item \texttt{scipy.optimize.linear\_sum\_assignment} uses highly optimized compiled C code with efficient memory access patterns
+    \item Greedy requires repeated sorting ($O(NM \log NM)$ per iteration) and candidate regeneration after each assignment
+    \item ILA processes all assignments in batches, amortizing overhead
 \end{enumerate}
 
-\textbf{Practical Implications:} The Hungarian algorithm is the clear choice---it provides both optimality and speed. Greedy remains useful as a baseline and for scenarios where scipy is unavailable.
+\textbf{Practical Implications:} ILA algorithm is the clear choice---it provides both per-iteration optimality and superior speed. Greedy remains useful as a baseline and for environments where SciPy is unavailable.
 
 \textbf{Capacity Impact:} Doubling capacity yields sub-linear improvement (24.8\% $\rightarrow$ 52.3\%), suggesting diminishing returns. Fleet operators should balance capacity costs against marginal savings.
 
 \textbf{Length Effect:} Saving percentage drops from 31.6\% (L=50) to 7.5\% (L=1600) as vehicles have less overlap on longer highways. This suggests our approach is most effective for medium-length corridors with high vehicle density.
+
+\subsection{Limitations}
+
+We explicitly acknowledge the following limitations:
+
+\textbf{One-Dimensional Simplification:} Our highway model abstracts away road network topology. Real deployments involve intersections, multiple routes, and lane-changing dynamics not captured here.
+
+\textbf{Distance-Based Energy Proxy:} We model energy savings as proportional to towed distance under the assumption of constant per-distance propulsion energy. A physics-based model would incorporate vehicle mass, rolling resistance, aerodynamic drag, and the additional load on the towing AV.
+
+\textbf{Global Optimality:} The iterative ILA does not guarantee global optimality for the multi-segment problem. Early assignments may preclude better global solutions.
+
+\textbf{Offline Setting:} Our formulation assumes complete knowledge of all vehicle trajectories. Real-time deployment requires online algorithms with incomplete information.
+
+These limitations define clear directions for future work while not diminishing the value of our contributions for the studied setting.
 
 %==============================================================================
 % SECTION 6: CONCLUSION AND FUTURE WORK
@@ -553,12 +606,12 @@ Figure~\ref{fig:runtime} shows runtime comparison across scenarios.
 \section{Conclusion}
 \label{sec:conclusion}
 
-We have presented a novel formulation for dynamic platoon formation in heterogeneous autonomous vehicle systems, where Passive Vehicles are physically towed by Active Vehicles to achieve substantial energy savings. Our one-dimensional model captures essential trade-offs---capacity constraints, multi-segment matching, and minimum distance requirements.
+We have presented a novel formulation for dynamic platoon formation in heterogeneous autonomous vehicle systems, where Passive Vehicles are physically towed by Active Vehicles to achieve substantial distance coverage (as a proxy for energy savings under constant per-distance propulsion). Our one-dimensional model captures essential trade-offs---point-wise capacity constraints, multi-segment matching, and minimum distance requirements.
 
-Two algorithms were proposed and compared: a Greedy baseline and an Enhanced Hungarian algorithm. Experiments on scenarios with up to 80 AVs and 400 PVs demonstrate:
+Two algorithms were proposed and compared: a Greedy baseline and an Iterative Linear Assignment (ILA) algorithm using the Jonker--Volgenant method. Experiments on scenarios with up to 80 AVs and 400 PVs demonstrate:
 \begin{itemize}
-    \item Both algorithms achieve 25--52\% energy savings depending on capacity
-    \item Hungarian is both optimal and 5--15$\times$ faster due to optimized implementations
+    \item Both algorithms achieve 25--52\% distance coverage savings depending on capacity
+    \item ILA is both per-iteration optimal and 5--15$\times$ faster due to optimized compiled implementations
     \item Multi-segment matching improves coverage by enabling PVs to use multiple AVs
 \end{itemize}
 
@@ -585,7 +638,7 @@ This extension connects to vehicle routing problems with synchronization constra
 \textbf{Decentralized Coordination:} Centralized matching has scalability limits. V2V-based protocols could enable:
 \begin{itemize}
     \item Local negotiation between nearby vehicles
-    \item Distributed consensus for platoon formation~\cite{ren2007information}
+    \item Distributed consensus for platoon formation~\cite{ren2005consensus}
     \item Privacy-preserving matching without central authority
 \end{itemize}
 
@@ -612,9 +665,7 @@ This extension connects to vehicle routing problems with synchronization constra
 
 \bibitem{bergenhem2012overview} C. Bergenhem, S. Shladover, E. Coelingh, C. Englund, and S. Tsugawa, ``Overview of platooning systems,'' in \textit{Proc. 19th ITS World Congress}, Vienna, Austria, 2012.
 
-\bibitem{shladover2015cooperative} S. E. Shladover, ``Cooperative (rather than autonomous) vehicle-highway automation systems,'' \textit{IEEE Intell. Transp. Syst. Mag.}, vol. 1, no. 1, pp. 10--19, 2009.
-
-\bibitem{alam2015heavy} A. Alam, A. Gattami, K. H. Johansson, and C. J. Tomlin, ``Guaranteeing safety for heavy duty vehicle platooning,'' in \textit{Proc. 3rd Int. Symp. on Future Active Safety Technology Toward Zero Traffic Accidents}, 2015.
+\bibitem{shladover2009cooperative} S. E. Shladover, ``Cooperative (rather than autonomous) vehicle-highway automation systems,'' \textit{IEEE Intell. Transp. Syst. Mag.}, vol. 1, no. 1, pp. 10--19, 2009.
 
 \bibitem{furuhata2013ridesharing} M. Furuhata, M. Dessouky, F. Ord\'{o}\~{n}ez, M.-E. Brunet, X. Wang, and S. Koenig, ``Ridesharing: The state-of-the-art and future directions,'' \textit{Transport. Res. Part B: Methodol.}, vol. 57, pp. 28--46, 2013.
 
@@ -640,8 +691,6 @@ This extension connects to vehicle routing problems with synchronization constra
 
 \bibitem{dresner2008multiagent} K. Dresner and P. Stone, ``A multiagent approach to autonomous intersection management,'' \textit{J. Artif. Intell. Res.}, vol. 31, pp. 591--656, 2008.
 
-\bibitem{wang2019cooperative} C. Wang, Q. Chen, H. Guo, and H. Xiong, ``Cooperative platoon formation of connected and autonomous vehicles,'' \textit{IEEE Trans. Intell. Transp. Syst.}, vol. 21, no. 12, pp. 5289--5301, 2020.
-
 \bibitem{fisher1978analysis} M. L. Fisher, G. L. Nemhauser, and L. A. Wolsey, ``An analysis of approximations for maximizing submodular set functions---II,'' \textit{Math. Programming Study}, vol. 8, pp. 73--87, 1978.
 
 \bibitem{scipy2020} P. Virtanen et al., ``SciPy 1.0: Fundamental algorithms for scientific computing in Python,'' \textit{Nature Methods}, vol. 17, pp. 261--272, 2020.
@@ -650,7 +699,7 @@ This extension connects to vehicle routing problems with synchronization constra
 
 \bibitem{karp1990optimal} R. M. Karp, U. V. Vazirani, and V. V. Vazirani, ``An optimal algorithm for on-line bipartite matching,'' in \textit{Proc. 22nd Ann. ACM Symp. Theory of Computing}, pp. 352--358, 1990.
 
-\bibitem{ren2007information} W. Ren and R. W. Beard, ``Consensus seeking in multiagent systems under dynamically changing interaction topologies,'' \textit{IEEE Trans. Autom. Control}, vol. 50, no. 5, pp. 655--661, 2005.
+\bibitem{ren2005consensus} W. Ren and R. W. Beard, ``Consensus seeking in multiagent systems under dynamically changing interaction topologies,'' \textit{IEEE Trans. Autom. Control}, vol. 50, no. 5, pp. 655--661, 2005.
 \end{thebibliography}
 
 \end{document}

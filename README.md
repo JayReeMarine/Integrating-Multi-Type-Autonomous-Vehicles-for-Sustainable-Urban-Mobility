@@ -257,11 +257,3 @@ If you use this code in your research, please cite:
   year={2024}
 }
 ```
-
-## License
-
-[Add your license here]
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.

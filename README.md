@@ -13,6 +13,25 @@ This research introduces a novel concept of **active and passive autonomous vehi
 - **Efficient Algorithms**: Both centralized (optimal) and greedy (near-optimal) solutions for vehicle matching
 - **Experimental Framework**: Extensive parameter sweep experiments with visualization tools
 
+## Quick Start
+
+```bash
+# 1. Clone and setup
+git clone https://github.com/JayReeMarine/Integrating-Multi-Type-Autonomous-Vehicles-for-Sustainable-Urban-Mobility.git
+cd Integrating-Multi-Type-Autonomous-Vehicles-for-Sustainable-Urban-Mobility
+
+# 2. Create virtual environment and install dependencies
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+# 3. Run all experiments
+python3 -m experiments.main
+
+# 4. Generate visualization graphs
+python3 -m visualization.plot_all
+```
+
 ## Project Structure
 
 ```
@@ -64,20 +83,21 @@ This research introduces a novel concept of **active and passive autonomous vehi
 
 ### Prerequisites
 
-- Python 3.8 or higher
+- Python 3.8 or higher (tested with Python 3.14)
 - pip (Python package manager)
+- LaTeX distribution with `latexmk` (optional, for paper compilation)
 
 ### Setup
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/Integrating-Multi-Type-Autonomous-Vehicles-for-Sustainable-Urban-Mobility.git
+   git clone https://github.com/JayReeMarine/Integrating-Multi-Type-Autonomous-Vehicles-for-Sustainable-Urban-Mobility.git
    cd Integrating-Multi-Type-Autonomous-Vehicles-for-Sustainable-Urban-Mobility
    ```
 
 2. **Create and activate a virtual environment**
    ```bash
-   python -m venv venv
+   python3 -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
 
@@ -86,6 +106,13 @@ This research introduces a novel concept of **active and passive autonomous vehi
    pip install -r requirements.txt
    ```
 
+4. **Verify installation**
+   ```bash
+   python3 -c "import pandas, numpy, matplotlib, scipy; print('All dependencies installed!')"
+   ```
+
+> **Note for macOS users**: Use `python3` instead of `python` for all commands.
+
 ## Usage
 
 ### Running All Experiments
@@ -93,7 +120,7 @@ This research introduces a novel concept of **active and passive autonomous vehi
 To run the complete experiment suite (both Greedy and Hungarian algorithms with all parameter sweeps):
 
 ```bash
-python -m experiments.main
+python3 -m experiments.main
 ```
 
 This will execute:
@@ -109,14 +136,14 @@ Run specific experiment sweeps:
 
 ```bash
 # Greedy algorithm experiments
-python -m experiments.run_greedy_pv_av_sweep
-python -m experiments.run_greedy_length_sweep
-python -m experiments.run_greedy_capacity_sweep
+python3 -m experiments.run_greedy_pv_av_sweep
+python3 -m experiments.run_greedy_length_sweep
+python3 -m experiments.run_greedy_capacity_sweep
 
 # Hungarian algorithm experiments
-python -m experiments.run_hungarian_pv_av_sweep
-python -m experiments.run_hungarian_length_sweep
-python -m experiments.run_hungarian_capacity_sweep
+python3 -m experiments.run_hungarian_pv_av_sweep
+python3 -m experiments.run_hungarian_length_sweep
+python3 -m experiments.run_hungarian_capacity_sweep
 ```
 
 ### Generating Visualizations
@@ -124,7 +151,7 @@ python -m experiments.run_hungarian_capacity_sweep
 After running experiments, generate all plots and comparison analysis:
 
 ```bash
-python -m visualization.plot_all
+python3 -m visualization.plot_all
 ```
 
 This generates:
@@ -238,6 +265,8 @@ latexmk -pdf conference_101719.tex
 
 The compiled PDF will be generated as `conference_101719.pdf`.
 
+> **Note**: If you see "Nothing to do" or "All targets are up-to-date", this means the PDF already exists and is current - this is not an error!
+
 ## Dependencies
 
 - `pandas>=1.5.0` - Data manipulation and CSV handling
@@ -257,3 +286,11 @@ If you use this code in your research, please cite:
   year={2024}
 }
 ```
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.

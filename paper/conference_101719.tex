@@ -244,71 +244,122 @@ The first term in~\eqref{eq:state_time} accounts for independent driving from $\
 \subsection{Illustrative Example}
 \label{sec:toyexample}
 
-Figure~\ref{fig:toyexample} illustrates a concrete instance with 2 AVs and 3 PVs on a highway of length $L = 100$.
+Figure~\ref{fig:toyexample} illustrates a concrete instance with 2 AVs and 3 PVs on a highway of length $L = 100$, including temporal parameters.
 
-\begin{figure}[htbp]
+\begin{figure*}[htbp]
 \centering
-\begin{tikzpicture}[scale=0.065, >=Stealth]
+\begin{subfigure}[b]{0.48\textwidth}
+\centering
+\begin{tikzpicture}[scale=0.058, >=Stealth]
     % Highway
     \draw[very thick, ->] (0,0) -- (105,0);
-    \node[below] at (0,0) {$0$};
-    \node[below] at (50,0) {$50$};
-    \node[below] at (100,0) {$100$};
-    \node[right] at (105,0) {$L$};
-
+    \node[below, font=\footnotesize] at (0,0) {$0$};
+    \node[below, font=\footnotesize] at (50,0) {$50$};
+    \node[below, font=\footnotesize] at (100,0) {$100$};
+    \node[right, font=\footnotesize] at (105,0) {$x$};
     % Tick marks
     \foreach \x in {0,10,20,30,40,50,60,70,80,90,100} {
-        \draw (\x,-1) -- (\x,1);
+        \draw (\x,-1.2) -- (\x,1.2);
     }
-
-    % AV1: entry=10, exit=70, capacity=2
-    \draw[ultra thick, blue] (10,15) -- (70,15);
-    \fill[blue] (10,15) circle (1.5);
-    \fill[blue] (70,15) circle (1.5);
-    \node[left, blue] at (8,15) {$a_1$};
-    \node[above, blue, font=\scriptsize] at (40,16) {$C_1=2$};
-
-    % AV2: entry=50, exit=95, capacity=2
-    \draw[ultra thick, red] (50,20) -- (95,20);
-    \fill[red] (50,20) circle (1.5);
-    \fill[red] (95,20) circle (1.5);
-    \node[left, red] at (48,20) {$a_2$};
-    \node[above, red, font=\scriptsize] at (72.5,21) {$C_2=2$};
-
-    % PV1: entry=15, exit=60
-    \draw[thick, green!60!black, dashed] (15,8) -- (60,8);
-    \fill[green!60!black] (15,8) circle (1.2);
-    \fill[green!60!black] (60,8) circle (1.2);
-    \node[left, green!60!black] at (13,8) {$p_1$};
-
-    % PV2: entry=20, exit=90
-    \draw[thick, orange, dashed] (20,5) -- (90,5);
-    \fill[orange] (20,5) circle (1.2);
-    \fill[orange] (90,5) circle (1.2);
-    \node[left, orange] at (18,5) {$p_2$};
-
-    % PV3: entry=55, exit=85
-    \draw[thick, purple, dashed] (55,2) -- (85,2);
-    \fill[purple] (55,2) circle (1.2);
-    \fill[purple] (85,2) circle (1.2);
-    \node[left, purple] at (53,2) {$p_3$};
-
-    % Shared segments highlighted
-    \draw[ultra thick, green!60!black] (15,8) -- (60,8);
-
-    % Legend
-    \node[right, font=\scriptsize] at (0,-8) {AVs: $a_1$=[10,70], $a_2$=[50,95]};
-    \node[right, font=\scriptsize] at (0,-12) {PVs: $p_1$=[15,60], $p_2$=[20,90], $p_3$=[55,85]};
-
+    % AV1: [10,70], C=2, t=0, v=2
+    \draw[ultra thick, blue] (10,20) -- (70,20);
+    \fill[blue] (10,20) circle (2);
+    \fill[blue] (70,20) circle (2);
+    \node[left, blue, font=\footnotesize] at (8,20) {$a_1$};
+    \node[above, blue, font=\tiny] at (40,21.5) {$C_1\!=\!2,\; t_1^a\!=\!0,\; v_1^a\!=\!2$};
+    % AV2: [50,95], C=2, t=38, v=2
+    \draw[ultra thick, red!70!black] (50,26) -- (95,26);
+    \fill[red!70!black] (50,26) circle (2);
+    \fill[red!70!black] (95,26) circle (2);
+    \node[left, red!70!black, font=\footnotesize] at (48,26) {$a_2$};
+    \node[above, red!70!black, font=\tiny] at (72.5,27.5) {$C_2\!=\!2,\; t_2^a\!=\!22,\; v_2^a\!=\!2$};
+    % PV1: [15,60], t=1, v=1.5
+    \draw[thick, green!60!black, dashed] (15,11) -- (60,11);
+    \fill[green!60!black] (15,11) circle (1.8);
+    \fill[green!60!black] (60,11) circle (1.8);
+    \node[left, green!60!black, font=\footnotesize] at (13,11) {$p_1$};
+    \node[below, green!60!black, font=\tiny] at (37.5,9.5) {$t_1^p\!=\!1,\; v_1^p\!=\!1.5$};
+    % PV2: [20,90], t=5, v=1.5
+    \draw[thick, orange, dashed] (20,6) -- (90,6);
+    \fill[orange] (20,6) circle (1.8);
+    \fill[orange] (90,6) circle (1.8);
+    \node[left, orange, font=\footnotesize] at (18,6) {$p_2$};
+    \node[below, orange, font=\tiny] at (55,4.5) {$t_2^p\!=\!5,\; v_2^p\!=\!1.5$};
+    % PV3: [55,85], t=50, v=1.5
+    \draw[thick, purple, dashed] (55,1) -- (85,1);
+    \fill[purple] (55,1) circle (1.8);
+    \fill[purple] (85,1) circle (1.8);
+    \node[left, purple, font=\footnotesize] at (53,1) {$p_3$};
+    \node[below, purple, font=\tiny] at (70,-0.5) {$t_3^p\!=\!50,\; v_3^p\!=\!1.5$};
 \end{tikzpicture}
-\caption{Toy example with 2 AVs and 3 PVs. Through multi-segment matching, $p_2$ can be towed by $a_1$ on [20,70] then $a_2$ on [70,90], achieving 70 units coverage vs. 50 with single-AV matching.}
+\caption{Problem instance: vehicle routes with entry/exit points, capacity, entry time, and speed.}
+\label{fig:toysetup}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.48\textwidth}
+\centering
+\begin{tikzpicture}[scale=0.058, >=Stealth]
+    % Highway
+    \draw[very thick, ->] (0,0) -- (105,0);
+    \node[below, font=\footnotesize] at (0,0) {$0$};
+    \node[below, font=\footnotesize] at (50,0) {$50$};
+    \node[below, font=\footnotesize] at (100,0) {$100$};
+    \node[right, font=\footnotesize] at (105,0) {$x$};
+    \foreach \x in {0,10,20,30,40,50,60,70,80,90,100} {
+        \draw (\x,-1.2) -- (\x,1.2);
+    }
+    % AV routes (faded background)
+    \draw[thick, blue!30] (10,20) -- (70,20);
+    \draw[thick, red!30] (50,26) -- (95,26);
+    % p1 -> a1 on [15,60]: TOWED (solid green)
+    \draw[ultra thick, green!60!black] (15,11) -- (60,11);
+    \fill[green!60!black] (15,11) circle (2);
+    \fill[green!60!black] (60,11) circle (2);
+    \node[left, green!60!black, font=\footnotesize] at (13,11) {$p_1$};
+    \node[above, green!60!black, font=\tiny] at (37.5,12.5) {towed by $a_1$: saving $= 45$};
+    % Time check annotation for p1
+    \node[right, font=\tiny, text=green!40!black] at (61,11) {$|2.5\!-\!1|\!=\!1.5 \leq \tau$};
+    % p2 -> a1 on [20,70] then a2 on [70,90]: MULTI-SEGMENT
+    \draw[ultra thick, blue!70] (20,6) -- (70,6);
+    \node[above, font=\tiny, text=blue!70] at (45,7.5) {towed by $a_1$: saving $= 50$};
+    \draw[ultra thick, red!70!black] (70,6) -- (90,6);
+    \node[above, font=\tiny, text=red!70!black] at (82,7.5) {$a_2$: $20$};
+    \fill[orange] (20,6) circle (2);
+    \fill[orange] (90,6) circle (2);
+    \node[left, orange, font=\footnotesize] at (18,6) {$p_2$};
+    % Segment boundary marker
+    \draw[thick, dashed, gray] (70,4) -- (70,9);
+    \node[below, font=\tiny, gray] at (70,3.5) {handoff};
+    % p3: UNMATCHED (time infeasible)
+    \draw[thick, purple, dashed] (55,1) -- (85,1);
+    \fill[purple] (55,1) circle (1.8);
+    \fill[purple] (85,1) circle (1.8);
+    \node[left, purple, font=\footnotesize] at (53,1) {$p_3$};
+    \node[right, font=\tiny, text=red] at (86,1) {unmatched};
+    \node[right, font=\tiny, text=red!70!black] at (86,-1) {$|t^a\!-\!t^p|\!>\!\tau$};
+    % Legend box
+    \draw[rounded corners, fill=white, draw=gray, thin] (2,16) rectangle (48,28);
+    \node[right, font=\tiny] at (3,26) {--- Towed segment (energy saved)};
+    \draw[ultra thick, blue!70] (4,26) -- (14,26);
+    \node[right, font=\tiny] at (3,22.5) {- - Uncovered (self-driving)};
+    \draw[thick, purple, dashed] (4,22.5) -- (14,22.5);
+    \node[right, font=\tiny] at (3,19) {Total: $p_1$: 45, $p_2$: 70, $p_3$: 0};
+\end{tikzpicture}
+\caption{Matching result: $p_1 \to a_1$ (45 units), $p_2 \to a_1$ then $a_2$ via multi-segment (70 units), $p_3$ unmatched due to time infeasibility.}
+\label{fig:toymatch}
+\end{subfigure}
+\caption{Illustrative example ($L=100$, $\tau=5$) with 2 AVs and 3 PVs. (a)~Problem setup with temporal parameters. (b)~Matching result: multi-segment matching yields $p_2$ coverage of 70 units (vs.\ 50 with single-AV), while $p_3$ remains unmatched because $|t_i^a(cp) - t_3^p(cp)| > \tau$ for both AVs.}
 \label{fig:toyexample}
-\end{figure}
+\end{figure*}
 
-\textbf{Example Analysis:}
+\textbf{Example Analysis:} Vehicle parameters are listed in Fig.~\ref{fig:toysetup}. All speeds and times use consistent units. With $\tau = 5$:
 \begin{itemize}
-    \item \textbf{Shared distances:} $d_{11} = 45$, $d_{12} = 50$, $d_{22} = 40$, $d_{23} = 30$.
-    \item \textbf{Multi-segment benefit:} PV $p_2$ covers 70 units via two AVs vs. 50 units with single-AV.
+    \item \textbf{Time feasibility:} $p_1 \to a_1$: AV arrives at $cp\!=\!15$ at time $0 + (15\!-\!10)/2 = 2.5$; PV arrives at $1 + (15\!-\!15)/1.5 = 1$; $|2.5 - 1| = 1.5 \leq \tau$~\checkmark.
+    $p_2 \to a_1$: $|5 - 5| = 0 \leq \tau$~\checkmark.
+    $p_3 \to a_1$: $|22.5 - 50| = 27.5 > \tau$~($\times$).
+    $p_3 \to a_2$: $|24.5 - 50| = 25.5 > \tau$~($\times$). Thus $p_3$ is \textit{unmatched} due to time infeasibility.
+    \item \textbf{Multi-segment state update for $p_2$:} After $a_1$ tows $p_2$ on $[20,70]$: state updates to $\ell_2 = 70$, $\hat{t}_2 = 5 + 0/1.5 + 50/2 = 30$ via~\eqref{eq:state_time}. For the second segment, $p_2$ at $cp\!=\!70$: $t = 30$; $a_2$ at 70: $22 + 20/2 = 32$; $|32 - 30| = 2 \leq \tau$~\checkmark. Towed on $[70,90]$, saving 20 additional units.
+    \item \textbf{Coverage:} $p_1$: 45/45 (100\%), $p_2$: 70/70 (100\% via two AVs), $p_3$: 0/30 (0\%). Total saving: 115 out of 145 baseline distance (79.3\%).
 \end{itemize}
 
 %==============================================================================
@@ -563,9 +614,20 @@ $L$ & Save & \% & Time(s) & Save & \% & Time(s) \\
     \item Absolute savings increase but efficiency drops for longer highways
 \end{itemize}
 
+\subsubsection{Baseline Distance Comparison}
+
+Figure~\ref{fig:baseline} shows the total PV distance under three conditions: (1)~\textit{Baseline}---no towing, every PV drives independently; (2)~\textit{After Greedy}---remaining distance after greedy matching; (3)~\textit{After ILA}---remaining distance after ILA matching. The gap between Baseline and the optimized bars directly visualizes the energy eliminated by towing.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\columnwidth]{figures/capacity_baseline_comparison.png}
+    \caption{Total PV distance: Baseline (no towing) vs.\ after Greedy vs.\ after ILA across AV capacity values. The difference between Baseline and each algorithm represents total distance saved (proportional to PV propulsion energy eliminated).}
+    \label{fig:baseline}
+\end{figure}
+
 \subsubsection{Algorithm Comparison Visualization}
 
-Figures~\ref{fig:comparison} and~\ref{fig:length_saving} show performance comparisons graphically.
+Figures~\ref{fig:comparison} and~\ref{fig:length_saving} show saving percentage comparisons graphically.
 
 \begin{figure}[htbp]
     \centering

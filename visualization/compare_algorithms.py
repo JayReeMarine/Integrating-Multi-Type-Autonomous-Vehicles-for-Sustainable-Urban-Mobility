@@ -25,6 +25,33 @@ import matplotlib.pyplot as plt
 from typing import Dict, List, Tuple, Optional
 
 # ============================================================================
+# IEEE-Quality Figure Configuration
+# ============================================================================
+
+# Set global matplotlib parameters for IEEE paper quality
+plt.rcParams.update({
+    'font.family': 'serif',
+    'font.serif': ['Times New Roman', 'Times', 'DejaVu Serif'],
+    'font.size': 14,
+    'axes.titlesize': 16,
+    'axes.labelsize': 15,
+    'xtick.labelsize': 13,
+    'ytick.labelsize': 13,
+    'legend.fontsize': 13,
+    'figure.dpi': 300,
+    'savefig.dpi': 300,
+    'savefig.bbox': 'tight',
+    'lines.linewidth': 2.5,
+    'lines.markersize': 10,
+    'axes.linewidth': 1.2,
+    'grid.linewidth': 0.8,
+    'xtick.major.width': 1.0,
+    'ytick.major.width': 1.0,
+    'xtick.major.size': 5,
+    'ytick.major.size': 5,
+})
+
+# ============================================================================
 # Configuration
 # ============================================================================
 
@@ -500,12 +527,12 @@ def plot_comparison_bar_chart(
     title: str,
     output_path: Path
 ) -> None:
-    """Create a grouped bar chart comparing Greedy vs Hungarian."""
+    """Create a grouped bar chart comparing Greedy vs ILA (IEEE quality)."""
 
     if df.empty:
         return
 
-    fig, ax = plt.subplots(figsize=(10, 6))
+    fig, ax = plt.subplots(figsize=(8, 5.5))
 
     x = np.arange(len(df))
     width = 0.35
@@ -513,20 +540,27 @@ def plot_comparison_bar_chart(
     greedy_vals = df[f"{metric}_greedy"].values
     hungarian_vals = df[f"{metric}_hungarian"].values
 
-    bars1 = ax.bar(x - width/2, greedy_vals, width, label='Greedy', color='#2ecc71')
-    bars2 = ax.bar(x + width/2, hungarian_vals, width, label='Hungarian', color='#3498db')
+    bars1 = ax.bar(x - width/2, greedy_vals, width, label='Greedy',
+                   color='#2ecc71', edgecolor='black', linewidth=0.8)
+    bars2 = ax.bar(x + width/2, hungarian_vals, width, label='ILA',
+                   color='#3498db', edgecolor='black', linewidth=0.8)
 
-    ax.set_xlabel(x_col)
+    # IEEE-friendly axis labels
+    x_labels_map = {
+        "capacity_max": "AV Capacity ($C_{max}$)",
+        "highway_length": "Highway Length ($L$)",
+    }
+    ax.set_xlabel(x_labels_map.get(x_col, x_col))
     ax.set_ylabel(METRIC_LABELS.get(metric, metric))
     ax.set_title(title)
     ax.set_xticks(x)
     ax.set_xticklabels([str(int(v)) for v in df[x_col].values])
-    ax.legend()
-    ax.grid(True, alpha=0.3)
+    ax.legend(framealpha=0.9, edgecolor='gray')
+    ax.grid(True, alpha=0.3, axis='y')
 
     plt.tight_layout()
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    plt.savefig(output_path, dpi=150)
+    plt.savefig(output_path)
     plt.close()
     print(f"Saved: {output_path}")
 
@@ -538,39 +572,126 @@ def plot_relative_performance(
     title: str,
     output_path: Path
 ) -> None:
-    """Plot relative performance (Greedy/Hungarian * 100) for multiple metrics."""
+    """Plot relative performance (Greedy/ILA * 100) for multiple metrics (IEEE quality)."""
 
     if df.empty:
         return
 
-    fig, ax = plt.subplots(figsize=(12, 6))
+    fig, ax = plt.subplots(figsize=(8, 5.5))
 
     x = df[x_col].values
+    markers = ['o', 's', '^', 'D']
 
-    for metric in metrics:
+    for i, metric in enumerate(metrics):
         rel_col = f"{metric}_relative"
         if rel_col in df.columns:
             label = METRIC_LABELS.get(metric, metric)
-            ax.plot(x, df[rel_col].values, marker='o', label=label)
+            ax.plot(x, df[rel_col].values, marker=markers[i % len(markers)],
+                    label=label, linewidth=2.5, markersize=10)
 
     # Add baseline at 100%
-    ax.axhline(y=100, color='red', linestyle='--', label='Baseline (100%)')
+    ax.axhline(y=100, color='red', linestyle='--', linewidth=2.0,
+               label='ILA Baseline (100%)')
 
-    ax.set_xlabel(x_col)
+    x_labels_map = {
+        "capacity_max": "AV Capacity ($C_{max}$)",
+        "highway_length": "Highway Length ($L$)",
+    }
+    ax.set_xlabel(x_labels_map.get(x_col, x_col))
     ax.set_ylabel('Relative Performance (%)')
     ax.set_title(title)
-    ax.legend(loc='best')
+    ax.legend(loc='best', framealpha=0.9, edgecolor='gray')
     ax.grid(True, alpha=0.3)
 
     plt.tight_layout()
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    plt.savefig(output_path, dpi=150)
+    plt.savefig(output_path)
     plt.close()
     print(f"Saved: {output_path}")
 
 
-def generate_all_plots(comparisons: Dict[str, pd.DataFrame]) -> None:
-    """Generate all comparison plots."""
+def plot_baseline_comparison(
+    greedy_data: Dict[str, pd.DataFrame],
+    hungarian_data: Dict[str, pd.DataFrame],
+    scenario: str,
+    group_col: str,
+    title: str,
+    output_path: Path
+) -> None:
+    """Plot Baseline vs Greedy vs ILA total distance comparison (IEEE quality).
+
+    Shows the total distance PVs travel: baseline (no towing) vs after
+    Greedy optimization vs after ILA optimization.
+    """
+
+    greedy_df = greedy_data.get(scenario, pd.DataFrame())
+    hungarian_df = hungarian_data.get(scenario, pd.DataFrame())
+
+    if greedy_df.empty or hungarian_df.empty:
+        print(f"No data for baseline comparison ({scenario})")
+        return
+
+    # Filter to the scenario type and aggregate
+    greedy_scenario = greedy_df[greedy_df["scenario_type"] == scenario].copy()
+    hungarian_scenario = hungarian_df[hungarian_df["scenario_type"] == scenario].copy()
+
+    if greedy_scenario.empty or hungarian_scenario.empty:
+        return
+
+    # Aggregate: mean across seeds
+    g_agg = greedy_scenario.groupby(group_col, as_index=False).agg({
+        "baseline_total_distance": "mean",
+        "total_saving": "mean",
+    })
+    h_agg = hungarian_scenario.groupby(group_col, as_index=False).agg({
+        "baseline_total_distance": "mean",
+        "total_saving": "mean",
+    })
+
+    # Merge
+    merged = pd.merge(g_agg, h_agg, on=group_col, suffixes=("_greedy", "_hungarian"))
+
+    fig, ax = plt.subplots(figsize=(8, 5.5))
+
+    x = np.arange(len(merged))
+    width = 0.25
+
+    baseline_vals = merged["baseline_total_distance_greedy"].values
+    greedy_remaining = baseline_vals - merged["total_saving_greedy"].values
+    ila_remaining = baseline_vals - merged["total_saving_hungarian"].values
+
+    ax.bar(x - width, baseline_vals, width, label='Baseline (No Towing)',
+           color='#e74c3c', edgecolor='black', linewidth=0.8)
+    ax.bar(x, greedy_remaining, width, label='After Greedy',
+           color='#2ecc71', edgecolor='black', linewidth=0.8)
+    ax.bar(x + width, ila_remaining, width, label='After ILA',
+           color='#3498db', edgecolor='black', linewidth=0.8)
+
+    x_labels_map = {
+        "capacity_max": "AV Capacity ($C_{max}$)",
+        "highway_length": "Highway Length ($L$)",
+    }
+    ax.set_xlabel(x_labels_map.get(group_col, group_col))
+    ax.set_ylabel('Total PV Distance (units)')
+    ax.set_title(title)
+    ax.set_xticks(x)
+    ax.set_xticklabels([str(int(v)) for v in merged[group_col].values])
+    ax.legend(framealpha=0.9, edgecolor='gray')
+    ax.grid(True, alpha=0.3, axis='y')
+
+    plt.tight_layout()
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    plt.savefig(output_path)
+    plt.close()
+    print(f"Saved: {output_path}")
+
+
+def generate_all_plots(
+    comparisons: Dict[str, pd.DataFrame],
+    greedy_data: Optional[Dict[str, pd.DataFrame]] = None,
+    hungarian_data: Optional[Dict[str, pd.DataFrame]] = None,
+) -> None:
+    """Generate all comparison plots (IEEE quality)."""
 
     # Capacity sweep plots
     if "capacity_sweep" in comparisons and not comparisons["capacity_sweep"].empty:
@@ -588,7 +709,7 @@ def generate_all_plots(comparisons: Dict[str, pd.DataFrame]) -> None:
         plot_relative_performance(
             df, "capacity_max",
             ["total_saving", "matched_ratio", "saving_percent"],
-            "Capacity Sweep: Relative Performance (Greedy vs Hungarian)",
+            "Capacity Sweep: Greedy / ILA Ratio",
             PLOT_OUTPUT_DIR / "capacity" / "capacity_relative_performance.png"
         )
 
@@ -606,8 +727,23 @@ def generate_all_plots(comparisons: Dict[str, pd.DataFrame]) -> None:
         plot_relative_performance(
             df, "highway_length",
             ["total_saving", "matched_ratio", "saving_percent"],
-            "Length Sweep: Relative Performance (Greedy vs Hungarian)",
+            "Length Sweep: Greedy / ILA Ratio",
             PLOT_OUTPUT_DIR / "length" / "length_relative_performance.png"
+        )
+
+    # Baseline comparison plots (Baseline vs Greedy vs ILA)
+    if greedy_data is not None and hungarian_data is not None:
+        plot_baseline_comparison(
+            greedy_data, hungarian_data,
+            "capacity_sweep", "capacity_max",
+            "Baseline vs Greedy vs ILA: Capacity Sweep",
+            PLOT_OUTPUT_DIR / "capacity" / "capacity_baseline_comparison.png"
+        )
+        plot_baseline_comparison(
+            greedy_data, hungarian_data,
+            "length_sweep", "highway_length",
+            "Baseline vs Greedy vs ILA: Length Sweep",
+            PLOT_OUTPUT_DIR / "length" / "length_baseline_comparison.png"
         )
 
 
@@ -642,7 +778,7 @@ def main() -> None:
 
     # Generate plots
     print("[4/4] Generating comparison plots...")
-    generate_all_plots(comparisons)
+    generate_all_plots(comparisons, greedy_data, hungarian_data)
 
     print()
     print("=" * 60)

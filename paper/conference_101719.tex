@@ -58,7 +58,7 @@ autonomous vehicles, vehicle platooning, energy efficiency, linear assignment, J
 \section{Introduction}
 
 % Paragraph 1: High-level motivation (world problem + statistics)
-The persistent over-reliance on single-occupancy vehicles poses significant challenges to urban transportation sustainability. According to the U.S. Department of Transportation's National Household Travel Survey, drive-alone trips account for the vast majority of commute travel, contributing substantially to traffic congestion, energy consumption, and carbon emissions~\cite{usdot2022}. The transportation sector alone is responsible for nearly 29\% of total greenhouse gas emissions in the United States, with light-duty vehicles contributing the largest share~\cite{epa2023}. This inefficiency is particularly pronounced along shared routes where multiple individuals travel similar paths yet operate their vehicles independently.
+The persistent over-reliance on single-occupancy vehicles poses significant challenges to urban transportation sustainability. According to the U.S. Department of Transportation's National Household Travel Survey, drive-alone trips account for the vast majority of commute travel, contributing substantially to traffic congestion, energy consumption, and carbon emissions~\cite{usdot2024}. The transportation sector alone is responsible for nearly 29\% of total greenhouse gas emissions in the United States, with light-duty vehicles contributing the largest share~\cite{epa2023}. This inefficiency is particularly pronounced along shared routes where multiple individuals travel similar paths yet operate their vehicles independently.
 
 % Paragraph 2: Problem and idea (platooning/cooperation concept)
 Autonomous vehicle (AV) technology presents a transformative opportunity to address these challenges through coordinated vehicle operation. This paper introduces a novel concept of \textit{active} and \textit{passive} autonomous vehicles, where smaller Passive Vehicles (PVs) can temporarily attach to larger Active Vehicles (AVs) during shared highway segments. Unlike traditional vehicle platooning that maintains physical separation between vehicles, our approach enables physical coupling where a PV's propulsion system is deactivated while being towed, eliminating propulsion energy consumption for the towed vehicle during attached segments. In our model, we abstract energy savings as proportional to distance covered while towed; extending to physics-based energy models incorporating rolling resistance and aerodynamic drag is left for future work. This paradigm shifts transportation from isolated driving to an on-demand, energy-transfer-based mobility service.
@@ -252,9 +252,10 @@ Figure~\ref{fig:toyexample} illustrates a concrete instance with 2 AVs and 3 PVs
 
 \begin{figure*}[htbp]
 \centering
-\begin{subfigure}[b]{0.48\textwidth}
+\begin{subfigure}[t]{0.49\textwidth}
 \centering
-\begin{tikzpicture}[scale=0.07, >=Stealth]
+\resizebox{0.98\linewidth}{!}{%
+\begin{tikzpicture}[x=0.07cm,y=0.085cm, >=Stealth]
     % Highway
     \draw[very thick, ->] (0,0) -- (105,0);
     \node[below, font=\footnotesize] at (0,-1) {$0$};
@@ -266,43 +267,45 @@ Figure~\ref{fig:toyexample} illustrates a concrete instance with 2 AVs and 3 PVs
         \draw (\x,-1) -- (\x,1);
     }
     % PV3: [55,85], t=50, v=1.5
-    \draw[thick, purple, dashed] (55,6) -- (85,6);
-    \fill[purple] (55,6) circle (1.5);
-    \fill[purple] (85,6) circle (1.5);
-    \node[left, purple, font=\small] at (53,6) {$p_3$};
-    \node[below, purple, font=\scriptsize] at (70,4) {$t_3^p\!=\!50,\; v_3^p\!=\!1.5$};
+    \draw[thick, purple, dashed] (55,6.5) -- (85,6.5);
+    \fill[purple] (55,6.5) circle (1.5);
+    \fill[purple] (85,6.5) circle (1.5);
+    \node[left, purple, font=\small] at (53,6.5) {$p_3$};
+    \node[below, purple, font=\scriptsize] at (70,4.1) {$t_3^p\!=\!50,\; v_3^p\!=\!1.5$};
     % PV2: [20,90], t=5, v=1.5
-    \draw[thick, orange, dashed] (20,15) -- (90,15);
-    \fill[orange] (20,15) circle (1.5);
-    \fill[orange] (90,15) circle (1.5);
-    \node[left, orange, font=\small] at (18,15) {$p_2$};
-    \node[below, orange, font=\scriptsize] at (55,13) {$t_2^p\!=\!5,\; v_2^p\!=\!1.5$};
+    \draw[thick, orange, dashed] (20,15.5) -- (90,15.5);
+    \fill[orange] (20,15.5) circle (1.5);
+    \fill[orange] (90,15.5) circle (1.5);
+    \node[left, orange, font=\small] at (18,15.5) {$p_2$};
+    \node[below, orange, font=\scriptsize] at (55,13.2) {$t_2^p\!=\!5,\; v_2^p\!=\!1.5$};
     % PV1: [15,60], t=1, v=1.5
-    \draw[thick, green!60!black, dashed] (15,24) -- (60,24);
-    \fill[green!60!black] (15,24) circle (1.5);
-    \fill[green!60!black] (60,24) circle (1.5);
-    \node[left, green!60!black, font=\small] at (13,24) {$p_1$};
-    \node[below, green!60!black, font=\scriptsize] at (37.5,22) {$t_1^p\!=\!1,\; v_1^p\!=\!1.5$};
+    \draw[thick, green!60!black, dashed] (15,23) -- (60,23);
+    \fill[green!60!black] (15,23) circle (1.5);
+    \fill[green!60!black] (60,23) circle (1.5);
+    \node[left, green!60!black, font=\small] at (13,23) {$p_1$};
+    \node[below, green!60!black, font=\scriptsize] at (37.5,20.7) {$t_1^p\!=\!1,\; v_1^p\!=\!1.5$};
     % AV1: [10,70], C=2, t=0, v=2
-    \draw[ultra thick, blue] (10,34) -- (70,34);
-    \fill[blue] (10,34) circle (1.8);
-    \fill[blue] (70,34) circle (1.8);
-    \node[left, blue, font=\small] at (8,34) {$a_1$};
-    \node[above, blue, font=\scriptsize] at (40,36) {$C_1\!=\!2,\; t_1^a\!=\!0,\; v_1^a\!=\!2$};
+    \draw[ultra thick, blue] (10,31) -- (70,31);
+    \fill[blue] (10,31) circle (1.8);
+    \fill[blue] (70,31) circle (1.8);
+    \node[left, blue, font=\small] at (8,31) {$a_1$};
+    \node[above, blue, font=\scriptsize] at (33,33.8) {$C_1\!=\!2,\; t_1^a\!=\!0,\; v_1^a\!=\!2$};
     % AV2: [50,95], C=2, t=22, v=2
-    \draw[ultra thick, red!70!black] (50,43) -- (95,43);
-    \fill[red!70!black] (50,43) circle (1.8);
-    \fill[red!70!black] (95,43) circle (1.8);
-    \node[left, red!70!black, font=\small] at (48,43) {$a_2$};
-    \node[above, red!70!black, font=\scriptsize] at (72.5,45) {$C_2\!=\!2,\; t_2^a\!=\!22,\; v_2^a\!=\!2$};
+    \draw[ultra thick, red!70!black] (50,42) -- (95,42);
+    \fill[red!70!black] (50,42) circle (1.8);
+    \fill[red!70!black] (95,42) circle (1.8);
+    \node[left, red!70!black, font=\small] at (47,42) {$a_2$};
+    \node[above, red!70!black, font=\scriptsize] at (72.5,44.8) {$C_2\!=\!2,\; t_2^a\!=\!22,\; v_2^a\!=\!2$};
 \end{tikzpicture}
+}
 \caption{Problem instance: vehicle routes with parameters.}
 \label{fig:toysetup}
 \end{subfigure}
 \hfill
-\begin{subfigure}[b]{0.48\textwidth}
+\begin{subfigure}[t]{0.49\textwidth}
 \centering
-\begin{tikzpicture}[scale=0.07, >=Stealth]
+\resizebox{0.98\linewidth}{!}{%
+\begin{tikzpicture}[x=0.07cm,y=0.085cm, >=Stealth]
     % Highway
     \draw[very thick, ->] (0,0) -- (105,0);
     \node[below, font=\footnotesize] at (0,-1) {$0$};
@@ -313,42 +316,36 @@ Figure~\ref{fig:toyexample} illustrates a concrete instance with 2 AVs and 3 PVs
         \draw (\x,-1) -- (\x,1);
     }
     % AV routes (faded background)
-    \draw[thick, blue!25] (10,34) -- (70,34);
-    \draw[thick, red!25] (50,43) -- (95,43);
+    \draw[thick, blue!25] (49,31) -- (70,31);
+    \draw[thick, red!25] (49,42) -- (95,42);
     % p3: UNMATCHED (time infeasible)
-    \draw[thick, purple, dashed] (55,6) -- (85,6);
-    \fill[purple] (55,6) circle (1.5);
-    \fill[purple] (85,6) circle (1.5);
-    \node[left, purple, font=\small] at (53,6) {$p_3$};
-    \node[right, font=\scriptsize, text=red] at (87,6) {unmatched ($|t^a\!-\!t^p|\!>\!\tau$)};
+    \draw[thick, purple, dashed] (55,6.5) -- (85,6.5);
+    \fill[purple] (55,6.5) circle (1.5);
+    \fill[purple] (85,6.5) circle (1.5);
+    \node[left, purple, font=\small] at (53,6.5) {$p_3$};
+    \node[below, font=\scriptsize, text=red] at (76,4.3) {unmatched (time infeasible)};
     % p2 -> a1 on [20,70] then a2 on [70,90]: MULTI-SEGMENT
-    \draw[ultra thick, blue!70] (20,15) -- (70,15);
-    \node[above, font=\scriptsize, text=blue!70] at (45,17) {towed by $a_1$: $50$};
-    \draw[ultra thick, red!70!black] (70,15) -- (90,15);
-    \node[above, font=\scriptsize, text=red!70!black] at (82,17) {$a_2$: $20$};
-    \fill[orange] (20,15) circle (1.8);
-    \fill[orange] (90,15) circle (1.8);
-    \node[left, orange, font=\small] at (18,15) {$p_2$};
+    \draw[ultra thick, blue!70] (20,15.5) -- (70,15.5);
+    \node[above, font=\scriptsize, text=blue!70] at (45,17.7) {towed by $a_1$: $50$};
+    \draw[ultra thick, red!70!black] (70,15.5) -- (90,15.5);
+    \node[above, font=\scriptsize, text=red!70!black] at (82,17.7) {$a_2$: $20$};
+    \fill[orange] (20,15.5) circle (1.8);
+    \fill[orange] (90,15.5) circle (1.8);
+    \node[left, orange, font=\small] at (18,15.5) {$p_2$};
     % Segment boundary marker
-    \draw[thick, dashed, gray] (70,12.5) -- (70,18.5);
-    \node[below, font=\scriptsize, gray] at (70,12) {handoff};
+    \draw[thick, dashed, gray] (70,13) -- (70,18);
+    \node[below, font=\scriptsize, gray] at (70,12.2) {handoff};
     % p1 -> a1 on [15,60]: TOWED (solid green)
-    \draw[ultra thick, green!60!black] (15,24) -- (60,24);
-    \fill[green!60!black] (15,24) circle (1.8);
-    \fill[green!60!black] (60,24) circle (1.8);
-    \node[left, green!60!black, font=\small] at (13,24) {$p_1$};
-    \node[above, green!60!black, font=\scriptsize] at (37.5,26) {towed by $a_1$: $45$};
+    \draw[ultra thick, green!60!black] (15,23) -- (60,23);
+    \fill[green!60!black] (15,23) circle (1.8);
+    \fill[green!60!black] (60,23) circle (1.8);
+    \node[left, green!60!black, font=\small] at (13,23) {$p_1$};
+    \node[above, green!60!black, font=\scriptsize] at (37.5,25.2) {towed by $a_1$: $45$};
     % Time check annotation for p1
-    \node[right, font=\scriptsize, text=green!40!black] at (62,24) {$|2.5\!-\!1| \leq \tau$\;\checkmark};
-    % Legend box
-    \draw[rounded corners, fill=white, draw=gray, thin] (2,36) rectangle (52,46);
-    \draw[ultra thick, blue!70] (4,44) -- (14,44);
-    \node[right, font=\scriptsize] at (15,44) {Towed (energy saved)};
-    \draw[thick, purple, dashed] (4,40) -- (14,40);
-    \node[right, font=\scriptsize] at (15,40) {Uncovered (self-driving)};
-    \node[right, font=\scriptsize] at (4,37) {Total: $p_1$: 45, $p_2$: 70, $p_3$: 0};
+    \node[right, font=\scriptsize, text=green!40!black] at (62,23) {$|2.5\!-\!1| \leq \tau$\;\checkmark};
 \end{tikzpicture}
-\caption{Matching result: $p_1 \!\to\! a_1$ (45), $p_2 \!\to\! a_1\!+\!a_2$ (70), $p_3$ unmatched.}
+}
+\caption{Matching result with multi-segment towing. Solid segments denote towed portions, dashed segments denote uncovered self-driving portions, and total towed distances are $p_1=45$, $p_2=70$, and $p_3=0$.}
 \label{fig:toymatch}
 \end{subfigure}
 \caption{Illustrative example ($L=100$, $\tau=5$) with 2 AVs and 3 PVs. (a)~Problem setup with temporal parameters. (b)~Matching result: multi-segment matching yields $p_2$ coverage of 70 units (vs.\ 50 with single-AV), while $p_3$ remains unmatched because $|t_i^a(cp) - t_3^p(cp)| > \tau$ for both AVs.}
@@ -463,7 +460,7 @@ Algorithm~\ref{alg:hungarian} applies ILA iteratively, updating states after eac
     \IF{no feasible assignments}
         \STATE \textbf{break}
     \ENDIF
-    \STATE $matching \leftarrow$ \textsc{LinearSumAssignment}($\mathbf{W}$)
+    \STATE $matching \leftarrow$ \texttt{LinearSumAssignment}($\mathbf{W}$)
     \FOR{each $(slot, j) \in matching$ with $W_{slot,j} < +\infty$}
         \IF{capacity feasible at all critical points (Lemma~\ref{lem:critical})}
             \STATE Accept: $\mathcal{X} \leftarrow \mathcal{X} \cup \{(p_j, a_i, cp, dp)\}$
@@ -481,7 +478,7 @@ Algorithm~\ref{alg:hungarian} applies ILA iteratively, updating states after eac
 
 Let $K = \sum_{i=1}^{N} C_i$ denote the total number of virtual slots. Each iteration constructs a $K \times M$ cost matrix in $O(KM)$ time and solves the LSAP in $O(\max(K,M)^3)$ worst-case time. Since each accepted assignment advances at least one PV's boundary, the number of iterations is at most $O(NM)$, giving total worst-case complexity $O(NM \cdot \max(K,M)^3)$.
 
-We use \texttt{scipy.optimize.linear\_sum\_assignment}~\cite{scipy2020}, which implements the Jonker--Volgenant algorithm with highly optimized compiled C code. In practice, ILA is \textit{faster} than Greedy despite the cubic per-iteration cost because: (1) the solver processes all slot--PV pairs in a single batch call with efficient memory access, and (2) the number of ILA iterations is typically small (2--5 in our experiments), whereas Greedy executes hundreds of iterations with $O(NM \log(NM))$ re-sorting each time.
+We use SciPy's \texttt{linear\_sum\_assignment}~\cite{scipy2020}, which implements the Jonker--Volgenant algorithm with highly optimized compiled C code. In practice, ILA is \textit{faster} than Greedy despite the cubic per-iteration cost because: (1) the solver processes all slot--PV pairs in a single batch call with efficient memory access, and (2) the number of ILA iterations is typically small (2--5 in our experiments), whereas Greedy executes hundreds of iterations with $O(NM \log(NM))$ re-sorting each time.
 
 \textbf{Capacity Conflict Resolution:} When multiple assignments from a single iteration target the same AV, applying them simultaneously may violate point-wise capacity constraints. We resolve this by processing matched pairs sequentially within each iteration: for each $(slot, j)$ pair, we verify that the assignment satisfies capacity at all critical points (Lemma~\ref{lem:critical}) given the \textit{current} state of prior assignments. Assignments that would violate capacity are discarded; the corresponding PVs remain eligible for matching in subsequent iterations. This ensures feasibility while preserving the benefits of batch optimization.
 
@@ -491,7 +488,7 @@ We use \texttt{scipy.optimize.linear\_sum\_assignment}~\cite{scipy2020}, which i
 
 \begin{theorem}[Per-Iteration Optimality]
 \label{thm:hungarian}
-At each iteration of Algorithm~\ref{alg:hungarian}, let $\mathbf{W}$ be the cost matrix constructed from the current PV states $\{(\ell_j, \hat{t}_j)\}$ and AV assignments. The call to \textsc{LinearSumAssignment}($\mathbf{W}$) returns a matching that maximizes total towed distance among all feasible one-to-one slot-to-PV assignments for that iteration.
+At each iteration of Algorithm~\ref{alg:hungarian}, let $\mathbf{W}$ be the cost matrix constructed from the current PV states $\{(\ell_j, \hat{t}_j)\}$ and AV assignments. The call to \texttt{LinearSumAssignment}($\mathbf{W}$) returns a matching that maximizes total towed distance among all feasible one-to-one slot-to-PV assignments for that iteration.
 \end{theorem}
 
 \begin{proof}
@@ -750,13 +747,13 @@ This extension connects to vehicle routing problems with synchronization constra
 \end{itemize}
 
 \begin{thebibliography}{00}
-\bibitem{usdot2022} U.S. Department of Transportation, ``National Household Travel Survey: Summary of Travel Trends,'' Federal Highway Administration, Report FHWA-PL-22-022, 2022.
+\bibitem{usdot2024} U.S. Department of Transportation, Federal Highway Administration, ``Summary of Travel Trends: 2022 National Household Travel Survey,'' Report FHWA-HPL-24-009, 2024.
 
-\bibitem{epa2023} U.S. Environmental Protection Agency, ``Inventory of U.S. Greenhouse Gas Emissions and Sinks: 1990--2021,'' EPA 430-R-23-002, 2023.
+\bibitem{epa2023} U.S. Environmental Protection Agency, ``Inventory of U.S. Greenhouse Gas Emissions and Sinks: 1990--2021,'' EPA 430-R-23-003, 2023.
 
 \bibitem{tsugawa2016review} S. Tsugawa, S. Jeschke, and S. E. Shladover, ``A Review of Truck Platooning Projects for Energy Savings,'' \textit{IEEE Trans. Intell. Veh.}, vol. 1, no. 1, pp. 68--77, 2016.
 
-\bibitem{bergenhem2012overview} C. Bergenhem, S. Shladover, E. Coelingh, C. Englund, and S. Tsugawa, ``Overview of platooning systems,'' in \textit{Proc. 19th ITS World Congress}, Vienna, Austria, 2012.
+\bibitem{bergenhem2012overview} C. Bergenhem, H. Pettersson, E. Coelingh, C. Englund, S. Shladover, and S. Tsugawa, ``Overview of platooning systems,'' in \textit{Proc. 19th ITS World Congress}, Vienna, Austria, 2012.
 
 \bibitem{shladover2009cooperative} S. E. Shladover, ``Cooperative (rather than autonomous) vehicle-highway automation systems,'' \textit{IEEE Intell. Transp. Syst. Mag.}, vol. 1, no. 1, pp. 10--19, 2009.
 
@@ -764,7 +761,7 @@ This extension connects to vehicle routing problems with synchronization constra
 
 \bibitem{agatz2012optimization} N. Agatz, A. Erera, M. Savelsbergh, and X. Wang, ``Optimization for dynamic ride-sharing: A review,'' \textit{European J. Oper. Res.}, vol. 223, no. 2, pp. 295--303, 2012.
 
-\bibitem{alonso2017demand} J. Alonso-Mora, S. Samaranayake, A. Wallar, E. Frazzoli, and D. Rus, ``On-demand high-capacity ride-sharing via dynamic trip-vehicle assignment,'' \textit{Proc. Nat. Acad. Sci.}, vol. 114, no. 3, pp. 462--467, 2017.
+\bibitem{alonso2017demand} J. Alonso-Mora, S. Samaranayake, A. Wallar, E. Frazzoli, and D. Rus, ``On-demand high-capacity ride-sharing via dynamic trip-vehicle assignment,'' \textit{Proc. Natl. Acad. Sci. U.S.A.}, vol. 114, no. 3, pp. 462--467, 2017.
 
 \bibitem{cordeau2007dial} J.-F. Cordeau and G. Laporte, ``The dial-a-ride problem: models and algorithms,'' \textit{Annals Oper. Res.}, vol. 153, no. 1, pp. 29--46, 2007.
 
@@ -774,7 +771,7 @@ This extension connects to vehicle routing problems with synchronization constra
 
 \bibitem{kuhn1955hungarian} H. W. Kuhn, ``The Hungarian method for the assignment problem,'' \textit{Naval Res. Logistics Quarterly}, vol. 2, no. 1--2, pp. 83--97, 1955.
 
-\bibitem{munkres1957algorithms} J. Munkres, ``Algorithms for the assignment and transportation problems,'' \textit{J. Society Indust. Appl. Math.}, vol. 5, no. 1, pp. 32--38, 1957.
+\bibitem{munkres1957algorithms} J. Munkres, ``Algorithms for the assignment and transportation problems,'' \textit{J. Soc. Ind. Appl. Math.}, vol. 5, no. 1, pp. 32--38, 1957.
 
 \bibitem{burkard2012assignment} R. Burkard, M. Dell'Amico, and S. Martello, \textit{Assignment Problems}, SIAM, 2012.
 

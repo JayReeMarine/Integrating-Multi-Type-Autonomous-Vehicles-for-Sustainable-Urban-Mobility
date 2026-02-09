@@ -45,11 +45,11 @@ eunus.ali@monash.edu
 \maketitle
 
 \begin{abstract}
-This paper addresses the energy inefficiency of single-occupancy vehicles by introducing a novel cooperative autonomous vehicle system where smaller Passive Vehicles (PVs) can be physically towed by larger Active Vehicles (AVs) during shared highway segments. Unlike traditional platooning that relies solely on aerodynamic drafting, our approach enables propulsion energy elimination for towed vehicles during attached segments. We formulate the platoon formation problem as a constrained optimization problem on a one-dimensional highway model and propose two algorithms: a Greedy Maximum-Weight Matching algorithm and an Iterative Linear Assignment (ILA) algorithm using the Jonker--Volgenant method. A key innovation is the multi-segment matching capability, allowing a single PV to be towed by multiple AVs across different route segments. Experimental evaluation on synthetic scenarios with up to 400 PVs and 80 AVs demonstrates that both algorithms achieve 25--52\% distance coverage (proportional to energy savings under constant per-distance propulsion) depending on capacity, with ILA providing per-iteration optimality (optimal solutions to each bipartite subproblem) and superior runtime performance (5--15$\times$ faster) due to highly optimized compiled implementations.
+This paper addresses the energy inefficiency of single-occupancy vehicles by introducing a novel cooperative autonomous vehicle system where smaller Passive Vehicles (PVs) can be physically towed by larger Active Vehicles (AVs) during shared highway segments. Unlike traditional platooning that relies solely on aerodynamic drafting, our approach enables propulsion energy elimination for towed vehicles during attached segments. We formulate the platoon formation problem as a constrained optimization problem on a one-dimensional highway model and propose two algorithms: a Greedy Maximum-Weight Matching algorithm and an Iterative Linear Assignment (ILA) algorithm using the Jonker--Volgenant method. A key innovation is the multi-segment matching capability, allowing a single PV to be towed by multiple AVs across different route segments. Experimental evaluation on synthetic scenarios with up to 400 PVs and 80 AVs demonstrates that both algorithms achieve 25--52\% distance coverage (proportional to energy savings under constant per-distance propulsion) depending on capacity, with ILA providing per-iteration optimality---i.e., an optimal solution to the bipartite subproblem constructed at each iteration---and superior runtime performance (5--15$\times$ faster) due to highly optimized compiled implementations. While global optimality for the full multi-segment problem remains an open question, ILA consistently matches or exceeds greedy performance across all tested scenarios.
 \end{abstract}
 
 \begin{IEEEkeywords}
-autonomous vehicles, vehicle platooning, energy efficiency, Hungarian algorithm, combinatorial optimization, intelligent transportation systems
+autonomous vehicles, vehicle platooning, energy efficiency, linear assignment, Jonker--Volgenant algorithm, combinatorial optimization, intelligent transportation systems
 \end{IEEEkeywords}
 
 %==============================================================================
@@ -67,7 +67,7 @@ Autonomous vehicle (AV) technology presents a transformative opportunity to addr
 Existing research on cooperative vehicle systems spans several related but distinct areas. Traditional platooning systems~\cite{tsugawa2016review,bergenhem2012overview} focus on coordinated driving with aerodynamic benefits, typically achieving 10--20\% fuel savings through drafting. Ridesharing and carpooling optimization~\cite{furuhata2013ridesharing,agatz2012optimization} address passenger matching but not vehicle coupling. Eco-driving strategies~\cite{sciarretta2020energy,hellstrom2009look} optimize individual vehicle behavior without inter-vehicle coordination. The assignment problem we address relates to the classic bipartite matching literature~\cite{kuhn1955hungarian,munkres1957algorithms}, though our multi-segment matching with capacity constraints introduces novel complexity. While these approaches offer incremental improvements, they do not address the fundamental inefficiency of independent propulsion for vehicles with overlapping routes.
 
 % Paragraph 4: Our solution summary (big picture)
-We formulate the platoon formation problem on a one-dimensional highway model where the objective is to maximize total distance coverage (as a proxy for energy savings) through strategic PV-to-AV assignments. To solve this problem, we propose two complementary algorithms. The \textit{Greedy Maximum-Weight Matching} algorithm provides an intuitive baseline through iterative selection, while the \textit{Iterative Linear Assignment (ILA)} algorithm using SciPy's \texttt{linear\_sum\_assignment} (Jonker--Volgenant algorithm~\cite{scipy2020}) guarantees optimal solutions per iteration. Surprisingly, our experiments reveal that ILA is not only per-iteration optimal (for each bipartite subproblem) but also faster (5--15$\times$) due to highly optimized compiled C implementations that avoid the repeated sorting overhead inherent in greedy approaches. A key innovation is our multi-segment matching capability: rather than restricting each PV to a single AV, our algorithms allow a PV to be towed by different AVs across different segments of its route.
+We formulate the platoon formation problem on a one-dimensional highway model where the objective is to maximize total distance coverage (as a proxy for energy savings) through strategic PV-to-AV assignments. To solve this problem, we propose two complementary algorithms. The \textit{Greedy Maximum-Weight Matching} algorithm provides an intuitive baseline through iterative selection, while the \textit{Iterative Linear Assignment (ILA)} algorithm using SciPy's \texttt{linear\_sum\_assignment} (Jonker--Volgenant algorithm~\cite{scipy2020}) guarantees optimal solutions per iteration. Despite its higher per-iteration worst-case complexity, our experiments reveal that ILA is not only per-iteration optimal (solving each bipartite subproblem exactly) but also 5--15$\times$ faster in practice, owing to highly optimized compiled C implementations that avoid the repeated candidate regeneration and sorting overhead inherent in the greedy approach. A key innovation is our multi-segment matching capability: rather than restricting each PV to a single AV, our algorithms allow a PV to be towed by different AVs across different segments of its route.
 
 % Paragraph 5: Contributions (what we show in results)
 The main contributions of this paper are:
@@ -317,13 +317,13 @@ Figure~\ref{fig:toyexample} illustrates a concrete instance with 2 AVs and 3 PVs
 \section{Proposed Algorithms}
 \label{sec:algorithms}
 
-We present two algorithms: a greedy approach for baseline comparison and an assignment-based batch matching approach (ILA) that achieves per-iteration optimality.
+We present two algorithms: a greedy approach that serves as a solution-quality baseline, and an assignment-based batch matching approach (ILA) that achieves per-iteration optimality with superior runtime.
 
 \subsection{Greedy Maximum-Weight Matching}
 
-\subsubsection{Key Insight}
+\subsubsection{Key Insight and Rationale}
 
-The greedy approach iteratively selects assignments with maximum energy saving. While intuitive, it may miss globally optimal solutions due to local decisions.
+The greedy approach iteratively selects the single assignment with maximum energy saving, committing immediately before considering alternatives. While intuitive, it may miss globally better solutions due to myopic decisions. We include this algorithm as a \textit{solution-quality baseline}: it provides a natural reference point against which to measure ILA's improvement, requires no external solver library, and is straightforward to implement in resource-constrained environments. Its slower runtime (analyzed below) further motivates the need for batch-based methods like ILA.
 
 \subsubsection{Algorithm Description}
 
@@ -362,15 +362,15 @@ Algorithm~\ref{alg:greedy} operates in three phases:
 
 \subsubsection{Complexity}
 
-Each iteration generates $O(NM)$ candidates and requires $O(NM \log NM)$ sorting. The number of iterations is bounded by the total number of possible segments---in the worst case $O(NM)$ when each PV is matched to multiple AVs sequentially. Total worst-case complexity: $O((NM)^2 \log NM)$.
+Let $N = |\mathcal{A}|$ denote the number of AVs and $M = |\mathcal{P}|$ the number of PVs. Each iteration enumerates all feasible (AV, PV) pairs and checks point-wise capacity at each AV's critical points, producing $O(NM)$ candidates. Sorting these candidates requires $O(NM \log(NM))$ time. Because greedy commits to exactly one assignment per iteration, the total number of iterations is bounded by the number of accepted segments, which is at most $O(NM)$ in the worst case (each of $M$ PVs matched to up to $N$ AVs across segments). This yields total worst-case complexity $O((NM)^2 \log(NM))$.
 
-\textbf{Why Greedy is Slow in Practice:} Unlike batch algorithms, greedy must regenerate and re-sort candidates after each assignment because point-wise capacity constraints may invalidate previously feasible candidates. This repeated sorting overhead dominates runtime in our experiments.
+\textbf{Why Greedy is Slow in Practice:} The key bottleneck is that greedy must \textit{regenerate and re-sort all candidates after every single assignment}. Each accepted pair changes the capacity state of one AV and the coverage state of one PV, potentially invalidating previously feasible candidates. This per-assignment overhead of $O(NM \log(NM))$ accumulates over hundreds of iterations in our experiments. By contrast, ILA processes an entire batch of assignments in one $O(K^3)$ call (where $K = \sum_i C_i$), amortizing overhead across all matches in a round.
 
 \subsection{Iterative Linear Assignment (ILA) Algorithm}
 
 \subsubsection{Key Insight}
 
-The classic Hungarian algorithm~\cite{kuhn1955hungarian} solves bipartite matching optimally in $O(n^3)$. Modern implementations, such as SciPy's \texttt{linear\_sum\_assignment}, use the Jonker--Volgenant algorithm (a shortest augmenting path method)~\cite{scipy2020} which handles rectangular matrices efficiently. We adapt this via: (1) virtual slot expansion for capacity constraints, (2) iterative application for multi-segment matching.
+The linear sum assignment problem (LSAP) seeks a minimum-cost perfect matching in a weighted bipartite graph and is solvable in $O(n^3)$ time. The classic Hungarian algorithm~\cite{kuhn1955hungarian,munkres1957algorithms} established this complexity; modern solvers such as SciPy's \texttt{linear\_sum\_assignment} use the Jonker--Volgenant shortest augmenting path method~\cite{scipy2020}, which retains the $O(n^3)$ worst case but achieves substantially faster empirical performance through compiled C code and efficient data structures. Both methods return a provably optimal assignment for any given cost matrix. We adapt LSAP solving via: (1) virtual slot expansion to encode capacity constraints, and (2) iterative application across rounds for multi-segment matching.
 
 \subsubsection{Virtual Slot Expansion}
 
@@ -410,39 +410,50 @@ Algorithm~\ref{alg:hungarian} applies ILA iteratively, updating states after eac
         \STATE \textbf{break}
     \ENDIF
     \STATE $matching \leftarrow$ \textsc{LinearSumAssignment}($\mathbf{W}$)
-    \FOR{each valid $(slot, j) \in matching$}
-        \STATE Apply assignment, update states
+    \FOR{each $(slot, j) \in matching$ with $W_{slot,j} < +\infty$}
+        \IF{capacity feasible at all critical points (Lemma~\ref{lem:critical})}
+            \STATE Accept: $\mathcal{X} \leftarrow \mathcal{X} \cup \{(p_j, a_i, cp, dp)\}$
+            \STATE Update $(\ell_j, \hat{t}_j)$ via~\eqref{eq:state_pos}--\eqref{eq:state_time}
+        \ELSE
+            \STATE Discard; $p_j$ remains eligible for next iteration
+        \ENDIF
     \ENDFOR
 \UNTIL{no new assignments}
 \RETURN $\mathcal{X}$, $total$
 \end{algorithmic}
 \end{algorithm}
 
-\subsubsection{Implementation Note}
+\subsubsection{Complexity and Implementation}
 
-We use \texttt{scipy.optimize.linear\_sum\_assignment}~\cite{scipy2020}, which implements the Jonker--Volgenant algorithm with highly optimized compiled C code. This results in ILA being \textit{faster} than Greedy in practice, despite the $O(n^3)$ per-iteration complexity. The speedup comes from: (1) batch processing all assignments in one iteration via optimized linear algebra, (2) avoiding the repeated $O(NM \log NM)$ sorting required by Greedy after each assignment.
+Let $K = \sum_{i=1}^{N} C_i$ denote the total number of virtual slots. Each iteration constructs a $K \times M$ cost matrix in $O(KM)$ time and solves the LSAP in $O(\max(K,M)^3)$ worst-case time. Since each accepted assignment advances at least one PV's boundary, the number of iterations is at most $O(NM)$, giving total worst-case complexity $O(NM \cdot \max(K,M)^3)$.
+
+We use \texttt{scipy.optimize.linear\_sum\_assignment}~\cite{scipy2020}, which implements the Jonker--Volgenant algorithm with highly optimized compiled C code. In practice, ILA is \textit{faster} than Greedy despite the cubic per-iteration cost because: (1) the solver processes all slot--PV pairs in a single batch call with efficient memory access, and (2) the number of ILA iterations is typically small (2--5 in our experiments), whereas Greedy executes hundreds of iterations with $O(NM \log(NM))$ re-sorting each time.
 
 \textbf{Capacity Conflict Resolution:} When multiple assignments from a single iteration target the same AV, applying them simultaneously may violate point-wise capacity constraints. We resolve this by processing matched pairs sequentially within each iteration: for each $(slot, j)$ pair, we verify that the assignment satisfies capacity at all critical points (Lemma~\ref{lem:critical}) given the \textit{current} state of prior assignments. Assignments that would violate capacity are discarded; the corresponding PVs remain eligible for matching in subsequent iterations. This ensures feasibility while preserving the benefits of batch optimization.
 
 \subsection{Theoretical Analysis}
 
-\textit{Remark on Approximation Guarantees:} Under restrictive conditions---single-segment matching only, uniform AV capacity across the entire route (no point-wise variation), and no time constraints---the greedy algorithm achieves a $\frac{1}{2}$-approximation via reduction to submodular maximization~\cite{fisher1978analysis}. However, our full problem with multi-segment matching, point-wise capacity, and time tolerance does not satisfy these conditions. We therefore present the greedy algorithm as an empirical baseline rather than claiming formal approximation guarantees for the general case.
+\textit{Remark on Approximation Guarantees:} Under restrictive conditions---single-segment matching only, uniform AV capacity (no point-wise variation), and no time constraints---a greedy algorithm achieves a $\frac{1}{2}$-approximation via reduction to submodular maximization~\cite{fisher1978analysis}. Our full problem with multi-segment matching, point-wise capacity, and time tolerance does not satisfy these conditions. We therefore position the greedy algorithm as an \textit{empirical solution-quality baseline}: it provides a natural lower bound on achievable savings against which ILA can be evaluated, without claiming formal approximation guarantees.
 
-\begin{theorem}
+\begin{theorem}[Per-Iteration Optimality]
 \label{thm:hungarian}
-Algorithm~\ref{alg:hungarian} computes ILAs within each iteration (per-iteration optimality).
+At each iteration of Algorithm~\ref{alg:hungarian}, let $\mathbf{W}$ be the cost matrix constructed from the current PV states $\{(\ell_j, \hat{t}_j)\}$ and AV assignments. The call to \textsc{LinearSumAssignment}($\mathbf{W}$) returns a matching that maximizes total towed distance among all feasible one-to-one slot-to-PV assignments for that iteration.
 \end{theorem}
 
 \begin{proof}
-Given the current uncovered intervals for all PVs, the cost matrix $\mathbf{W}$ encodes all feasible assignments. The Jonker--Volgenant algorithm guarantees an optimal bipartite matching for this matrix. Since PV uncovered intervals shrink monotonically, the algorithm converges.
+The cost matrix $\mathbf{W}$ encodes, for every virtual slot--PV pair, the negated towed distance ($-d_{ij}^{curr}$) if the pair is feasible and $+\infty$ otherwise. The LSAP is to find a matching of slots to PVs minimizing total cost. Because the Jonker--Volgenant algorithm solves LSAP exactly~\cite{scipy2020,burkard2012assignment}, the returned matching maximizes total towed distance for the current cost matrix. Convergence follows from the fact that each accepted assignment strictly advances at least one PV's left boundary $\ell_j$, so the number of iterations is bounded by the total number of feasible segments.
 \end{proof}
 
-\begin{lemma}[Global Optimality Caveat]
+\begin{lemma}[Global Optimality Gap]
 \label{lem:global}
-Algorithm~\ref{alg:hungarian} does not guarantee global optimality for the multi-segment problem. The iterative decomposition may lock in early assignments that preclude better global solutions.
+Algorithm~\ref{alg:hungarian} does not guarantee global optimality for the full multi-segment problem~\eqref{eq:obj}--\eqref{eq:minlen}. Specifically, assignments accepted in iteration $r$ fix PV states for all subsequent iterations $r' > r$; an alternative set of assignments in iteration $r$ could yield higher total savings globally.
 \end{lemma}
 
-\textit{Remark:} Despite lacking global optimality guarantees, our experiments show that the iterative ILA consistently matches or exceeds greedy performance. The decomposition is a practical trade-off between solution quality and computational tractability.
+\begin{proof}
+Consider two AVs $a_1, a_2$ and one PV $p_1$ where $a_1$ overlaps $p_1$ on $[0, 30]$ and $a_2$ overlaps on $[10, 50]$. In the first iteration, ILA may assign $p_1 \to a_1$ (saving 30), advancing $\ell_1$ to 30. In the second iteration, the remaining overlap with $a_2$ is $[30, 50]$ (saving 20), for a total of 50. However, the single assignment $p_1 \to a_2$ on $[10, 50]$ yields 40, and freeing $a_1$ for another PV could produce a higher global total. The iterative decomposition cannot explore such cross-iteration trade-offs.
+\end{proof}
+
+\textit{Remark:} Despite this gap, our experiments (Section~\ref{sec:experiments}) show that ILA consistently matches or exceeds greedy performance across all tested configurations. The iterative decomposition is a practical trade-off: it reduces the NP-hard multi-segment problem to a polynomial sequence of tractable LSAP subproblems.
 
 %==============================================================================
 % SECTION 5: EXPERIMENTAL EVALUATION
@@ -454,7 +465,7 @@ Algorithm~\ref{alg:hungarian} does not guarantee global optimality for the multi
 
 \subsubsection{Implementation}
 
-Both algorithms are implemented in Python 3.14.2 using NumPy 1.26 and SciPy 1.11~\cite{scipy2020}. The ILA algorithm uses \texttt{scipy.optimize.linear\_sum\_assignment} (Jonker--Volgenant implementation). All experiments run single-threaded on an Apple M4 Pro with 16GB unified memory under macOS 15.0.
+Both algorithms are implemented in Python 3.11 using NumPy 1.26 and SciPy 1.11~\cite{scipy2020}. The ILA algorithm uses \texttt{scipy.optimize.linear\_sum\_assignment} (Jonker--Volgenant implementation). All experiments run single-threaded on an Apple M4 Pro with 16GB unified memory under macOS 15.0.
 
 \subsubsection{Scenario Generation}
 
@@ -577,27 +588,27 @@ Figures~\ref{fig:runtime} and~\ref{fig:capacity_relative} show runtime compariso
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.95\columnwidth]{figures/length_relative_performance.png}
-    \caption{Relative performance (Optimal/Greedy) across highway lengths. Values $<$1 indicate ILA is faster and/or achieves higher savings.}
+    \caption{Relative performance (ILA/Greedy ratio) across highway lengths. Values $<$1 indicate ILA is faster and/or achieves higher savings.}
     \label{fig:runtime}
 \end{figure}
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.95\columnwidth]{figures/capacity_relative_performance.png}
-    \caption{Relative performance across capacity values. ILA algorithm maintains consistent speedup (2.8--11.5$\times$) across all capacity settings.}
+    \caption{Relative performance (ILA/Greedy ratio) across capacity values. ILA maintains consistent speedup (2.8--11.5$\times$) across all capacity settings.}
     \label{fig:capacity_relative}
 \end{figure}
 
 \subsection{Discussion}
 
-\textbf{Why is Optimal Assignment Faster?} Counter-intuitively, ILA outperforms Greedy in runtime despite $O(n^3)$ per-iteration complexity. This is due to:
+\textbf{Why is ILA Faster Despite Higher Worst-Case Complexity?} Despite the $O(K^3)$ per-iteration cost of solving a linear assignment problem (where $K = \sum_i C_i$), ILA outperforms Greedy in wall-clock time. This is due to:
 \begin{enumerate}
     \item \texttt{scipy.optimize.linear\_sum\_assignment} uses highly optimized compiled C code with efficient memory access patterns
     \item Greedy requires repeated sorting ($O(NM \log NM)$ per iteration) and candidate regeneration after each assignment
     \item ILA processes all assignments in batches, amortizing overhead
 \end{enumerate}
 
-\textbf{Practical Implications:} ILA algorithm is the clear choice---it provides both per-iteration optimality and superior speed. Greedy remains useful as a baseline and for environments where SciPy is unavailable.
+\textbf{Practical Implications:} ILA is the recommended algorithm for deployment---it provides both per-iteration optimality and superior speed. The greedy algorithm serves two roles: (1)~as a solution-quality reference that validates ILA's empirical performance (ILA matches or exceeds greedy savings in every configuration), and (2)~as a dependency-free alternative for constrained environments lacking compiled LSAP solvers.
 
 \textbf{Capacity Impact:} Doubling capacity yields sub-linear improvement (24.8\% $\rightarrow$ 52.3\%), suggesting diminishing returns. Fleet operators should balance capacity costs against marginal savings.
 
@@ -628,7 +639,7 @@ We have presented a novel formulation for dynamic platoon formation in heterogen
 Two algorithms were proposed and compared: a Greedy baseline and an Iterative Linear Assignment (ILA) algorithm using the Jonker--Volgenant method. Experiments on scenarios with up to 80 AVs and 400 PVs demonstrate:
 \begin{itemize}
     \item Both algorithms achieve 25--52\% distance coverage savings depending on capacity
-    \item ILA is both per-iteration optimal and 5--15$\times$ faster due to optimized compiled implementations
+    \item ILA solves each iteration's bipartite subproblem optimally and is 5--15$\times$ faster in practice due to optimized compiled implementations; global optimality for the full multi-segment problem is not guaranteed
     \item Multi-segment matching improves coverage by enabling PVs to use multiple AVs
 \end{itemize}
 

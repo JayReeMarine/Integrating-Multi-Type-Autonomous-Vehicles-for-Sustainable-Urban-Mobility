@@ -492,7 +492,7 @@ At each iteration of Algorithm~\ref{alg:hungarian}, let $\mathbf{W}$ be the cost
 \end{theorem}
 
 \begin{proof}
-The cost matrix $\mathbf{W}$ encodes, for every virtual slot--PV pair, the negated towed distance ($-d_{ij}^{curr}$) if the pair is feasible and $+\infty$ otherwise. The LSAP is to find a matching of slots to PVs minimizing total cost. Because the Jonker--Volgenant algorithm solves LSAP exactly~\cite{scipy2020,burkard2012assignment}, the returned matching maximizes total towed distance for the current cost matrix. Convergence follows from the fact that each accepted assignment strictly advances at least one PV's left boundary $\ell_j$, so the number of iterations is bounded by the total number of feasible segments.
+The cost matrix $\mathbf{W}$ encodes, for every virtual slot--PV pair, the negated towed distance ($-d_{ij}^{curr}$) if the pair is feasible and $+\infty$ otherwise. The LSAP is to find a matching of slots to PVs minimizing total cost. Because the Jonker--Volgenant algorithm solves LSAP exactly~\cite{burkard2012assignment}, the returned matching maximizes total towed distance for the current cost matrix. Convergence follows from the fact that each accepted assignment strictly advances at least one PV's left boundary $\ell_j$, so the number of iterations is bounded by the total number of feasible segments.
 \end{proof}
 
 \begin{lemma}[Global Optimality Gap]
@@ -785,7 +785,7 @@ This extension connects to vehicle routing problems with synchronization constra
 
 \bibitem{scipy2020} P. Virtanen et al., ``SciPy 1.0: Fundamental algorithms for scientific computing in Python,'' \textit{Nature Methods}, vol. 17, pp. 261--272, 2020.
 
-\bibitem{drexl2012synchronization} M. Drexl, ``Synchronization in vehicle routing---a survey of VRPs with multiple synchronization constraints,'' \textit{Transport. Sci.}, vol. 46, no. 3, pp. 297--316, 2012.
+\bibitem{drexl2012synchronization} M. Drexl, ``Synchronization in vehicle routing---a survey of VRPs with multiple synchronization constraints,'' \textit{Transport. Sci.}, vol. 46, no. 3, pp. 297--438, 2012.
 
 \bibitem{karp1990optimal} R. M. Karp, U. V. Vazirani, and V. V. Vazirani, ``An optimal algorithm for on-line bipartite matching,'' in \textit{Proc. 22nd Ann. ACM Symp. Theory of Computing}, pp. 352--358, 1990.
 

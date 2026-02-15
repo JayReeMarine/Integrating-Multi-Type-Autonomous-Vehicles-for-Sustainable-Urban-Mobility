@@ -163,17 +163,9 @@ For an AV $a_i$ and PV $p_j$, the \textit{shared path} is the overlap of their r
     \label{eq:shared}
 \end{equation}
 
-The coupling point $cp_{ij}$ (where PV attaches) and decoupling point $dp_{ij}$ (where PV detaches) are:
-\begin{align}
-    cp_{ij} &= \max(e_i^a, e_j^p) \label{eq:cp}\\
-    dp_{ij} &= \min(x_i^a, x_j^p) \label{eq:dp}
-\end{align}
+The coupling point $cp_{ij}$ (where the PV attaches) and decoupling point $dp_{ij}$ (where the PV detaches) are defined as $cp_{ij} = \max(e_i^a, e_j^p)$ and $dp_{ij} = \min(x_i^a, x_j^p)$, respectively.
 
-The energy saving $S_{ij}$ when PV $p_j$ is towed by AV $a_i$ is proportional to the shared distance:
-\begin{equation}
-    S_{ij} = \alpha \cdot d_{ij}
-    \label{eq:saving}
-\end{equation}
+The energy saving when PV $p_j$ is towed by AV $a_i$ is proportional to shared distance, i.e., $S_{ij} = \alpha \cdot d_{ij}$.
 where $\alpha$ is an energy coefficient. For simplicity, we set $\alpha = 1$, making energy saving equivalent to distance saved.
 
 \subsection{Multi-Segment Matching}
@@ -184,11 +176,7 @@ A key innovation of our formulation is \textit{multi-segment matching}: a single
 A segment assignment for PV $p_j$ to AV $a_i$ is a tuple $(p_j, a_i, s, e)$ where $[s, e] \subseteq [e_j^p, x_j^p]$ is the segment during which $p_j$ is towed by $a_i$.
 \end{definition}
 
-For PV $p_j$, its route from $e_j^p$ to $x_j^p$ can be partitioned into segments:
-\begin{itemize}
-    \item \textit{Covered}: PV is towed by an AV (energy saved)
-    \item \textit{Uncovered}: PV drives independently (no energy saved)
-\end{itemize}
+For PV $p_j$, its route from $e_j^p$ to $x_j^p$ can be partitioned into covered segments (towed by AVs, thus saving propulsion energy) and uncovered segments (self-driven, with no towing-based saving).
 
 \textbf{Progressive Coverage Assumption:} Our algorithms process towing segments in spatial order along the highway. Each PV maintains a \textit{current left boundary} $\ell_j$ (initially $e_j^p$) representing the leftmost uncovered position. When PV $p_j$ is assigned to AV $a_i$, the towing segment starts at $\max(e_i^a, \ell_j)$ and $\ell_j$ advances to the decoupling point. This ensures uncovered regions are always contiguous suffix intervals $[\ell_j, x_j^p]$, simplifying state management while capturing the natural left-to-right progression of vehicles along the highway. This enforces a left-to-right coverage policy: once a PV passes a position, earlier uncovered gaps cannot be revisited. Relaxing this to allow non-contiguous uncovered regions (e.g., skipping a poor AV to wait for a better one downstream, then backfilling) would require tracking interval sets rather than a single boundary, and is left for future work.
 

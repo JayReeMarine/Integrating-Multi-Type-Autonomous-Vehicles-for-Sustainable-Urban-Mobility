@@ -558,6 +558,16 @@ def plot_comparison_bar_chart(
     ax.legend(framealpha=0.9, edgecolor='gray')
     ax.grid(True, alpha=0.3, axis='y')
 
+    # For paper-facing saving% charts (Fig. 3/4), avoid a 0 baseline that makes
+    # differences look visually flat; use a non-zero lower bound based on data.
+    if metric == "saving_percent":
+        min_val = float(np.nanmin([np.nanmin(greedy_vals), np.nanmin(hungarian_vals)]))
+        max_val = float(np.nanmax([np.nanmax(greedy_vals), np.nanmax(hungarian_vals)]))
+        ymin = max(0.0, min_val * 0.8)
+        ymax = max_val * 1.05
+        if ymax > ymin:
+            ax.set_ylim(ymin, ymax)
+
     plt.tight_layout()
     output_path.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(output_path)
@@ -678,6 +688,15 @@ def plot_baseline_comparison(
     ax.set_xticklabels([str(int(v)) for v in merged[group_col].values])
     ax.legend(framealpha=0.9, edgecolor='gray')
     ax.grid(True, alpha=0.3, axis='y')
+
+    # For paper-facing baseline comparison (Fig. 2), avoid a 0 baseline so
+    # algorithm differences are more readable in print.
+    min_val = float(np.nanmin([np.nanmin(baseline_vals), np.nanmin(greedy_remaining), np.nanmin(ila_remaining)]))
+    max_val = float(np.nanmax([np.nanmax(baseline_vals), np.nanmax(greedy_remaining), np.nanmax(ila_remaining)]))
+    ymin = max(0.0, min_val * 0.85)
+    ymax = max_val * 1.02
+    if ymax > ymin:
+        ax.set_ylim(ymin, ymax)
 
     plt.tight_layout()
     output_path.parent.mkdir(parents=True, exist_ok=True)

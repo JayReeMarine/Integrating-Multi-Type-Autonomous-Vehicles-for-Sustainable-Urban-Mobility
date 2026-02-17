@@ -1,6 +1,6 @@
 # Dynamic Platoon Formation for Multi-Modal Autonomous Vehicle Systems
 
-A simulation framework for optimizing energy-efficient platoon formation between Active Vehicles (AVs) and Passive Vehicles (PVs) on highway systems. This project implements and compares two algorithms for vehicle matching: a Greedy Maximum-Weight Matching algorithm and a Capacity-Constrained Hungarian algorithm.
+A simulation framework for optimizing energy-efficient platoon formation between Active Vehicles (AVs) and Passive Vehicles (PVs) on highway systems. This project implements and compares two algorithms for vehicle matching: a Greedy Maximum-Weight Matching baseline and an Iterative Linear Assignment (ILA) method (Hungarian-family linear assignment solved by SciPy's Jonker-Volgenant backend).
 
 ## Overview
 
@@ -10,7 +10,7 @@ This research introduces a novel concept of **active and passive autonomous vehi
 
 - **Simplified Problem Formulation**: Deterministic baseline with clean mapping to classic optimization problems
 - **Comprehensive Formulation**: Real-world model addressing traffic dynamics and temporal constraints
-- **Efficient Algorithms**: Both centralized (optimal) and greedy (near-optimal) solutions for vehicle matching
+- **Efficient Algorithms**: A greedy baseline and an assignment-based ILA method with per-iteration optimality
 - **Experimental Framework**: Extensive parameter sweep experiments with visualization tools
 
 ## Quick Start
@@ -83,7 +83,7 @@ python3 -m visualization.plot_all
 
 ### Prerequisites
 
-- Python 3.8 or higher (tested with Python 3.14)
+- Python 3.8 or higher (tested with Python 3.11)
 - pip (Python package manager)
 - LaTeX distribution with `latexmk` (optional, for paper compilation)
 
@@ -175,32 +175,32 @@ The platoon formation problem is formulated as an optimization problem:
 **Objective**: Maximize total energy savings through strategic platoon formation
 
 **Constraints**:
-- Each AV can tow at most `C_i` PVs simultaneously (capacity constraint)
-- Each PV can be assigned to at most one AV (assignment constraint)
-- Minimum shared distance `L_min` required for platooning (feasibility constraint)
+- Each AV can tow at most `C_i` PVs simultaneously at any highway position (point-wise capacity)
+- Each PV can be towed by multiple AVs across route segments, but not by two AVs at the same position/time
+- Minimum shared distance `L_min` is required for a feasible towing segment
 
 ### Greedy Maximum-Weight Matching
 
-**Time Complexity**: O(NM log(NM))
+**Worst-Case Time Complexity**: O((NM)^2 log(NM)) for iterative re-generation/re-sorting
 
 **Approach**:
 1. Generate all feasible (AV, PV) candidate pairs
 2. Sort candidates by energy saving (descending)
 3. Assign greedily while respecting capacity constraints
 
-**Approximation Guarantee**: Achieves 1/2-approximation for submodular energy functions
+**Role in this project**: A practical baseline for solution quality and implementation simplicity
 
-### Capacity-Constrained Hungarian Algorithm
+### Iterative Linear Assignment (ILA)
 
-**Time Complexity**: O((N + M)^3)
+**Per-Iteration Complexity**: LSAP solved in O(max(K, M)^3), where K is total virtual AV slots
 
 **Approach**:
 1. Expand AVs into capacity slots
 2. Construct bipartite graph with feasibility edges
-3. Solve minimum-cost assignment using Hungarian algorithm
-4. Extract optimal assignments
+3. Solve minimum-cost assignment using `scipy.optimize.linear_sum_assignment`
+4. Apply accepted matches, update states, and iterate
 
-**Guarantee**: Computes globally optimal solution
+**Guarantee**: Computes an optimal assignment for each iteration's linear subproblem (per-iteration optimality, not global optimality for the full multi-segment problem)
 
 ## Input Parameters
 
@@ -244,15 +244,15 @@ The platoon formation problem is formulated as an optimization problem:
 
 ## Experimental Results Summary
 
-Based on experiments comparing Greedy vs Hungarian algorithms:
+Based on experiments comparing Greedy vs ILA:
 
-| Metric | Greedy Performance |
-|--------|-------------------|
-| Total Saving | ~99% of optimal |
-| Match Ratio | ~95% of optimal |
-| Runtime | 10-30x faster than Hungarian |
+| Metric | Observed Trend |
+|--------|----------------|
+| Total covered distance (saving proxy) | Both methods improve with capacity; ILA matches or slightly exceeds Greedy |
+| Saving percentage | Typically in the 25--52% range depending on scenario |
+| Runtime | ILA is often faster in practice due to optimized compiled solver backend |
 
-The greedy algorithm provides an excellent balance between performance and computational efficiency, making it suitable for real-time applications.
+Greedy remains a useful baseline, while ILA is the primary method used for final analysis in the paper.
 
 ## Paper Compilation
 
@@ -267,6 +267,11 @@ The compiled PDF will be generated as `conference_101719.pdf`.
 
 > **Note**: If you see "Nothing to do" or "All targets are up-to-date", this means the PDF already exists and is current - this is not an error!
 
+## Code Availability
+
+Code available at:
+`https://github.com/JayReeMarine/Integrating-Multi-Type-Autonomous-Vehicles-for-Sustainable-Urban-Mobility`
+
 ## Dependencies
 
 - `pandas>=1.5.0` - Data manipulation and CSV handling
@@ -279,11 +284,18 @@ The compiled PDF will be generated as `conference_101719.pdf`.
 If you use this code in your research, please cite:
 
 ```bibtex
-@inproceedings{platoon2024,
-  title={Dynamic Platoon Formation for Multi-Modal Autonomous Vehicle Systems},
-  author={[Author Names]},
-  booktitle={[Conference Name]},
-  year={2024}
+@misc{ree2026dynamic,
+  title        = {Dynamic Platoon Formation of Multi-Type Autonomous Vehicles for Sustainable Urban Mobility},
+  author       = {Jaeyun Ree and Mohammed Eunus Ali},
+  year         = {2026},
+  note         = {Manuscript under review}
+}
+
+@misc{ree2026code,
+  title        = {Codebase for Dynamic Platoon Formation of Multi-Type Autonomous Vehicles},
+  author       = {Jaeyun Ree and Mohammed Eunus Ali},
+  year         = {2026},
+  howpublished = {\url{https://github.com/JayReeMarine/Integrating-Multi-Type-Autonomous-Vehicles-for-Sustainable-Urban-Mobility}}
 }
 ```
 

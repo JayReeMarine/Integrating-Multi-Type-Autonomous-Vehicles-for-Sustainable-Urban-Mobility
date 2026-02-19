@@ -16,6 +16,8 @@
 \newtheorem{theorem}{Theorem}
 \newtheorem{lemma}[theorem]{Lemma}
 \newtheorem{definition}{Definition}
+\providecommand{\Eunus}[1]{\textcolor{red}{\textsc{Eunus:} #1}}
+\providecommand{\EunusP}[1]{\Eunus{#1}}
 
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
@@ -57,41 +59,88 @@ autonomous vehicles, vehicle platooning, energy efficiency, linear assignment, J
 %==============================================================================
 \section{Introduction}
 
-% Paragraph 1: High-level motivation (world problem + statistics)
 Single-occupancy travel remains a major barrier to sustainable urban mobility. U.S. National Household Travel Survey data show that drive-alone commuting dominates trip demand~\cite{usdot2024}, while the transportation sector contributes about 29\% of U.S. greenhouse gas emissions~\cite{epa2023}. This inefficiency is pronounced when many vehicles traverse overlapping routes but still consume propulsion energy independently.
 
-% Paragraph 2: Problem and idea (platooning/cooperation concept)
-We study a cooperative AV setting with two roles: Active Vehicles (AVs), which can tow, and Passive Vehicles (PVs), which can be towed. Unlike drafting-based platooning, we model physical coupling: a towed PV does not use its own propulsion on attached segments. We use covered distance as a proxy for PV-side propulsion-energy reduction, and reserve physics-level load modeling for future work.
+\begin{figure}[t]
+\centering
+\resizebox{0.98\columnwidth}{!}{%
+\begin{tikzpicture}[x=0.06cm,y=0.22cm,>=Stealth]
+    % Highway axis
+    \draw[very thick, ->] (0,0) -- (103,0);
+    \foreach \x in {0,20,40,60,80,100} {
+        \draw (\x,-0.35) -- (\x,0.35);
+    }
+    \node[below, font=\scriptsize] at (0,-0.45) {$0$};
+    \node[below, font=\scriptsize] at (50,-0.45) {$50$};
+    \node[below, font=\scriptsize] at (100,-0.45) {$100$};
+    \node[right, font=\scriptsize] at (103,0) {$x$};
 
-% Paragraph 3: Related work sketch and differentiation
+    % Towable vehicles (dashed full path + solid towed segments)
+    \draw[thick, dashed, gray] (5,2) -- (85,2);
+    \draw[ultra thick, blue!70] (15,2) -- (60,2);
+    \node[left, font=\scriptsize] at (4,2) {T1};
+
+    \draw[thick, dashed, gray] (18,4) -- (95,4);
+    \draw[ultra thick, blue!70] (20,4) -- (70,4);
+    \draw[ultra thick, red!75!black] (70,4) -- (90,4);
+    \node[left, font=\scriptsize] at (17,4) {T2};
+
+    \draw[thick, dashed, gray] (55,6) -- (98,6);
+    \draw[ultra thick, red!75!black] (60,6) -- (92,6);
+    \node[left, font=\scriptsize] at (54,6) {T3};
+
+    % Activators
+    \draw[ultra thick, blue] (10,9) -- (70,9);
+    \fill[blue] (10,9) circle (1.2);
+    \fill[blue] (70,9) circle (1.2);
+    \node[left, blue, font=\scriptsize] at (8.6,8.8) {Activator $A_1$};
+    \node[above, blue, font=\scriptsize] at (37.5,9.9) {capacity $=2$};
+
+    \draw[ultra thick, red!75!black] (45,11) -- (95,11);
+    \fill[red!75!black] (45,11) circle (1.2);
+    \fill[red!75!black] (95,11) circle (1.2);
+    \node[left, red!75!black, font=\scriptsize] at (50.0,12.1) {Activator $A_2$};
+    \node[above, red!75!black, font=\scriptsize] at (71.5,13.6) {capacity $=2$};
+
+    % Handoff marker
+    \draw[gray, dashed] (70,3.2) -- (70,4.8);
+    \node[below, gray, font=\scriptsize] at (70,2.5) {handoff};
+
+    % Legend text
+    \node[font=\scriptsize, align=left] at (31.2,14.3) {solid: towed segment};
+    \node[font=\scriptsize, align=left] at (31.2,13.5) {dashed: self-driving segment};
+\end{tikzpicture}
+}
+\caption{Conceptual overview of towing-based cooperation. Dashed segments denote self-driving, and solid segments denote towed travel. Activators $A_1$ and $A_2$ each have capacity 2, so only feasible segments (including a handoff on $T2$) can be covered.}
+\label{fig:intro_concept}
+\end{figure}
+
+Figure~\ref{fig:intro_concept} gives the high-level intuition. Even when many trips overlap, vehicles usually spend propulsion energy independently. If towing-capable vehicles can pull towable vehicles over shared segments, propulsion can be reduced on those covered portions. Because each Activator has a strict capacity limit, only a subset of requests can be served at the same location. Our objective is therefore to find feasible pairings and segment boundaries that maximize total covered towable distance.
+
+In the rest of this paper, we call towing-capable vehicles \textit{Active Vehicles (AVs)} and towable vehicles \textit{Passive Vehicles (PVs)}. Unlike drafting-based platooning, our model assumes physical coupling: when a PV is attached, its own propulsion on that segment is fully eliminated. We use covered distance as a proxy for PV-side propulsion-energy reduction, and reserve physics-level load modeling for future work.
+
 Prior work spans platooning~\cite{tsugawa2016review,bergenhem2012overview}, ridesharing and routing~\cite{furuhata2013ridesharing,agatz2012optimization,cordeau2007dial}, and assignment optimization~\cite{kuhn1955hungarian,munkres1957algorithms}. These lines do not model physical towing with both multi-segment PV coverage and point-wise AV capacity constraints in one framework. Our formulation targets that gap.
 
-% Paragraph 4: Our solution summary (big picture)
-We formulate the problem on a one-dimensional highway and maximize total PV covered distance. We compare a Greedy Maximum-Weight Matching baseline with an Iterative Linear Assignment (ILA) method built on SciPy's Jonker--Volgenant implementation~\cite{scipy2020}. In experiments, ILA achieves per-iteration optimal assignments and is 5--15$\times$ faster in practice, while supporting multi-segment towing where one PV can use multiple AVs sequentially.
+We study an optimization problem of cooperative towing-based coupling that maximizes covered PV distance under overlap, synchronization, and capacity constraints. For tractability, we evaluate this problem under a one-dimensional highway abstraction. We compare a Greedy Maximum-Weight Matching baseline with an Iterative Linear Assignment (ILA) method built on SciPy's Jonker--Volgenant implementation~\cite{scipy2020}. Greedy baseline iteratively selects the currently best feasible AV--PV towing pair (highest benefit) and commits to it. It repeats until no feasible pairs remain, producing a fast but not globally optimal matching.
 
-% Paragraph 5: Contributions (what we show in results)
-This paper makes three main contributions. First, we formalize a one-dimensional cooperative towing problem that jointly captures multi-segment matching and point-wise AV capacity constraints. Second, we develop and compare two solution strategies: a greedy baseline and an Iterative Linear Assignment (ILA) method based on the Jonker--Volgenant solver~\cite{scipy2020} with virtual-slot capacity encoding. Third, we provide a controlled experimental study (50--80 AVs, 200--400 PVs) showing 25--52\% distance coverage savings and consistent practical runtime advantages for ILA.
+This paper makes three main contributions. First, we formalize the cooperative towing optimization problem with multi-segment matching and point-wise AV capacity constraints. For tractability, we instantiate and evaluate this formulation on a one-dimensional highway abstraction. Second, we develop and compare two solution strategies: a greedy baseline and an Iterative Linear Assignment (ILA) method based on the Jonker--Volgenant solver~\cite{scipy2020} with virtual-slot capacity encoding. Third, we provide a controlled experimental study (50--80 AVs, 200--400 PVs) showing substantial coverage savings.
 
 %==============================================================================
 % SECTION 2: RELATED WORK
 %==============================================================================
 \section{Related Work}
 
-\subsection{Vehicle Platooning}
+\subsection{Platooning and Drafting}
 
-Platooning studies report about 10--20\% fuel savings through aerodynamic drafting~\cite{tsugawa2016review,bergenhem2012overview,shladover2009cooperative}. These systems keep vehicles physically separated and focus on coordinated following. In contrast, we model physical towing, which eliminates PV propulsion on covered segments.
+Platooning studies report about 10--20\% fuel savings primarily through aerodynamic drafting~\cite{tsugawa2016review,bergenhem2012overview,shladover2009cooperative}. Vehicles remain physically separated and coordinate spacing/speed. Our setting instead models physical towing, where a covered PV segment does not use its own propulsion. This towing mechanism, plus dynamic attach/detach decisions under capacity, is outside standard drafting formulations.
 
-\subsection{Ridesharing and Vehicle Routing}
+\subsection{Ridesharing vs. Vehicle--Vehicle Coupling}
 
-Ridesharing and dial-a-ride methods optimize passenger-to-vehicle matching with timing and capacity constraints~\cite{furuhata2013ridesharing,agatz2012optimization,alonso2017demand,cordeau2007dial}. Our setting differs because the decision variable is vehicle-to-vehicle towing assignment.
+Ridesharing and dial-a-ride methods optimize passenger-to-vehicle assignment with timing and capacity constraints~\cite{furuhata2013ridesharing,agatz2012optimization,alonso2017demand,cordeau2007dial}. In our problem, the decision variable is vehicle-to-vehicle coupling over road segments. Capacity is point-wise along each towing vehicle's path (attachments vary by position), which differs from conventional seat-capacity constraints.
 
-\subsection{Assignment and Matching Problems}
+\subsection{Assignment Solvers and Iterative Gap}
 
-Our algorithms build on classic bipartite assignment~\cite{kuhn1955hungarian,munkres1957algorithms} and capacitated variants~\cite{burkard2012assignment,cattrysse1992survey}. The added difficulty here is iterative multi-segment coverage under point-wise capacity along each AV trajectory.
-
-\subsection{Cooperative Autonomous Vehicles}
-
-Cooperative AV research also covers CACC and intersection coordination~\cite{ploeg2011design,dresner2008multiagent}. These methods coordinate separated vehicles; our work instead optimizes physical coupling with spatial-temporal feasibility constraints.
+Hungarian/Jonker--Volgenant methods solve a one-shot linear assignment optimally for a fixed cost matrix~\cite{kuhn1955hungarian,munkres1957algorithms,scipy2020}. Our challenge is that feasible gains change after each accepted towing segment because PV residual routes and time states update. Therefore, a single assignment solve is insufficient; we need an iterative solve--update process with virtual-slot capacity encoding.
 
 %==============================================================================
 % SECTION 3: PROBLEM DEFINITION
@@ -334,7 +383,7 @@ Figure~\ref{fig:toyexample} illustrates a concrete instance with 2 AVs and 3 PVs
 \section{Proposed Algorithms}
 \label{sec:algorithms}
 
-We present two algorithms: a greedy approach that serves as a solution-quality baseline, and an assignment-based batch matching approach (ILA) that achieves per-iteration optimality with superior runtime.
+We present two algorithms: a greedy baseline and an assignment-based iterative method (ILA). The key modeling point is that this problem is not a one-shot assignment: once a PV is matched for one segment, its remaining uncovered segment changes, and so do later feasible pairings. Therefore, ILA repeatedly rebuilds a gain matrix from the current uncovered PV segments and solves a linear assignment subproblem for that round. AV capacities are encoded by expanding each AV into virtual slots before solving. This solve--update loop continues until no feasible assignment remains.
 
 \subsection{Greedy Maximum-Weight Matching}
 

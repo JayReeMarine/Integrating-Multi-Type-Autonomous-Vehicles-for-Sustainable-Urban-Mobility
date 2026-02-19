@@ -47,7 +47,7 @@ eunus.ali@monash.edu
 \maketitle
 
 \begin{abstract}
-This paper addresses the energy inefficiency of single-occupancy vehicles by introducing a novel cooperative autonomous vehicle system where smaller Passive Vehicles (PVs) can be physically towed by larger Active Vehicles (AVs) during shared highway segments. Unlike traditional platooning that relies solely on aerodynamic drafting, our approach enables complete PV propulsion energy elimination during attached segments. We formulate the platoon formation problem as a constrained optimization problem on a one-dimensional highway model and propose two algorithms: a Greedy Maximum-Weight Matching algorithm and an Iterative Linear Assignment (ILA) algorithm using the Jonker--Volgenant method. A key innovation is the multi-segment matching capability, allowing a single PV to be towed by multiple AVs across different route segments. Experimental evaluation on synthetic scenarios with up to 400 PVs and 80 AVs demonstrates that both algorithms achieve 25--52\% distance coverage (proportional to energy savings under constant per-distance propulsion) depending on capacity, with ILA providing per-iteration optimality---i.e., an optimal solution to the bipartite subproblem constructed at each iteration---and superior runtime performance (5--15$\times$ faster) due to highly optimized compiled implementations. While global optimality for the full multi-segment problem remains an open question, ILA consistently matches or exceeds greedy performance across all tested scenarios.
+This paper addresses the energy inefficiency of single-occupancy vehicles by introducing a novel cooperative autonomous vehicle system where smaller Passive Vehicles (PVs) can be physically towed by larger Active Vehicles (AVs) during shared highway segments. Unlike traditional platooning that relies solely on aerodynamic drafting, our approach enables complete PV propulsion energy elimination during attached segments. We formulate the platoon formation problem as a constrained optimization problem on a one-dimensional highway model and propose two algorithms: a Greedy Maximum-Weight Matching algorithm and an Iterative Linear Assignment (ILA) algorithm using the Jonker--Volgenant method. A key innovation is the multi-segment matching capability, allowing a single PV to be towed by multiple AVs across different route segments. Experimental evaluation on synthetic scenarios with up to 400 PVs and 80 AVs demonstrates that both algorithms achieve 25--52\% distance coverage (proportional to energy savings under constant per-distance propulsion) depending on capacity, with ILA providing per-iteration optimality---i.e., an optimal solution to the bipartite subproblem constructed at each iteration---while preserving capacity and temporal feasibility across multi-segment assignments. While global optimality for the full multi-segment problem remains an open question, ILA consistently matches or exceeds greedy performance across all tested scenarios, and runtime differences are reported as empirical observations.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -94,7 +94,7 @@ Single-occupancy travel remains a major barrier to sustainable urban mobility. U
     \fill[blue] (10,9) circle (1.2);
     \fill[blue] (70,9) circle (1.2);
     \node[left, blue, font=\scriptsize] at (8.6,8.8) {Activator $A_1$};
-    \node[above, blue, font=\scriptsize] at (37.5,9.9) {capacity $=2$};
+    \node[above, blue, font=\scriptsize] at (22,9.9) {capacity $=2$};
 
     \draw[ultra thick, red!75!black] (45,11) -- (95,11);
     \fill[red!75!black] (45,11) circle (1.2);
@@ -107,8 +107,8 @@ Single-occupancy travel remains a major barrier to sustainable urban mobility. U
     \node[below, gray, font=\scriptsize] at (70,2.5) {handoff};
 
     % Legend text
-    \node[font=\scriptsize, align=left] at (31.2,14.3) {solid: towed segment};
-    \node[font=\scriptsize, align=left] at (31.2,13.5) {dashed: self-driving segment};
+    \node[font=\scriptsize, align=left] at (14,14.5) {solid: towed segment};
+    \node[font=\scriptsize, align=left] at (14,13.7) {dashed: self-driving segment};
 \end{tikzpicture}
 }
 \caption{Conceptual overview of towing-based cooperation. Dashed segments denote self-driving, and solid segments denote towed travel. Activators $A_1$ and $A_2$ each have capacity 2, so only feasible segments (including a handoff on $T2$) can be covered.}
@@ -198,6 +198,7 @@ For an AV $a_i$ and PV $p_j$, the \textit{shared path} is the overlap of their r
     d_{ij} = \max(0, \min(x_i^a, x_j^p) - \max(e_i^a, e_j^p))
     \label{eq:shared}
 \end{equation}
+This quantity is the physically towable overlap between the two routes. It is needed to define both feasibility and the towing benefit of a candidate segment.
 
 The coupling point $cp_{ij}$ (where the PV attaches) and decoupling point $dp_{ij}$ (where the PV detaches) are defined as $cp_{ij} = \max(e_i^a, e_j^p)$ and $dp_{ij} = \min(x_i^a, x_j^p)$, respectively.
 
@@ -212,12 +213,11 @@ A segment assignment for PV $p_j$ to AV $a_i$ is a tuple $(p_j, a_i, s, e)$ wher
 \end{definition}
 
 For PV $p_j$, its route from $e_j^p$ to $x_j^p$ can be partitioned into covered segments (towed by AVs, thus saving propulsion energy) and uncovered segments (self-driven, with no towing-based saving).
-
-\textbf{Progressive Coverage Assumption:} Assignments are processed left-to-right. Each PV tracks a current uncovered boundary $\ell_j$ (initially $e_j^p$), and a new segment starts at $\max(e_i^a,\ell_j)$ before advancing $\ell_j$ to the segment end. Hence uncovered regions remain a contiguous suffix $[\ell_j, x_j^p]$. This design simplifies state management but does not allow backfilling earlier skipped gaps.
+This is necessary because one AV often covers only part of a PV route, so multiple feasible handoffs may be required to increase total coverage.
 
 \subsection{Optimization Problem}
 
-Let $\mathcal{X}$ denote the set of all segment assignments $(p_j, a_i, s, e)$ where PV $p_j$ is towed by AV $a_i$ over segment $[s, e]$. The optimization problem is:
+Let $\mathcal{X}$ denote the set of all segment assignments $(p_j, a_i, s, e)$ where PV $p_j$ is towed by AV $a_i$ over segment $[s, e]$. The decision variables are the selected segment assignments in $\mathcal{X}$. The optimization problem is:
 
 \begin{align}
     \max \quad & \sum_{(p_j, a_i, s, e) \in \mathcal{X}} (e - s) \label{eq:obj}\\
@@ -226,15 +226,16 @@ Let $\mathcal{X}$ denote the set of all segment assignments $(p_j, a_i, s, e)$ w
     & \text{Segments for each } p_j \text{ are pairwise disjoint} \label{eq:nonoverlap}\\
     & (e - s) \geq L_{min} \quad \forall (p_j, a_i, s, e) \in \mathcal{X} \label{eq:minlen}
 \end{align}
+The objective \eqref{eq:obj} maximizes total covered PV distance, which is our proxy for PV propulsion-energy reduction.
 
 \textbf{Constraint Interpretation:}
 \begin{itemize}
-    \item \textbf{Point-wise Capacity} \eqref{eq:capacity}: At any position $x$ along AV $a_i$'s route, the number of simultaneously towed PVs cannot exceed $C_i$. This is the key constraint that distinguishes our problem from standard bipartite matching---an AV's effective capacity varies along its route as PVs attach and detach.
+    \item \textbf{Point-wise Capacity} \eqref{eq:capacity}: At any position $x$ along AV $a_i$'s route, the number of simultaneously towed PVs cannot exceed $C_i$. This is enforced point-wise (not only per AV globally) because attachments change along the route as PVs couple and decouple.
     \item \textbf{Non-overlap} \eqref{eq:nonoverlap}: A PV cannot be towed by two AVs simultaneously at any position.
     \item \textbf{Minimum length} \eqref{eq:minlen}: Each towing segment must exceed $L_{min}$ to justify coupling overhead.
 \end{itemize}
 
-\textbf{Baseline Distance:} Without any towing, every PV drives its full route independently. The \textit{baseline total distance} is $B = \sum_{j=1}^{M} (x_j^p - e_j^p)$. The saving percentage is then $\text{Saving\%} = \frac{\sum (e-s)}{B} \times 100$, which under constant per-distance propulsion equals the percentage of PV propulsion energy eliminated. This baseline serves as the denominator for all efficiency metrics in our experiments.
+Capacity in \eqref{eq:capacity} is a continuous-position constraint over each AV path. The lemma below states why checking only boundary events is sufficient in implementation.
 
 \begin{lemma}[Critical Points Sufficiency]
 \label{lem:critical}
@@ -245,28 +246,19 @@ Fix an AV $a_i$ and let $\mathcal{X}_i = \{(p_j, a_i, s, e) \in \mathcal{X}\}$ b
 The number of PVs towed by AV $a_i$ is a step function over $x \in [e_i^a, x_i^a]$, incrementing at segment start points $s$ and decrementing at segment end points $e$. Between consecutive critical points, the count is constant. Thus, capacity satisfaction at all critical points implies satisfaction everywhere.
 \end{proof}
 
-\subsection{Time Constraints}
+\subsection{Assumptions and Temporal Constraints}
 
-When temporal synchronization is required:
+When temporal synchronization is required at a coupling point $cp$:
 \begin{equation}
     |t_i^a(cp) - t_j^p(cp)| \leq \tau
     \label{eq:time}
 \end{equation}
-where $t_i^a(cp) = t_i^a + (cp - e_i^a)/v_i^a$ is when AV $a_i$ reaches the coupling point $cp$. For multi-segment matching, the PV arrival time is computed from the current state:
-\begin{equation}
-    t_j^p(cp) = \hat{t}_j + \frac{cp - \ell_j}{v_j^p}
-    \label{eq:pv_arrival}
-\end{equation}
-where $(\ell_j, \hat{t}_j)$ is the PV's current state. For the first assignment, this reduces to $t_j^p + (cp - e_j^p)/v_j^p$. In our experiments, we use $\tau = 5$ time units with vehicle speeds varying $\pm 20\%$ around a baseline.
+where $t_i^a(cp) = t_i^a + (cp - e_i^a)/v_i^a$ is when AV $a_i$ reaches the coupling point, and $t_j^p(cp)$ is when PV $p_j$ reaches the same point under its current planned trajectory. In our experiments, we use $\tau = 5$ time units with vehicle speeds varying $\pm 20\%$ around a baseline.
+Constraint \eqref{eq:time} captures temporal feasibility: even with spatial overlap, coupling is invalid if the two vehicles cannot meet within tolerance.
 
-\textbf{Speed Synchronization Policy:} Once coupled at the coupling point $cp_{ij}$, the PV adopts the AV's speed $v_i^a$ for the duration of the towing segment. This policy ensures that feasibility depends solely on synchronization at the coupling point and the existence of a shared route overlap. Decoupling occurs automatically when either vehicle reaches its exit point or when the shared segment ends.
+\textbf{Assumption (Coupled Speed):} During an attached segment, the PV follows the AV speed. Decoupling occurs when the shared segment ends or when either vehicle exits its route.
 
-\textbf{State Update for Multi-Segment Matching:} Each PV maintains state $(\ell_j, \hat{t}_j)$ where $\ell_j$ is the current left boundary of the uncovered interval and $\hat{t}_j$ is the PV's arrival time at position $\ell_j$. Initially, $\ell_j = e_j^p$ and $\hat{t}_j = t_j^p$. Let $(\ell_j^{old}, \hat{t}_j^{old})$ denote the state before an assignment. After PV $p_j$ is towed by AV $a_i$ from coupling point $cp$ to decoupling point $dp$, the state updates as:
-\begin{align}
-    \ell_j^{new} &\leftarrow dp \label{eq:state_pos}\\
-    \hat{t}_j^{new} &\leftarrow \hat{t}_j^{old} + \frac{cp - \ell_j^{old}}{v_j^p} + \frac{dp - cp}{v_i^a} \label{eq:state_time}
-\end{align}
-The first term in~\eqref{eq:state_time} accounts for independent driving from $\ell_j^{old}$ to the coupling point, while the second term accounts for towing at the AV's speed.
+Overall, the formulation is defined by: decision variables (selected segment assignments), objective \eqref{eq:obj}, and feasibility constraints including overlap, point-wise capacity, non-overlap, minimum segment length, and temporal synchronization.
 
 \subsection{Illustrative Example}
 \label{sec:toyexample}
@@ -383,7 +375,7 @@ Figure~\ref{fig:toyexample} illustrates a concrete instance with 2 AVs and 3 PVs
 \section{Proposed Algorithms}
 \label{sec:algorithms}
 
-We present two algorithms: a greedy baseline and an assignment-based iterative method (ILA). The key modeling point is that this problem is not a one-shot assignment: once a PV is matched for one segment, its remaining uncovered segment changes, and so do later feasible pairings. Therefore, ILA repeatedly rebuilds a gain matrix from the current uncovered PV segments and solves a linear assignment subproblem for that round. AV capacities are encoded by expanding each AV into virtual slots before solving. This solve--update loop continues until no feasible assignment remains.
+We present two algorithms in sequence: Greedy first, then ILA.
 
 \subsection{Greedy Maximum-Weight Matching}
 
@@ -433,6 +425,23 @@ Let $N = |\mathcal{A}|$ denote the number of AVs and $M = |\mathcal{P}|$ the num
 \textbf{Why Greedy is Slow in Practice:} The key bottleneck is that greedy must \textit{regenerate and re-sort all candidates after every single assignment}. Each accepted pair changes the capacity state of one AV and the coverage state of one PV, potentially invalidating previously feasible candidates. This per-assignment overhead of $O(NM \log(NM))$ accumulates over hundreds of iterations in our experiments. By contrast, ILA processes an entire batch of assignments in one $O(K^3)$ call (where $K = \sum_i C_i$), amortizing overhead across all matches in a round.
 
 \subsection{Iterative Linear Assignment (ILA) Algorithm}
+
+\subsubsection{State Update for Multi-Segment Iterations}
+
+ILA uses a progressive left-to-right coverage state for each PV. Each PV $p_j$ keeps state $(\ell_j, \hat{t}_j)$, where $\ell_j$ is the current left boundary of its uncovered interval and $\hat{t}_j$ is its arrival time at $\ell_j$.
+
+For temporal feasibility checks in each iteration, the PV arrival time at candidate coupling point $cp$ is:
+\begin{equation}
+    t_j^p(cp) = \hat{t}_j + \frac{cp - \ell_j}{v_j^p}
+    \label{eq:pv_arrival}
+\end{equation}
+
+After assigning PV $p_j$ to AV $a_i$ on $[cp,dp]$, the state updates as:
+\begin{align}
+    \ell_j^{new} &\leftarrow dp \label{eq:state_pos}\\
+    \hat{t}_j^{new} &\leftarrow \hat{t}_j^{old} + \frac{cp - \ell_j^{old}}{v_j^p} + \frac{dp - cp}{v_i^a} \label{eq:state_time}
+\end{align}
+The first term in~\eqref{eq:state_time} is independent driving to the coupling point, and the second is towing at AV speed.
 
 \subsubsection{Key Insight}
 
@@ -562,12 +571,14 @@ Vehicle entry/exit points are uniformly distributed along the highway. Entry tim
 \subsubsection{Metrics}
 
 \begin{itemize}
-    \item \textbf{Baseline Distance}: $\sum_{j=1}^{M} (x_j^p - e_j^p)$, the total distance all PVs would travel independently without any towing. This serves as the denominator for percentage calculations.
+    \item \textbf{Baseline Distance}: $\sum_{j=1}^{M} (x_j^p - e_j^p)$, the total PV distance without any towing.
     \item \textbf{Total Saving}: Sum of towed distances across all assignments, i.e., $\sum_{(p_j, a_i, s, e) \in \mathcal{X}} (e - s)$.
     \item \textbf{Matched Ratio}: Fraction of PVs receiving at least one assignment.
-    \item \textbf{Saving \%}: $\frac{\text{Total Saving}}{\text{Baseline Distance}} \times 100$. Under the assumption of constant per-distance propulsion energy, this equals the percentage of PV propulsion energy eliminated.
+    \item \textbf{Saving \%}: $\frac{\text{Total Saving}}{\text{Baseline Distance}} \times 100$.
     \item \textbf{Runtime}: Wall-clock execution time in seconds.
 \end{itemize}
+
+Baseline Distance and Saving \% are evaluation metrics (not optimization constraints). Under constant per-distance propulsion, Saving \% is a direct proxy for PV propulsion-energy reduction, and the normalization by Baseline Distance enables fair comparison across different scenario scales.
 
 \subsection{Results}
 
@@ -594,7 +605,8 @@ $[1,16]$ & 4091 & 51.4 & 0.45 & 4159 & 52.3 & \textbf{0.16} \\
 
 \textbf{Key Observations:}
 \begin{itemize}
-    \item ILA achieves 0.3--1.9\% higher savings while being 2.8--11.5$\times$ faster
+    \item ILA achieves 0.3--1.9\% higher savings
+    \item In our implementation, ILA shows 2.8--11.5$\times$ lower runtime (empirical observation)
     \item Both algorithms scale linearly with capacity
     \item Saving \% improves from 24.5\% to 52.3\% as capacity increases from 2 to 16
 \end{itemize}
@@ -625,7 +637,7 @@ $L$ & Save & \% & Time(s) & Save & \% & Time(s) \\
 \textbf{Key Observations:}
 \begin{itemize}
     \item Saving \% decreases with highway length (sparser vehicle overlap)
-    \item ILA is 5--28$\times$ faster across all lengths
+    \item In our implementation, ILA shows 5--28$\times$ lower runtime across tested lengths (empirical observation)
     \item Absolute savings increase but efficiency drops for longer highways
 \end{itemize}
 
@@ -647,7 +659,7 @@ Figures~\ref{fig:comparison} and~\ref{fig:length_saving} show saving percentage 
 \begin{figure}[t]
     \centering
     \includegraphics[width=0.95\columnwidth]{figures/capacity_saving_percent_comparison.png}
-    \caption{Distance saving percentage vs. AV capacity for both algorithms. ILA consistently matches or exceeds greedy while being faster.}
+    \caption{Distance saving percentage vs. AV capacity for both algorithms. ILA consistently matches or exceeds greedy in solution quality.}
     \label{fig:comparison}
 \end{figure}
 
@@ -658,34 +670,34 @@ Figures~\ref{fig:comparison} and~\ref{fig:length_saving} show saving percentage 
     \label{fig:length_saving}
 \end{figure}
 
-\subsubsection{Scalability and Runtime Analysis}
+\subsubsection{Scalability and Runtime Observation}
 
-Figures~\ref{fig:runtime} and~\ref{fig:capacity_relative} show runtime comparisons across scenarios.
+Figures~\ref{fig:runtime} and~\ref{fig:capacity_relative} report runtime comparisons across scenarios as empirical implementation observations.
 
 \begin{figure}[t]
     \centering
     \includegraphics[width=0.95\columnwidth]{figures/length_relative_performance.png}
-    \caption{Relative performance (ILA/Greedy ratio) across highway lengths. Values $<$1 indicate ILA is faster and/or achieves higher savings.}
+    \caption{Relative runtime (ILA/Greedy) across highway lengths. Values $<$1 indicate lower runtime for ILA in this implementation.}
     \label{fig:runtime}
 \end{figure}
 
 \begin{figure}[t]
     \centering
     \includegraphics[width=0.95\columnwidth]{figures/capacity_relative_performance.png}
-    \caption{Relative performance (ILA/Greedy ratio) across capacity values. ILA maintains consistent speedup (2.8--11.5$\times$) across all capacity settings.}
+    \caption{Relative runtime (ILA/Greedy) across capacity values. ILA shows lower runtime in this implementation across all tested capacities.}
     \label{fig:capacity_relative}
 \end{figure}
 
 \subsection{Discussion}
 
-\textbf{Why is ILA Faster Despite Higher Worst-Case Complexity?} Despite the $O(K^3)$ per-iteration cost of solving a linear assignment problem (where $K = \sum_i C_i$), ILA outperforms Greedy in wall-clock time. This is due to:
+\textbf{Methodological Implications:} The key value of ILA is structural rather than speed claims: each iteration solves its assignment subproblem optimally, virtual-slot expansion encodes AV capacity directly, and the iterative state update supports multi-segment matching while preserving feasibility constraints.
+
+\textbf{Runtime Observation (Empirical):} In our Python/SciPy implementation, ILA shows lower wall-clock runtime than greedy in tested settings. This behavior is implementation-dependent rather than a theoretical runtime guarantee. Likely contributors include:
 \begin{enumerate}
     \item \texttt{scipy.optimize.linear\_sum\_assignment} uses highly optimized compiled C code with efficient memory access patterns
     \item Greedy requires repeated sorting ($O(NM \log NM)$ per iteration) and candidate regeneration after each assignment
     \item ILA processes all assignments in batches, amortizing overhead
 \end{enumerate}
-
-\textbf{Practical Implications:} ILA is the recommended algorithm for deployment---it provides both per-iteration optimality and superior speed. The greedy algorithm serves two roles: (1)~as a solution-quality reference that validates ILA's empirical performance (ILA matches or exceeds greedy savings in every configuration), and (2)~as a dependency-free alternative for constrained environments lacking compiled LSAP solvers.
 
 \textbf{Capacity Impact:} Doubling capacity yields sub-linear improvement (24.8\% $\rightarrow$ 52.3\%), suggesting diminishing returns. Fleet operators should balance capacity costs against marginal savings.
 
@@ -701,7 +713,7 @@ Our results should be interpreted within four scope boundaries: (1) a one-dimens
 \section{Conclusion}
 \label{sec:conclusion}
 
-We presented a dynamic towing-based platoon formation framework for heterogeneous autonomous vehicles and formulated it as a constrained multi-segment matching problem on a one-dimensional corridor. Across scenarios with up to 80 AVs and 400 PVs, both algorithms achieved substantial coverage gains (25--52\%), while ILA consistently matched or exceeded greedy solution quality and delivered 5--15$\times$ faster runtime through batch assignment with an optimized Jonker--Volgenant solver. The framework captures point-wise capacity and temporal synchronization constraints, and the theoretical scope is explicit: ILA guarantees per-iteration optimality for each LSAP subproblem but not global optimality for the full multi-segment objective.
+We presented a dynamic towing-based platoon formation framework for heterogeneous autonomous vehicles and formulated it as a constrained multi-segment matching problem on a one-dimensional corridor. Across scenarios with up to 80 AVs and 400 PVs, both algorithms achieved substantial coverage gains (25--52\%), while ILA consistently matched or exceeded greedy solution quality. The framework captures point-wise capacity and temporal synchronization constraints, and the theoretical scope is explicit: ILA guarantees per-iteration optimality for each LSAP subproblem but not global optimality for the full multi-segment objective.
 
 \subsection{Future Work}
 \label{sec:future}

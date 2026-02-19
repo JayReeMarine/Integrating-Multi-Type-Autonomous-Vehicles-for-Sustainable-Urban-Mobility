@@ -96,26 +96,24 @@ Single-occupancy travel remains a major barrier to sustainable urban mobility. U
     \node[left, blue, font=\scriptsize] at (8.6,8.8) {Activator $A_1$};
     \node[above, blue, font=\scriptsize] at (22,9.9) {capacity $=2$};
 
-    \draw[ultra thick, red!75!black] (45,11) -- (95,11);
-    \fill[red!75!black] (45,11) circle (1.2);
-    \fill[red!75!black] (95,11) circle (1.2);
-    \node[left, red!75!black, font=\scriptsize] at (50.0,12.1) {Activator $A_2$};
-    \node[above, red!75!black, font=\scriptsize] at (71.5,13.6) {capacity $=2$};
+    \draw[ultra thick, red!75!black] (45,13) -- (95,13);
+    \fill[red!75!black] (45,13) circle (1.2);
+    \fill[red!75!black] (95,13) circle (1.2);
+    \node[left, red!75!black, font=\scriptsize] at (43.5,14.0) {Activator $A_2$};
+    \node[above, red!75!black, font=\scriptsize] at (71.5,13.3) {capacity $=2$};
 
     % Handoff marker
     \draw[gray, dashed] (70,3.2) -- (70,4.8);
     \node[below, gray, font=\scriptsize] at (70,2.5) {handoff};
 
-    % Legend text
-    \node[font=\scriptsize, align=left] at (14,14.5) {solid: towed segment};
-    \node[font=\scriptsize, align=left] at (14,13.7) {dashed: self-driving segment};
+
 \end{tikzpicture}
 }
 \caption{Conceptual overview of towing-based cooperation. Dashed segments denote self-driving, and solid segments denote towed travel. Activators $A_1$ and $A_2$ each have capacity 2, so only feasible segments (including a handoff on $T2$) can be covered.}
 \label{fig:intro_concept}
 \end{figure}
 
-Figure~\ref{fig:intro_concept} gives the high-level intuition. Even when many trips overlap, vehicles usually spend propulsion energy independently. If towing-capable vehicles can pull towable vehicles over shared segments, propulsion can be reduced on those covered portions. Because each Activator has a strict capacity limit, only a subset of requests can be served at the same location. Our objective is therefore to find feasible pairings and segment boundaries that maximize total covered towable distance.
+Figure~\ref{fig:intro_concept} illustrates the core idea: $T1$ is towed by $A_1$ over $[15,60]$; $T2$ is towed by $A_1$ then handed off to $A_2$ at $x\!=\!70$ (\textit{multi-segment matching}); $T3$ is towed by $A_2$ over $[60,92]$. Between $x\!=\!20$ and $x\!=\!60$, $A_1$ simultaneously tows $T1$ and $T2$, reaching its capacity of~2. Solid segments denote towed (propulsion-free) travel; dashed segments denote self-driving. Our objective is to maximize total covered towable distance.
 
 In the rest of this paper, we call towing-capable vehicles \textit{Active Vehicles (AVs)} and towable vehicles \textit{Passive Vehicles (PVs)}. Unlike drafting-based platooning, our model assumes physical coupling: when a PV is attached, its own propulsion on that segment is fully eliminated. We use covered distance as a proxy for PV-side propulsion-energy reduction, and reserve physics-level load modeling for future work.
 
@@ -235,7 +233,7 @@ The objective \eqref{eq:obj} maximizes total covered PV distance, which is our p
     \item \textbf{Minimum length} \eqref{eq:minlen}: Each towing segment must exceed $L_{min}$ to justify coupling overhead.
 \end{itemize}
 
-Capacity in \eqref{eq:capacity} is a continuous-position constraint over each AV path. The lemma below states why checking only boundary events is sufficient in implementation.
+Constraint \eqref{eq:capacity} applies at every position $x$, but the simultaneous tow count is a step function that changes only at coupling/decoupling endpoints. It therefore suffices to check capacity only at these \textit{critical points}; the following lemma formalizes this.
 
 \begin{lemma}[Critical Points Sufficiency]
 \label{lem:critical}
@@ -426,6 +424,8 @@ Let $N = |\mathcal{A}|$ denote the number of AVs and $M = |\mathcal{P}|$ the num
 
 \subsection{Iterative Linear Assignment (ILA) Algorithm}
 
+A one-shot assignment is insufficient: accepting a towing segment changes PV residual intervals and arrival times, altering future pairing benefits. ILA therefore solves \textit{iteratively}---each round builds a cost matrix from current PV states, solves it exactly, updates states, and repeats. Capacity is handled by expanding each AV $a_i$ into $C_i$ virtual slots.
+
 \subsubsection{State Update for Multi-Segment Iterations}
 
 ILA uses a progressive left-to-right coverage state for each PV. Each PV $p_j$ keeps state $(\ell_j, \hat{t}_j)$, where $\ell_j$ is the current left boundary of its uncovered interval and $\hat{t}_j$ is its arrival time at $\ell_j$.
@@ -502,7 +502,7 @@ Algorithm~\ref{alg:hungarian} applies ILA iteratively, updating states after eac
 
 Let $K = \sum_{i=1}^{N} C_i$ denote the total number of virtual slots. Each iteration constructs a $K \times M$ cost matrix in $O(KM)$ time and solves the LSAP in $O(\max(K,M)^3)$ worst-case time. Since each accepted assignment advances at least one PV's boundary, the number of iterations is at most $O(NM)$, giving total worst-case complexity $O(NM \cdot \max(K,M)^3)$.
 
-We use SciPy's \texttt{linear\_sum\_assignment}~\cite{scipy2020}, which implements the Jonker--Volgenant algorithm with highly optimized compiled C code. In practice, ILA is \textit{faster} than Greedy despite the cubic per-iteration cost because: (1) the solver processes all slot--PV pairs in a single batch call with efficient memory access, and (2) the number of ILA iterations is typically small (2--5 in our experiments), whereas Greedy executes hundreds of iterations with $O(NM \log(NM))$ re-sorting each time.
+We use SciPy's \texttt{linear\_sum\_assignment}~\cite{scipy2020}, which implements the Jonker--Volgenant algorithm with highly optimized compiled C code. In our implementation, ILA shows lower wall-clock runtime than Greedy despite the cubic per-iteration cost (empirical observation; see Section~\ref{sec:experiments}). Likely contributors include: (1) the solver processes all slot--PV pairs in a single batch call with efficient memory access, and (2) the number of ILA iterations is typically small (2--5 in our experiments), whereas Greedy executes hundreds of iterations with $O(NM \log(NM))$ re-sorting each time.
 
 \textbf{Capacity Conflict Resolution:} When multiple assignments from a single iteration target the same AV, applying them simultaneously may violate point-wise capacity constraints. We resolve this by processing matched pairs sequentially within each iteration: for each $(slot, j)$ pair, we verify that the assignment satisfies capacity at all critical points (Lemma~\ref{lem:critical}) given the \textit{current} state of prior assignments. Assignments that would violate capacity are discarded; the corresponding PVs remain eligible for matching in subsequent iterations. This ensures feasibility while preserving the benefits of batch optimization.
 

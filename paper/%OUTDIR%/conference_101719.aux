@@ -1,0 +1,130 @@
+\relax 
+\citation{usdot2024}
+\citation{epa2023}
+\citation{tsugawa2016review,bergenhem2012overview}
+\citation{furuhata2013ridesharing,agatz2012optimization,cordeau2007dial}
+\citation{kuhn1955hungarian,munkres1957algorithms}
+\citation{scipy2020}
+\@writefile{toc}{\contentsline {section}{\numberline {I}Introduction}{1}{}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Conceptual overview of towing-based cooperation. Dashed segments denote self-driving, and solid segments denote towed travel. Activators $A_1$ and $A_2$ each have capacity 2, so only feasible segments (including a handoff on $T2$) can be covered.}}{1}{}\protected@file@percent }
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{fig:intro_concept}{{1}{1}{}{figure.1}{}}
+\citation{scipy2020}
+\citation{tsugawa2016review,bergenhem2012overview,shladover2009cooperative}
+\citation{furuhata2013ridesharing,agatz2012optimization,alonso2017demand,cordeau2007dial}
+\citation{kuhn1955hungarian,munkres1957algorithms,scipy2020}
+\@writefile{toc}{\contentsline {section}{\numberline {II}Related Work}{2}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-A}}Platooning and Drafting}{2}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-B}}Ridesharing vs. Vehicle--Vehicle Coupling}{2}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-C}}Assignment Solvers and Iterative Gap}{2}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {III}Problem Formulation}{2}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-A}}Notation Summary}{2}{}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {I}{\ignorespaces Summary of Notation}}{2}{}\protected@file@percent }
+\newlabel{tab:notation}{{I}{2}{}{table.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-B}}System Model}{2}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-C}}Shared Path and Energy Model}{2}{}\protected@file@percent }
+\newlabel{eq:shared}{{1}{2}{}{equation.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-D}}Multi-Segment Matching}{2}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-E}}Optimization Problem}{3}{}\protected@file@percent }
+\newlabel{eq:obj}{{2}{3}{}{equation.2}{}}
+\newlabel{eq:capacity}{{3}{3}{}{equation.3}{}}
+\newlabel{eq:nonoverlap}{{4}{3}{}{equation.4}{}}
+\newlabel{eq:minlen}{{5}{3}{}{equation.5}{}}
+\newlabel{lem:critical}{{1}{3}{}{theorem.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-F}}Assumptions and Temporal Constraints}{3}{}\protected@file@percent }
+\newlabel{eq:time}{{6}{3}{}{equation.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-G}}Illustrative Example}{3}{}\protected@file@percent }
+\newlabel{sec:toyexample}{{\mbox  {III-G}}{3}{}{subsection.3.7}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {IV}Proposed Algorithms}{3}{}\protected@file@percent }
+\newlabel{sec:algorithms}{{IV}{3}{}{section.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-A}}Greedy Maximum-Weight Matching}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {IV-A}1}Key Insight and Rationale}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {IV-A}2}Algorithm Description}{3}{}\protected@file@percent }
+\citation{kuhn1955hungarian,munkres1957algorithms}
+\citation{scipy2020}
+\newlabel{fig:toysetup}{{2a}{4}{}{subfigure.2.1}{}}
+\newlabel{sub@fig:toysetup}{{a}{4}{}{subfigure.2.1}{}}
+\newlabel{fig:toymatch}{{2b}{4}{}{subfigure.2.2}{}}
+\newlabel{sub@fig:toymatch}{{b}{4}{}{subfigure.2.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Illustrative example ($L=100$, $\tau =5$) with 2 AVs and 3 PVs. (a)~Problem setup with temporal parameters. (b)~Matching result: multi-segment matching yields $p_2$ coverage of 70 units (vs.\ 50 with single-AV), while $p_3$ remains unmatched because $|t_i^a(cp) - t_3^p(cp)| > \tau $ for both AVs.}}{4}{}\protected@file@percent }
+\newlabel{fig:toyexample}{{2}{4}{}{figure.2}{}}
+\@writefile{loa}{\contentsline {algorithm}{\numberline {1}{\ignorespaces Greedy Multi-AV Platoon Matching}}{4}{}\protected@file@percent }
+\newlabel{alg:greedy}{{1}{4}{}{algorithm.1}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {IV-A}3}Complexity}{4}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-B}}Iterative Linear Assignment (ILA) Algorithm}{4}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {IV-B}1}State Update for Multi-Segment Iterations}{4}{}\protected@file@percent }
+\newlabel{eq:pv_arrival}{{7}{4}{}{equation.7}{}}
+\newlabel{eq:state_pos}{{8}{4}{}{equation.8}{}}
+\newlabel{eq:state_time}{{9}{4}{}{equation.9}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {IV-B}2}Key Insight}{4}{}\protected@file@percent }
+\citation{scipy2020}
+\citation{fisher1978analysis}
+\citation{burkard2012assignment}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {IV-B}3}Virtual Slot Expansion}{5}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {IV-B}4}Cost Matrix Construction}{5}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {IV-B}5}Iterative Algorithm}{5}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {IV-B}6}Complexity and Implementation}{5}{}\protected@file@percent }
+\@writefile{loa}{\contentsline {algorithm}{\numberline {2}{\ignorespaces Iterative Linear Assignment (ILA) for Multi-AV Matching}}{5}{}\protected@file@percent }
+\newlabel{alg:hungarian}{{2}{5}{}{algorithm.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-C}}Theoretical Analysis}{5}{}\protected@file@percent }
+\newlabel{thm:hungarian}{{2}{5}{}{theorem.2}{}}
+\citation{scipy2020}
+\newlabel{lem:global}{{3}{6}{}{theorem.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {V}Experimental Evaluation}{6}{}\protected@file@percent }
+\newlabel{sec:experiments}{{V}{6}{}{section.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-A}}Experimental Setup}{6}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {V-A}1}Implementation}{6}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {V-A}2}Scenario Generation}{6}{}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {II}{\ignorespaces Experimental Parameters}}{6}{}\protected@file@percent }
+\newlabel{tab:params}{{II}{6}{}{table.2}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {V-A}3}Metrics}{6}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-B}}Results}{6}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {V-B}1}Capacity Sweep}{6}{}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {III}{\ignorespaces Performance vs. AV Capacity (averaged over 4 seeds)}}{6}{}\protected@file@percent }
+\newlabel{tab:capacity}{{III}{6}{}{table.3}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {V-B}2}Highway Length Sweep}{6}{}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {IV}{\ignorespaces Performance vs. Highway Length (averaged over 4 seeds)}}{6}{}\protected@file@percent }
+\newlabel{tab:length}{{IV}{6}{}{table.4}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Total PV distance: Baseline (no towing) vs.\ after Greedy vs.\ after ILA across AV capacity values. The difference between Baseline and each algorithm represents total distance saved (proportional to PV propulsion energy eliminated).}}{7}{}\protected@file@percent }
+\newlabel{fig:baseline}{{3}{7}{}{figure.3}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Distance saving percentage vs. AV capacity for both algorithms. ILA consistently matches or exceeds greedy in solution quality.}}{7}{}\protected@file@percent }
+\newlabel{fig:comparison}{{4}{7}{}{figure.4}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {V-B}3}Baseline Distance Comparison}{7}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {V-B}4}Algorithm Comparison Visualization}{7}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {V-B}5}Scalability and Runtime Observation}{7}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-C}}Discussion}{7}{}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Distance saving percentage vs. highway length. Both algorithms show decreasing efficiency as highways lengthen due to sparser vehicle overlap.}}{7}{}\protected@file@percent }
+\newlabel{fig:length_saving}{{5}{7}{}{figure.5}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Relative runtime (ILA/Greedy) across highway lengths. Values $<$1 indicate lower runtime for ILA in this implementation.}}{7}{}\protected@file@percent }
+\newlabel{fig:runtime}{{6}{7}{}{figure.6}{}}
+\bibcite{usdot2024}{1}
+\bibcite{epa2023}{2}
+\bibcite{tsugawa2016review}{3}
+\bibcite{bergenhem2012overview}{4}
+\bibcite{shladover2009cooperative}{5}
+\bibcite{furuhata2013ridesharing}{6}
+\bibcite{agatz2012optimization}{7}
+\bibcite{alonso2017demand}{8}
+\bibcite{cordeau2007dial}{9}
+\bibcite{sciarretta2020energy}{10}
+\bibcite{hellstrom2009look}{11}
+\bibcite{kuhn1955hungarian}{12}
+\bibcite{munkres1957algorithms}{13}
+\bibcite{burkard2012assignment}{14}
+\bibcite{cattrysse1992survey}{15}
+\bibcite{ploeg2011design}{16}
+\bibcite{dresner2008multiagent}{17}
+\bibcite{fisher1978analysis}{18}
+\bibcite{scipy2020}{19}
+\bibcite{drexl2012synchronization}{20}
+\bibcite{karp1990optimal}{21}
+\bibcite{ren2005consensus}{22}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Relative runtime (ILA/Greedy) across capacity values. ILA shows lower runtime in this implementation across all tested capacities.}}{8}{}\protected@file@percent }
+\newlabel{fig:capacity_relative}{{7}{8}{}{figure.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-D}}Limitations}{8}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {VI}Conclusion}{8}{}\protected@file@percent }
+\newlabel{sec:conclusion}{{VI}{8}{}{section.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-A}}Future Work}{8}{}\protected@file@percent }
+\newlabel{sec:future}{{\mbox  {VI-A}}{8}{}{subsection.6.1}{}}
+\@writefile{toc}{\contentsline {section}{References}{8}{}\protected@file@percent }
+\gdef \@abspage@last{8}

@@ -59,7 +59,7 @@ autonomous vehicles, vehicle platooning, energy efficiency, linear assignment, J
 %==============================================================================
 \section{Introduction}
 
-Single-occupancy travel remains a major barrier to sustainable urban mobility. U.S. National Household Travel Survey data show that drive-alone commuting dominates trip demand~\cite{usdot2024}, while the transportation sector contributes about 29\% of U.S. greenhouse gas emissions~\cite{epa2023}. This inefficiency is pronounced when many vehicles traverse overlapping routes but still consume propulsion energy independently.
+Single-occupancy travel remains a major barrier to sustainable urban mobility. U.S. National Household Travel Survey data show that drive-alone commuting dominates trip demand~\cite{usdot2024}, while the transportation sector contributes about 29\% of U.S. greenhouse gas emissions~\cite{epa2023}. This inefficiency is pronounced when many vehicles traverse overlapping routes but still consume propulsion energy independently. With rapid advances in autonomous driving~\cite{yurtsever2020survey}, future transportation can realize physically coordinated vehicle platoons that go beyond independent driving.
 
 \begin{figure}[t]
 \centering
@@ -687,17 +687,11 @@ Figures~\ref{fig:runtime} and~\ref{fig:capacity_relative} report runtime compari
 
 \textbf{Methodological Implications:} The key value of ILA is structural rather than speed claims: each iteration solves its assignment subproblem optimally, virtual-slot expansion encodes AV capacity directly, and the iterative state update supports multi-segment matching while preserving feasibility constraints.
 
-\textbf{Runtime Observation (Empirical):} In our Python/SciPy implementation, ILA shows lower wall-clock runtime than greedy in tested settings. This behavior is implementation-dependent rather than a theoretical runtime guarantee. Likely contributors include:
-\begin{enumerate}
-    \item \texttt{scipy.optimize.linear\_sum\_assignment} uses highly optimized compiled C code with efficient memory access patterns
-    \item Greedy requires repeated sorting ($O(NM \log NM)$ per iteration) and candidate regeneration after each assignment
-    \item ILA processes all assignments in batches, amortizing overhead
-\end{enumerate}
+\textbf{Runtime Observation (Empirical):} In our Python/SciPy implementation, ILA shows lower wall-clock runtime than greedy in tested settings. This is implementation-dependent rather than a theoretical guarantee; likely contributors are SciPy's optimized C code, greedy's repeated sorting overhead, and ILA's batch processing.
 
+\textbf{Capacity Impact:} Doubling capacity yields sub-linear improvement (24.8\% $\rightarrow$ 52.3\%), suggesting diminishing returns.
 
-\textbf{Capacity Impact:} Doubling capacity yields sub-linear improvement (24.8\% $\rightarrow$ 52.3\%), suggesting diminishing returns. Fleet operators should balance capacity costs against marginal savings.
-
-\textbf{Length Effect:} Saving percentage drops from 31.6\% (L=50) to 7.5\% (L=1600) as vehicles have less overlap on longer highways. This suggests our approach is most effective for medium-length corridors with high vehicle density.
+\textbf{Length Effect:} Saving~\% drops from 31.6\% ($L\!=\!50$) to 7.5\% ($L\!=\!1600$) due to sparser overlap, suggesting our approach is most effective for medium-length corridors with high vehicle density.
 
 \subsection{Limitations}
 
@@ -763,6 +757,8 @@ Future work will extend the model to two-dimensional road networks, evaluate onl
 \bibitem{karp1990optimal} R. M. Karp, U. V. Vazirani, and V. V. Vazirani, ``An optimal algorithm for on-line bipartite matching,'' in \textit{Proc. 22nd Ann. ACM Symp. Theory of Computing}, pp. 352--358, 1990.
 
 \bibitem{ren2005consensus} W. Ren and R. W. Beard, ``Consensus seeking in multiagent systems under dynamically changing interaction topologies,'' \textit{IEEE Trans. Autom. Control}, vol. 50, no. 5, pp. 655--661, 2005.
+
+\bibitem{yurtsever2020survey} E. Yurtsever, J. Lambert, A. Carballo, and K. Takeda, ``A survey of autonomous driving: Common practices and emerging technologies,'' \textit{IEEE Access}, vol. 8, pp. 58443--58469, 2020.
 \end{thebibliography}
 
 \end{document}

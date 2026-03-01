@@ -420,11 +420,11 @@ Algorithm~\ref{alg:greedy} operates in three phases:
 \subsection{Iterative Linear Assignment (ILA) Algorithm}
 \label{sec:ila}
 
-A single assignment solve is insufficient for multi-segment matching because accepting one towing segment changes the PV’s residual interval and arrival time, which in turn affects the feasibility and benefit of subsequent pairings. To address this dependency across decisions, ILA solves a sequence of bipartite matching subproblems. Each iteration constructs a weighted bipartite graph from current PV states, solves the resulting Linear Sum Assignment Problem (LSAP) optimally via the Jonker--Volgenant method~\cite{kuhn1955hungarian,munkres1957algorithms,burkard2012assignment}, updates PV states to reflect newly covered segments, and repeats until no further feasible assignments exist. AV capacity is encoded through \textit{virtual slot expansion}: each AV $a_i$ with capacity $C_i$ is replicated into $C_i$ identical slots in the bipartite graph.
+A single assignment solve is insufficient for multi-segment matching because accepting one towing segment changes the PV’s residual interval and arrival time, which in turn affects the feasibility and benefit of later pairings. To handle this dependency, ILA solves a sequence of bipartite LSAP rounds. Each iteration builds a weighted bipartite graph from current PV states, solves the resulting LSAP optimally via the Jonker--Volgenant method~\cite{kuhn1955hungarian,munkres1957algorithms,burkard2012assignment}, updates PV states to reflect newly covered segments, and repeats until no further feasible assignments exist. AV capacity is encoded through \textit{virtual slot expansion}: each AV $a_i$ with capacity $C_i$ is replicated into $C_i$ identical slots in the bipartite graph.
 
 \subsubsection{Virtual Slot Expansion and Bipartite Graph}
 
-To encode point-wise capacity, each AV $a_i$ is expanded into $C_i$ virtual slots, producing $K = \sum_{i=1}^{N} C_i$ left-side nodes. The $M$ PVs form the right-side nodes. For the toy example (Section~\ref{sec:toyexample}), $a_1$ ($C_1\!=\!2$) yields two slots and $a_2$ ($C_2\!=\!1$) one slot ($K\!=\!3$ left nodes); edge weights equal the overlap---e.g., $a_1$-$p_1$ has weight $\min(8,7)-\max(2,1)=5$. The LSAP solver selects the maximum-weight matching: $a_1$-slot$_1 \!\to\! p_1$ (5) and $a_2 \!\to\! p_2$ (3). Figure~\ref{fig:bipartite} illustrates this.
+To encode point-wise capacity, each AV $a_i$ is expanded into $C_i$ virtual slots, producing $K = \sum_{i=1}^{N} C_i$ left-side nodes. The $M$ PVs form the right-side nodes. For the toy example (Section~\ref{sec:toyexample}), the slot set is $\{a_1^{(1)}, a_1^{(2)}, a_2^{(1)}\}$ ($K\!=\!3$); edge weights equal overlap distance, e.g., $w(a_1,p_1)=\min(8,7)-\max(2,1)=5$. The LSAP solver then selects the maximum-weight matching: $a_1^{(1)}\!\to\!p_1$ (5) and $a_2^{(1)}\!\to\!p_2$ (3). Figure~\ref{fig:bipartite} illustrates this.
 
 \begin{figure}[t]
 \centering
@@ -453,7 +453,7 @@ To encode point-wise capacity, each AV $a_i$ is expanded into $C_i$ virtual slot
     \node[above=0.15cm of p1, font=\small\bfseries] {PVs};
 \end{tikzpicture}
 }
-\caption{Bipartite graph for ILA (iteration~1 of the toy example). Each AV with $C_i\!=\!2$ yields two virtual slots. Edge weights are negated towed distances ($\infty$ denotes time-infeasible pairs). The LSAP solver finds the minimum-cost matching on this graph.}
+\caption{Bipartite graph for ILA (iteration~1 of the toy example). Each AV with $C_i\!=\!2$ yields two virtual slots. Edge weights are negated towed distances ($\infty$ denotes time-infeasible pairs), and the LSAP solver returns the minimum-cost matching.}
 \label{fig:bipartite}
 \end{figure}
 
@@ -524,7 +524,7 @@ The full multi-segment problem~\eqref{eq:obj}--\eqref{eq:minlen} is NP-hard, as 
 
 \begin{theorem}[Per-Iteration Optimality]
 \label{thm:hungarian}
-At each iteration of Algorithm~\ref{alg:hungarian}, the LSAP solver returns a matching that maximizes total towed distance among all one-to-one slot-to-PV assignments for the cost matrix $\mathbf{W}$ constructed from current states.
+At each iteration of Algorithm~\ref{alg:hungarian}, the LSAP solver returns a one-to-one slot-to-PV matching that maximizes total towed distance for the current cost matrix $\mathbf{W}$.
 \end{theorem}
 
 \begin{proof}
@@ -540,7 +540,7 @@ Algorithm~\ref{alg:hungarian} does not guarantee global optimality for the full 
 Consider $a_1$ overlapping $p_1$ on $[0,30]$ and $a_2$ on $[10,50]$. ILA may assign $p_1 \to a_1$ (saving 30), advancing $\ell_1$ to 30; the remaining $a_2$ overlap is $[30,50]$ (saving 20), for total 50. Yet assigning $p_1 \to a_2$ directly yields 40, freeing $a_1$ for other PVs---potentially producing a higher global total.
 \end{proof}
 
-Despite this gap, ILA consistently matches or exceeds greedy performance in all our experiments (Section~\ref{sec:experiments}). The iterative decomposition reduces the NP-hard multi-segment problem to a polynomial sequence of tractable LSAP subproblems.
+Despite this gap, ILA consistently matches or exceeds greedy performance in all our experiments (Section~\ref{sec:experiments}). The iterative decomposition turns the NP-hard multi-segment objective into a polynomial sequence of LSAP rounds.
 
 %==============================================================================
 % SECTION 5: EXPERIMENTAL EVALUATION
@@ -552,7 +552,7 @@ Despite this gap, ILA consistently matches or exceeds greedy performance in all 
 
 \subsubsection{Implementation}
 
-Both algorithms are implemented in Python 3.11 using NumPy 1.26 and SciPy 1.11~\cite{scipy2020}. The ILA algorithm uses \texttt{scipy.optimize.linear\_sum\_assignment}, which implements the Jonker--Volgenant shortest augmenting path method in highly optimized compiled C code. This implementation processes all slot--PV pairs in a single batch call with efficient memory access, which---combined with the small number of ILA iterations (typically 2--5)---yields lower empirical wall-clock time than greedy despite the cubic per-iteration cost. All experiments run single-threaded on an Apple M4 Pro with 16GB unified memory under macOS 15.0.
+Both algorithms are implemented in Python 3.11 using NumPy 1.26 and SciPy 1.11~\cite{scipy2020}. ILA uses SciPy's LSAP routine, which implements the Jonker--Volgenant shortest augmenting path method in optimized compiled C code. The routine processes slot--PV pairs in batch, and with a small iteration count (typically 2--5), ILA shows lower empirical wall-clock time than greedy in our setup. All experiments run single-threaded on an Apple M4 Pro with 16GB unified memory under macOS 15.0.
 
 \subsubsection{Scenario Generation}
 
@@ -599,7 +599,7 @@ We vary the AV capacity range $C$ to evaluate how the number of simultaneously t
 Table~\ref{tab:capacity} reports results ($N=50$, $M=200$, $L=100$).
 
 \begin{table}[htbp]
-\caption{Performance vs. AV Capacity (averaged over 4 seeds)}
+\caption{Performance vs. AV Capacity (4-seed average)}
 \label{tab:capacity}
 \centering
 \begin{tabular}{c|ccc|ccc}
@@ -622,7 +622,7 @@ We vary the highway length $L$ to study how spatial sparsity (fewer overlapping 
 Table~\ref{tab:length} reports results ($N=80$, $M=400$, $C=[1,3]$).
 
 \begin{table}[htbp]
-\caption{Performance vs. Highway Length (averaged over 4 seeds)}
+\caption{Performance vs. Highway Length (4-seed average)}
 \label{tab:length}
 \centering
 \begin{tabular}{c|ccc|ccc}
@@ -660,7 +660,7 @@ Figures~\ref{fig:comparison} and~\ref{fig:length_saving} show saving percentage 
 \begin{figure}[t]
     \centering
     \includegraphics[width=0.95\columnwidth]{figures/capacity_saving_percent_comparison.png}
-    \caption{Distance saving percentage vs. AV capacity for both algorithms. ILA consistently matches or exceeds greedy in solution quality.}
+    \caption{Distance saving percentage vs. AV capacity. ILA consistently matches or exceeds greedy.}
     \label{fig:comparison}
 \end{figure}
 

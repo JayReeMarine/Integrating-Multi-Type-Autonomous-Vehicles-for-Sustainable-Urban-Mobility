@@ -1,17 +1,16 @@
-# Dynamic Platoon Formation for Multi-Modal Autonomous Vehicle Systems
+# Dynamic Platoon Formation of Multi-Type Autonomous Vehicles for Sustainable Urban Mobility
 
-A simulation framework for optimizing energy-efficient platoon formation between Active Vehicles (AVs) and Passive Vehicles (PVs) on highway systems. This project implements and compares two algorithms for vehicle matching: a Greedy Maximum-Weight Matching baseline and an Iterative Linear Assignment (ILA) method (Hungarian-family linear assignment solved by SciPy's Jonker-Volgenant backend).
+A simulation framework for optimizing energy-efficient platoon formation between Active Vehicles (AVs) and Passive Vehicles (PVs) on highway systems. This project implements and compares two algorithms for vehicle matching: a Greedy Maximum-Weight Matching algorithm and an Iterative Linear Assignment (ILA) method (assignment solved via SciPy's Jonker-Volgenant backend).
 
 ## Overview
 
-This research introduces a novel concept of **active and passive autonomous vehicles**, where smaller passive vehicles (PVs) can temporarily attach to larger active vehicles (AVs) during shared highway segments. Unlike traditional platooning where vehicles maintain virtual formations through coordinated driving, our approach enables **physical attachment** where PVs are towed by AVs, achieving near-100% energy savings for towed vehicles during attached phases.
+This research introduces a novel concept of **active and passive autonomous vehicles**, where smaller passive vehicles (PVs) can temporarily attach to larger active vehicles (AVs) during shared highway segments. Unlike traditional platooning where vehicles maintain virtual formations through coordinated driving, our approach enables **physical attachment** where PV propulsion is offset during attached phases while AVs bear the additional towing load.
 
 ### Key Contributions
 
-- **Simplified Problem Formulation**: Deterministic baseline with clean mapping to classic optimization problems
-- **Comprehensive Formulation**: Real-world model addressing traffic dynamics and temporal constraints
-- **Efficient Algorithms**: A greedy baseline and an assignment-based ILA method with per-iteration optimality
-- **Experimental Framework**: Extensive parameter sweep experiments with visualization tools
+- **Problem Formulation**: Dynamic platoon formation with multi-segment matching, point-wise AV capacity constraints, and temporal synchronization
+- **Algorithms**: A greedy matching algorithm and an assignment-based ILA method with per-iteration optimality
+- **Experimental Framework**: Controlled parameter sweeps with reproducible visualization and comparison tools
 
 ## Quick Start
 
@@ -188,7 +187,7 @@ The platoon formation problem is formulated as an optimization problem:
 2. Sort candidates by energy saving (descending)
 3. Assign greedily while respecting capacity constraints
 
-**Role in this project**: A practical baseline for solution quality and implementation simplicity
+**Role in this project**: A simple heuristic comparator with low implementation overhead
 
 ### Iterative Linear Assignment (ILA)
 
@@ -248,11 +247,12 @@ Based on experiments comparing Greedy vs ILA:
 
 | Metric | Observed Trend |
 |--------|----------------|
-| Total covered distance (saving proxy) | Both methods improve with capacity; ILA matches or slightly exceeds Greedy |
-| Saving percentage | Typically in the 25--52% range depending on scenario |
-| Runtime | ILA is often faster in practice due to optimized compiled solver backend |
+| Total covered distance (saving proxy) | Both methods improve with capacity; ILA consistently matches or exceeds Greedy in tested settings |
+| Saving percentage | Typically in the 25--52% range depending on scenario (paper setting) |
+| ILA vs Greedy saving gap | 0.2--0.9 percentage-point higher saving rates (capacity sweep) |
+| Runtime | In this implementation, ILA is often faster (2.8--11.5x in capacity sweep; 5.5--26.9x in length sweep) |
 
-Greedy remains a useful baseline, while ILA is the primary method used for final analysis in the paper.
+Greedy remains a useful heuristic comparator, while ILA is the primary method used for final analysis in the paper.
 
 ## Paper Compilation
 

@@ -11,6 +11,10 @@
 \usepackage{multirow}
 \usepackage{tikz}
 \usepackage{subcaption}
+\usepackage[hyphens]{url}
+% Allow robust URL wrapping in narrow IEEE two-column layout.
+\def\UrlBreaks{\do\/\do-}
+\Urlmuskip=0mu plus 1mu\relax
 \usetikzlibrary{patterns,arrows.meta,positioning,calc}
 
 \newtheorem{theorem}{Theorem}
@@ -23,30 +27,30 @@
 
 \title{Dynamic Platoon Formation of Multi-Type Autonomous Vehicles for Sustainable Urban Mobility}
 
-\author{
-\IEEEauthorblockN{Jaeyun Ree}
-\IEEEauthorblockA{
-\textit{Faculty of Information Technology} \\
-\textit{Monash University} \\
-Melbourne, VIC, Australia \\
-jree0010@student.monash.edu
-}
-\and
-\IEEEauthorblockN{Mohammed Eunus Ali}
-\IEEEauthorblockA{
-\textit{Faculty of Information Technology} \\
-\textit{Monash University} \\
-Melbourne, VIC, Australia \\
-eunus.ali@monash.edu
-}
-}
+%\author{
+%\IEEEauthorblockN{Jaeyun Ree}
+%\IEEEauthorblockA{
+%\textit{Faculty of Information Technology} \\
+%\textit{Monash University} \\
+%Melbourne, VIC, Australia \\
+%jree0010@student.monash.edu
+%}
+%\and
+%\IEEEauthorblockN{Mohammed Eunus Ali}
+%\IEEEauthorblockA{
+%\textit{Faculty of Information Technology} \\
+%\textit{Monash University} \\
+%Melbourne, VIC, Australia \\
+%eunus.ali@monash.edu
+%}
+%}
 
 \maketitle
 
 \begin{abstract}
-This paper addresses the energy inefficiency of single-occupancy vehicles by introducing a novel cooperative autonomous vehicle system where smaller Passive Vehicles (PVs) can be physically towed by larger Active Vehicles (AVs) in a shared road segment. Unlike traditional platooning that relies solely on aerodynamic drafting, our approach enables complete PV propulsion energy elimination during the shared segment travel. We formulate the platoon formation problem as a constrained optimization problem on a one-dimensional a road segement and propose two algorithms: a Greedy Maximum-Weight Matching algorithm and an Iterative Linear Assignment (ILA) algorithm using the Jonker--Volgenant method. A key innovation is the multi-segment matching capability, allowing a single PV to be towed by multiple AVs across different route segments. Experimental evaluation on synthetic scenarios with up to 400 PVs and 80 AVs demonstrates that both algorithms achieve 25--52\% distance coverage (proportional to energy savings under constant per-distance propulsion) depending on capacity.
+This paper addresses the energy inefficiency of single-occupancy vehicles by introducing a novel cooperative autonomous vehicle system where smaller Passive Vehicles (PVs) can be physically towed by larger Active Vehicles (AVs) in a shared road segment. Unlike traditional platooning that relies solely on aerodynamic drafting, our approach enables PV propulsion energy to be fully offset by the towing AV during the shared segment travel, though the AV bears the additional load. We formulate the platoon formation problem as a constrained optimization problem and propose two algorithms: a Greedy Maximum-Weight Matching algorithm and an Iterative Linear Assignment (ILA) algorithm using the Jonker--Volgenant method. A key innovation is the multi-segment matching capability, allowing a single PV to be towed by multiple AVs across different route segments. Experimental evaluation on synthetic scenarios with up to 400 PVs and 80 AVs demonstrates that both algorithms achieve 25--52\% distance coverage (proportional to energy savings under constant per-distance propulsion) depending on capacity.
 %with ILA providing per-iteration optimality---i.e., an optimal solution to the bipartite subproblem constructed at each iteration---while preserving capacity and temporal feasibility across multi-segment assignments. While global optimality for the full multi-segment problem remains an open question, 
-Our experimental evaluation shows that the ILA consistently matches or exceeds greedy performance across all tested scenarios.
+Our experimental evaluation shows that the ILA consistently matches or exceeds greedy performance across all tested scenarios, achieving 0.2--0.9 percentage-point higher saving rates with 2.8--11.5$\times$ lower runtime. The complete codebase is available at \url{https://github.com/JayReeMarine/Integrating-Multi-Type-Autonomous-Vehicles-for-Sustainable-Urban-Mobility}.
 %and runtime differences are reported as empirical observations.
 \end{abstract}
 
@@ -76,18 +80,18 @@ Single-occupancy travel remains a major barrier to sustainable urban mobility. U
     \node[right, font=\scriptsize] at (103,0) {$x$};
 
     % Towable vehicles (dashed full path + solid towed segments)
-    \draw[thick, dashed, gray] (5,2) -- (85,2);
-    \draw[ultra thick, blue!70] (15,2) -- (60,2);
-    \node[left, font=\scriptsize] at (4,2) {T1};
+    \draw[thick, dashed, gray] (10,2) -- (80,2);
+    \draw[ultra thick, blue!70] (20,2) -- (60,2);
+    \node[left, font=\scriptsize] at (9,2) {T1};
 
-    \draw[thick, dashed, gray] (18,4) -- (95,4);
-    \draw[ultra thick, blue!70] (20,4) -- (70,4);
+    \draw[thick, dashed, gray] (20,4) -- (90,4);
+    \draw[ultra thick, blue!70] (20,4) -- (60,4);
     \draw[ultra thick, red!75!black] (70,4) -- (90,4);
-    \node[left, font=\scriptsize] at (17,4) {T2};
+    \node[left, font=\scriptsize] at (19,4) {T2};
 
-    \draw[thick, dashed, gray] (55,6) -- (98,6);
-    \draw[ultra thick, red!75!black] (60,6) -- (92,6);
-    \node[left, font=\scriptsize] at (54,6) {T3};
+    \draw[thick, dashed, gray] (50,6) -- (100,6);
+    \draw[ultra thick, red!75!black] (60,6) -- (90,6);
+    \node[left, font=\scriptsize] at (49,6) {T3};
 
     % Activators
     \draw[ultra thick, blue] (10,9) -- (70,9);
@@ -96,11 +100,11 @@ Single-occupancy travel remains a major barrier to sustainable urban mobility. U
     \node[left, blue, font=\scriptsize] at (8.6,8.8) {Activator $A_1$};
     \node[above, blue, font=\scriptsize] at (22,9.9) {capacity $=2$};
 
-    \draw[ultra thick, red!75!black] (45,13) -- (95,13);
-    \fill[red!75!black] (45,13) circle (1.2);
-    \fill[red!75!black] (95,13) circle (1.2);
-    \node[left, red!75!black, font=\scriptsize] at (43.5,14.0) {Activator $A_2$};
-    \node[above, red!75!black, font=\scriptsize] at (71.5,13.3) {capacity $=2$};
+    \draw[ultra thick, red!75!black] (50,13) -- (90,13);
+    \fill[red!75!black] (50,13) circle (1.2);
+    \fill[red!75!black] (90,13) circle (1.2);
+    \node[left, red!75!black, font=\scriptsize] at (48.5,14.0) {Activator $A_2$};
+    \node[above, red!75!black, font=\scriptsize] at (70,13.3) {capacity $=2$};
 
     % Handoff marker
     \draw[gray, dashed] (70,3.2) -- (70,4.8);
@@ -109,18 +113,20 @@ Single-occupancy travel remains a major barrier to sustainable urban mobility. U
 
 \end{tikzpicture}
 }
-\caption{Conceptual overview of towing-based cooperation. Dashed segments denote self-driving, and solid segments denote towed travel. Activators $A_1$ and $A_2$ each have capacity 2, so only feasible segments (including a handoff on $T2$) can be covered.}
+\caption{Conceptual overview of towing-based cooperation. Dashed gray segments denote self-driving portions (PV uses own propulsion), and solid colored segments denote towed travel (PV propulsion offset by AV). Activators $A_1$ and $A_2$ each have capacity 2; $T2$ is towed by $A_1$ to $x\!=\!60$, self-drives to $x\!=\!70$, then is handed off to $A_2$.}
 \label{fig:intro_concept}
 \end{figure}
-To address this, we introduce a new problem that we call \textit{dynamic platoon formation}. We consider two classes of autonomous vehicles: larger \textit{Active Vehicles (AVs)} capable of physically towing smaller vehicles, and smaller \textit{Passive Vehicles (PVs)} that can be attached to AVs during shared road segments. Unlike drafting-based platooning, which yields modest aerodynamic savings while vehicles remain physically separated, our model assumes mechanical coupling: when a PV is attached to an AV, the PV's own propulsion on that segment is \emph{completely eliminated}. Given a set of AVs and PVs with known routes, entry times, and speeds, the goal is to \textbf{maximize the total PV distance covered by towing}. We use covered distance as a proxy for PV-side propulsion-energy reduction, and reserve physics-level load modeling for future work.
+In a future where vehicles are fully autonomous, physical coordination becomes feasible: a large AV could mechanically couple with smaller vehicles on a shared highway segment, towing them and offsetting a substantial share of their independent propulsion energy for that portion of the trip~\cite{yurtsever2020survey,shladover2009cooperative}.
 
-Figure~\ref{fig:intro_concept} illustrates a concrete example. Three PVs ($T1$, $T2$, $T3$) travel along a shared highway, and two AVs ($A_1$, $A_2$) each have towing capacity~2. In the depicted solution, $T1$ is towed by $A_1$ over $[15,60]$; $T2$ is first towed by $A_1$ and then handed off to $A_2$ at $x\!=\!70$, demonstrating \textit{multi-segment matching}---a single PV served by multiple AVs across different route segments; and $T3$ is towed by $A_2$ over $[60,92]$. Between $x\!=\!20$ and $x\!=\!60$, $A_1$ simultaneously tows $T1$ and $T2$, reaching its capacity of~2. Solid segments denote towed (propulsion-free) travel; dashed segments denote self-driving.
+To address this, we introduce a new problem that we call \textit{dynamic platoon formation}. We consider two classes of autonomous vehicles: larger \textit{Active Vehicles (AVs)} capable of physically towing smaller vehicles, and smaller \textit{Passive Vehicles (PVs)} that can be attached to AVs during shared road segments. Unlike drafting-based platooning, which yields modest aerodynamic savings while vehicles remain physically separated, our model assumes mechanical coupling: when a PV is attached to an AV, the PV's own propulsion on that segment is \emph{fully offset}, with the towing load borne by the AV. Given a set of AVs and PVs with known, fixed routes (AVs do not deviate from their pre-planned paths), entry times, and speeds, the goal is to \textbf{maximize the total PV distance covered by towing}. We use covered distance as a proxy for PV-side propulsion-energy reduction, and reserve physics-level load modeling for future work.
+
+Figure~\ref{fig:intro_concept} illustrates a concrete example. Three PVs ($T1$, $T2$, $T3$) travel along a shared highway, and two AVs ($A_1$, $A_2$) each have towing capacity~2. In the depicted solution, $T1$ is towed by $A_1$ over $[20,60]$; $T2$ is towed by $A_1$ over $[20,60]$, then travels on its own over $[60,70]$, and is handed off to $A_2$ over $[70,90]$, demonstrating \textit{multi-segment matching}---a single PV served by multiple AVs across different route segments; and $T3$ is towed by $A_2$ over $[60,90]$. Between $x\!=\!20$ and $x\!=\!60$, $A_1$ simultaneously tows $T1$ and $T2$, reaching its capacity of~2. Solid segments denote towed (propulsion-free) travel; dashed segments denote self-driving.
 
 Prior work spans platooning~\cite{tsugawa2016review,bergenhem2012overview}, ridesharing and routing~\cite{furuhata2013ridesharing,agatz2012optimization,cordeau2007dial}, and assignment optimization~\cite{kuhn1955hungarian,munkres1957algorithms}. However, none of these lines of work models physical towing that combines multi-segment PV coverage with point-wise AV capacity constraints---i.e., the number of PVs an AV can tow simultaneously varies along its route as vehicles attach and detach---in a single framework. Our formulation targets that gap.
 
 We formulate this as an optimization problem: find segment assignments that maximize total towed PV distance, subject to spatial overlap, AV capacity, and temporal synchronization constraints. This multi-segment matching problem generalizes the generalized assignment problem, which is known to be NP-hard~\cite{cattrysse1992survey}, so exact solutions are intractable for realistic fleet sizes. We propose two approximate solution strategies. First, a \textit{Greedy Maximum-Weight Matching} algorithm iteratively selects the highest-benefit feasible AV--PV towing pair and commits to it, repeating until no feasible pairs remain. This approach is fast but myopic. Second, an \textit{Iterative Linear Assignment (ILA)} algorithm decomposes the multi-segment problem into a sequence of bipartite matching subproblems: at each iteration, it constructs a cost matrix that encodes the towing benefit of every feasible AV--PV pair, expands each AV into virtual slots to encode capacity, solves the resulting Linear Sum Assignment Problem (LSAP) optimally via the Jonker--Volgenant method~\cite{scipy2020}, updates PV states to reflect newly covered segments, and repeats until no further feasible assignments exist. For tractability, we evaluate both algorithms under a one-dimensional highway abstraction.
 
-This paper makes three main contributions. First, we formalize the dynamic platoon formation problem with multi-segment matching and point-wise AV capacity constraints. For tractability, we instantiate and evaluate this formulation on a one-dimensional highway abstraction. Second, we develop and compare two approximate solution strategies: a greedy matching algorithm and an Iterative Linear Assignment (ILA) method with virtual-slot capacity encoding. Third, we provide a controlled experimental study (50--80 AVs, 200--400 PVs) showing substantial coverage savings, with ILA consistently matching or exceeding greedy performance across all tested scenarios.
+This paper makes three main contributions. First, we formalize the dynamic platoon formation problem with multi-segment matching and point-wise AV capacity constraints. For tractability, we instantiate and evaluate this formulation on a one-dimensional highway abstraction. Second, we develop and compare two approximate solution strategies: a greedy matching algorithm and an Iterative Linear Assignment (ILA) method with virtual-slot capacity encoding. Third, we provide a controlled experimental study (50--80 AVs, 200--400 PVs) showing substantial coverage savings, with ILA consistently matching or exceeding greedy performance across all tested scenarios (0.2--0.9 percentage-point higher saving rates, 2.8--11.5$\times$ faster).
 
 %==============================================================================
 % SECTION 2: RELATED WORK
@@ -129,7 +135,7 @@ This paper makes three main contributions. First, we formalize the dynamic plato
 
 \subsection{Platooning and Drafting}
 
-Platooning studies report 10--20\% fuel savings primarily through aerodynamic drafting~\cite{tsugawa2016review,bergenhem2012overview,shladover2009cooperative}. Vehicles remain physically separated, coordinating spacing and speed via cooperative adaptive cruise control~\cite{ploeg2011design}. More recent work has examined platoon coordination on highway networks, including scheduling when and where vehicles should form platoons to minimize fuel consumption~\cite{drexl2012synchronization}. Our setting differs fundamentally: we model physical towing rather than aerodynamic drafting. When a PV is attached, its propulsion is fully eliminated, and the matching decisions involve dynamic attach/detach operations under point-wise capacity constraints---a problem structure absent from standard drafting formulations.
+Platooning studies report 10--20\% fuel savings primarily through aerodynamic drafting~\cite{tsugawa2016review,bergenhem2012overview,shladover2009cooperative}. Vehicles remain physically separated, coordinating spacing and speed via cooperative adaptive cruise control~\cite{ploeg2011design}. More recent work has examined platoon coordination on highway networks, including scheduling when and where vehicles should form platoons to minimize fuel consumption~\cite{drexl2012synchronization}. Our setting differs fundamentally: we model physical towing rather than aerodynamic drafting. When a PV is attached, its propulsion is fully offset by the towing AV, and the matching decisions involve dynamic attach/detach operations under point-wise capacity constraints---a problem structure absent from standard drafting formulations.
 
 \subsection{Ridesharing and Vehicle Coordination}
 
@@ -609,7 +615,7 @@ $[1,16]$ & 4091 & 51.4 & 0.45 & 4159 & 52.3 & \textbf{0.16} \\
 \end{tabular}
 \end{table}
 
-\textbf{Key observations:} ILA achieves 0.3--1.9\% higher savings with 2.8--11.5$\times$ lower runtime. Both algorithms scale linearly with capacity; saving~\% improves from 24.5\% ($C\!=\![1,2]$) to 52.3\% ($C\!=\![1,16]$).
+\textbf{Key observations:} ILA achieves 0.2--0.9 percentage-point higher saving rates with 2.8--11.5$\times$ lower runtime. Both algorithms scale linearly with capacity; saving~\% improves from 24.5\% ($C\!=\![1,2]$) to 52.3\% ($C\!=\![1,16]$).
 
 \subsubsection{Highway Length Sweep}
 We vary the highway length $L$ to study how spatial sparsity (fewer overlapping routes on longer highways) affects matching quality.
@@ -634,7 +640,7 @@ $L$ & Save & \% & Time(s) & Save & \% & Time(s) \\
 \end{tabular}
 \end{table}
 
-\textbf{Key observations:} Saving~\% decreases with highway length due to sparser vehicle overlap (31.4\% at $L\!=\!50$ vs.\ 7.5\% at $L\!=\!1600$). ILA shows 5--28$\times$ lower runtime; absolute savings increase but efficiency drops for longer highways.
+\textbf{Key observations:} Saving~\% decreases with highway length due to sparser vehicle overlap (31.4\% at $L\!=\!50$ vs.\ 7.5\% at $L\!=\!1600$). ILA shows 5.5--26.9$\times$ lower runtime; absolute savings increase but efficiency drops for longer highways.
 
 \subsubsection{Baseline Distance Comparison}
 
@@ -689,6 +695,8 @@ Figures~\ref{fig:runtime} and~\ref{fig:capacity_relative} report runtime compari
 
 \textbf{Runtime Observation (Empirical):} In our Python/SciPy implementation, ILA shows lower wall-clock runtime than greedy in tested settings. This is implementation-dependent rather than a theoretical guarantee; likely contributors are SciPy's optimized C code, greedy's repeated sorting overhead, and ILA's batch processing.
 
+\textbf{ILA vs.\ Greedy Similarity:} The small saving gap (0.2--0.9 percentage points in the capacity sweep) between ILA and Greedy is expected in our one-dimensional setting, where the linear route structure limits the combinatorial diversity of feasible matchings. In higher-dimensional road networks with richer overlap patterns and branching routes, greedy's myopic decisions are more likely to block globally superior assignments, and we expect ILA's coordinated matching to yield a larger advantage.
+
 \textbf{Capacity Impact:} Doubling capacity yields sub-linear improvement (24.8\% $\rightarrow$ 52.3\%), suggesting diminishing returns.
 
 \textbf{Length Effect:} Saving~\% drops from 31.6\% ($L\!=\!50$) to 7.5\% ($L\!=\!1600$) due to sparser overlap, suggesting our approach is most effective for medium-length corridors with high vehicle density.
@@ -714,51 +722,47 @@ We presented a dynamic towing-based platoon formation framework for heterogeneou
 Future work will extend the model to two-dimensional road networks, evaluate online and uncertain traffic settings with periodic re-optimization, and investigate decentralized coordination and incentive mechanisms for large-scale deployment. We will also validate the distance-based saving proxy against physics-based energy models and practical coupling constraints using real-world trajectory datasets and AV/PV platform studies.
 
 \begin{thebibliography}{00}
+% First cited in Introduction (line 66)
 \bibitem{usdot2024} U.S. Department of Transportation, Federal Highway Administration, ``Summary of Travel Trends: 2022 National Household Travel Survey,'' Report FHWA-HPL-24-009, 2024.
 
 \bibitem{epa2023} U.S. Environmental Protection Agency, ``Inventory of U.S. Greenhouse Gas Emissions and Sinks: 1990--2021,'' EPA 430-R-23-003, 2023.
 
+\bibitem{yurtsever2020survey} E. Yurtsever, J. Lambert, A. Carballo, and K. Takeda, ``A survey of autonomous driving: Common practices and emerging technologies,'' \textit{IEEE Access}, vol. 8, pp. 58443--58469, 2020.
+
+% First cited in Introduction - Prior work (line 125)
 \bibitem{tsugawa2016review} S. Tsugawa, S. Jeschke, and S. E. Shladover, ``A Review of Truck Platooning Projects for Energy Savings,'' \textit{IEEE Trans. Intell. Veh.}, vol. 1, no. 1, pp. 68--77, 2016.
 
 \bibitem{bergenhem2012overview} C. Bergenhem, H. Pettersson, E. Coelingh, C. Englund, S. Shladover, and S. Tsugawa, ``Overview of platooning systems,'' in \textit{Proc. 19th ITS World Congress}, Vienna, Austria, 2012.
-
-\bibitem{shladover2009cooperative} S. E. Shladover, ``Cooperative (rather than autonomous) vehicle-highway automation systems,'' \textit{IEEE Intell. Transp. Syst. Mag.}, vol. 1, no. 1, pp. 10--19, 2009.
 
 \bibitem{furuhata2013ridesharing} M. Furuhata, M. Dessouky, F. Ord\'{o}\~{n}ez, M.-E. Brunet, X. Wang, and S. Koenig, ``Ridesharing: The state-of-the-art and future directions,'' \textit{Transport. Res. Part B: Methodol.}, vol. 57, pp. 28--46, 2013.
 
 \bibitem{agatz2012optimization} N. Agatz, A. Erera, M. Savelsbergh, and X. Wang, ``Optimization for dynamic ride-sharing: A review,'' \textit{European J. Oper. Res.}, vol. 223, no. 2, pp. 295--303, 2012.
 
-\bibitem{alonso2017demand} J. Alonso-Mora, S. Samaranayake, A. Wallar, E. Frazzoli, and D. Rus, ``On-demand high-capacity ride-sharing via dynamic trip-vehicle assignment,'' \textit{Proc. Natl. Acad. Sci. U.S.A.}, vol. 114, no. 3, pp. 462--467, 2017.
-
 \bibitem{cordeau2007dial} J.-F. Cordeau and G. Laporte, ``The dial-a-ride problem: models and algorithms,'' \textit{Annals Oper. Res.}, vol. 153, no. 1, pp. 29--46, 2007.
-
-\bibitem{sciarretta2020energy} A. Sciarretta and A. Vahidi, \textit{Energy-Efficient Driving of Road Vehicles}, Springer, 2020.
-
-\bibitem{hellstrom2009look} E. Hellstr\"{o}m, M. Ivarsson, J. \r{A}slund, and L. Nielsen, ``Look-ahead control for heavy trucks to minimize trip time and fuel consumption,'' \textit{Control Eng. Practice}, vol. 17, no. 2, pp. 245--254, 2009.
 
 \bibitem{kuhn1955hungarian} H. W. Kuhn, ``The Hungarian method for the assignment problem,'' \textit{Naval Res. Logistics Quarterly}, vol. 2, no. 1--2, pp. 83--97, 1955.
 
 \bibitem{munkres1957algorithms} J. Munkres, ``Algorithms for the assignment and transportation problems,'' \textit{J. Soc. Ind. Appl. Math.}, vol. 5, no. 1, pp. 32--38, 1957.
 
-\bibitem{burkard2012assignment} R. Burkard, M. Dell'Amico, and S. Martello, \textit{Assignment Problems}, SIAM, 2012.
-
+% First cited in Introduction - formulation (line 127)
 \bibitem{cattrysse1992survey} D. G. Cattrysse and L. N. Van Wassenhove, ``A survey of algorithms for the generalized assignment problem,'' \textit{European J. Oper. Res.}, vol. 60, no. 3, pp. 260--272, 1992.
-
-\bibitem{ploeg2011design} J. Ploeg, B. T. M. Scheepers, E. van Nunen, N. van de Wouw, and H. Nijmeijer, ``Design and experimental evaluation of cooperative adaptive cruise control,'' in \textit{Proc. IEEE Int. Conf. Intell. Transp. Syst.}, pp. 260--265, 2011.
-
-\bibitem{dresner2008multiagent} K. Dresner and P. Stone, ``A multiagent approach to autonomous intersection management,'' \textit{J. Artif. Intell. Res.}, vol. 31, pp. 591--656, 2008.
-
-\bibitem{fisher1978analysis} M. L. Fisher, G. L. Nemhauser, and L. A. Wolsey, ``An analysis of approximations for maximizing submodular set functions---II,'' \textit{Math. Programming Study}, vol. 8, pp. 73--87, 1978.
 
 \bibitem{scipy2020} P. Virtanen et al., ``SciPy 1.0: Fundamental algorithms for scientific computing in Python,'' \textit{Nature Methods}, vol. 17, pp. 261--272, 2020.
 
+% First cited in Related Work - Platooning (line 138)
+\bibitem{shladover2009cooperative} S. E. Shladover, ``Cooperative (rather than autonomous) vehicle-highway automation systems,'' \textit{IEEE Intell. Transp. Syst. Mag.}, vol. 1, no. 1, pp. 10--19, 2009.
+
+\bibitem{ploeg2011design} J. Ploeg, B. T. M. Scheepers, E. van Nunen, N. van de Wouw, and H. Nijmeijer, ``Design and experimental evaluation of cooperative adaptive cruise control,'' in \textit{Proc. IEEE Int. Conf. Intell. Transp. Syst.}, pp. 260--265, 2011.
+
 \bibitem{drexl2012synchronization} M. Drexl, ``Synchronization in vehicle routing---a survey of VRPs with multiple synchronization constraints,'' \textit{Transport. Sci.}, vol. 46, no. 3, pp. 297--438, 2012.
 
-\bibitem{karp1990optimal} R. M. Karp, U. V. Vazirani, and V. V. Vazirani, ``An optimal algorithm for on-line bipartite matching,'' in \textit{Proc. 22nd Ann. ACM Symp. Theory of Computing}, pp. 352--358, 1990.
+% First cited in Related Work - Ridesharing (line 142)
+\bibitem{alonso2017demand} J. Alonso-Mora, S. Samaranayake, A. Wallar, E. Frazzoli, and D. Rus, ``On-demand high-capacity ride-sharing via dynamic trip-vehicle assignment,'' \textit{Proc. Natl. Acad. Sci. U.S.A.}, vol. 114, no. 3, pp. 462--467, 2017.
 
-\bibitem{ren2005consensus} W. Ren and R. W. Beard, ``Consensus seeking in multiagent systems under dynamically changing interaction topologies,'' \textit{IEEE Trans. Autom. Control}, vol. 50, no. 5, pp. 655--661, 2005.
+\bibitem{dresner2008multiagent} K. Dresner and P. Stone, ``A multiagent approach to autonomous intersection management,'' \textit{J. Artif. Intell. Res.}, vol. 31, pp. 591--656, 2008.
 
-\bibitem{yurtsever2020survey} E. Yurtsever, J. Lambert, A. Carballo, and K. Takeda, ``A survey of autonomous driving: Common practices and emerging technologies,'' \textit{IEEE Access}, vol. 8, pp. 58443--58469, 2020.
+% First cited in ILA Algorithm (line 423)
+\bibitem{burkard2012assignment} R. Burkard, M. Dell'Amico, and S. Martello, \textit{Assignment Problems}, SIAM, 2012.
 \end{thebibliography}
 
 \end{document}

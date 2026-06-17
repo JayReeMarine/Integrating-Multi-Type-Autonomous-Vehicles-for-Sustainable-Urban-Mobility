@@ -85,10 +85,19 @@
 \renewcommand{\shortauthors}{Ree, Ali, and Cheema}
 
 %% ===========================================================================
-%% ABSTRACT (from ITSC, lightly trimmed)
+%% ABSTRACT (SIGSPATIAL-aligned re-framing).
+%% Key changes vs ITSC version:
+%%   - Opens with "algorithmic abstraction" instead of leading with the
+%%     physical-towing image (pre-empts the ITSC reviewers' realism push).
+%%   - Frames the contribution as a spatio-temporal matching problem
+%%     (aligned with SIGSPATIAL algorithm-track reviewers).
+%%   - Explicit scope statement at the end: mechanical coupling, safety,
+%%     and full network routing are future work.
+%% TODO before submission: also update the abstract on EasyChair
+%% submission #83 so the metadata matches the PDF.
 %% ===========================================================================
 \begin{abstract}
-This paper addresses the energy inefficiency of single-occupancy vehicles by introducing a novel cooperative autonomous vehicle system where smaller Passive Vehicles (PVs) can be physically towed by larger Active Vehicles (AVs) in a shared road segment. Unlike traditional platooning that relies solely on aerodynamic drafting, our approach enables PV propulsion energy to be fully offset by the towing AV during the shared segment travel, though the AV bears the additional load. We formulate the platoon formation problem as a constrained optimization problem and propose two algorithms: a Greedy Maximum-Weight Matching algorithm and an Iterative Linear Assignment (ILA) algorithm using the Jonker--Volgenant method. A key innovation is the multi-segment matching capability, allowing a single PV to be towed by multiple AVs across different route segments. Experimental evaluation on synthetic scenarios with up to 400 PVs and 80 AVs demonstrates that both algorithms achieve 25--52\% distance coverage depending on capacity, with ILA consistently matching or exceeding the greedy baseline while running 2.8--11.5$\times$ faster.
+We study an algorithmic abstraction for future cooperative autonomous mobility in which larger active vehicles can tow smaller passive vehicles along shared road segments. The core problem is spatio-temporal: given fixed vehicle trajectories, entry times, speeds, and active-vehicle towing capacities, determine which passive vehicles should be matched to which active vehicles, and over which route segments, to maximize total covered distance. Unlike standard platooning or one-to-one assignment, the problem allows multi-segment service, where a passive vehicle may be towed by different active vehicles over disjoint portions of its route, while active-vehicle capacity must be respected at every position along the corridor. We formulate this dynamic platoon formation problem and propose two approximation methods: a greedy maximum-weight matching baseline and an Iterative Linear Assignment method that expands active vehicles into virtual capacity slots and repeatedly solves linear sum assignment subproblems. Experiments on synthetic corridor scenarios with up to 400 passive and 80 active vehicles show that both methods achieve substantial towed-distance coverage (25--52\% depending on capacity), with the assignment-based method consistently matching or exceeding greedy solution quality while reducing empirical runtime by 2.8--11.5$\times$. We position the model as a corridor-level spatial matching primitive; mechanical coupling, safety, and full road-network routing are left as future extensions.
 \end{abstract}
 
 %% ===========================================================================
@@ -321,13 +330,16 @@ This paper addresses the energy inefficiency of single-occupancy vehicles by int
 %% acmart compatibility warnings.
 
 %% TODO: Migrate pseudocode here. Switch \algorithmic -> algpseudocode.
-\begin{algorithm}
-\caption{Iterative Linear Assignment (ILA)}
-\label{alg:ila}
-\begin{algorithmic}[1]
-%% TODO: paste algorithm body from ITSC, rewritten with algpseudocode.
-\end{algorithmic}
-\end{algorithm}
+%% Commented out until the body is migrated so the file compiles cleanly.
+% \begin{algorithm}
+% \caption{Iterative Linear Assignment (ILA)}
+% \label{alg:ila}
+% \begin{algorithmic}[1]
+%   \State \textbf{Input:} AVs $\mathcal{A}$, PVs $\mathcal{P}$, parameters $L_{\min}, \tau$
+%   \State \textbf{Output:} Multi-segment matching $\mathcal{M}$
+%   \State \Comment{TODO: paste algorithm body from ITSC L.421--517}
+% \end{algorithmic}
+% \end{algorithm}
 
 
 %% ===========================================================================

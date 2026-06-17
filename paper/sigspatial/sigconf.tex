@@ -329,16 +329,15 @@ The greedy baseline repeatedly enumerates feasible segments $(a_i,p_j,s,e)$ unde
 \label{sec:ila}
 ILA replaces the myopic commit with a sequence of \emph{global} matching rounds. In each round, every AV $a_i$ is replicated into $C_i$ identical \emph{virtual slots}, encoding per-AV multiplicity in the LSAP while leaving the position-dependent capacity check to the commit step. With $K\!=\!\sum_i C_i$ slot nodes on the left and $M$ PV nodes on the right, we form a cost matrix $W\!\in\!\mathbb{R}^{K\times M}$ whose entry for slot $k$ of AV $a_i$ and PV $p_j$ is $-\bar{d}_{ij}$ for a feasible pair and $+\infty$ otherwise, where $\bar{d}_{ij}=\max(0,\;dp_{ij}-\max(e^a_i,\ell_j))$ is the residual overlap that uses $\ell_j$ in place of $e^p_j$. Minimum-cost matching on $W$ therefore maximizes total towed distance for the current round.
 
-Each round (Alg.~\ref{alg:ila}) solves this Linear Sum Assignment Problem (LSAP) optimally with the Jonker--Volgenant algorithm~\cite{scipy2020,kuhn1955hungarian}. Returned pairs are then sequentially confirmed against point-wise capacity at the critical points; pairs that fail (because multiple slots of the same AV matched a non-disjoint set of segments in one round) are discarded and remain eligible in later rounds. Confirmed pairs advance the corresponding PV route-states, so the next round operates on the residual problem. Rounds repeat until no feasible match remains, yielding multi-segment service whenever the same PV is matched to different AVs across rounds. Jonker--Volgenant guarantees per-round optimality on the constructed bipartite subproblem; global optimality across rounds is not guaranteed, but our experiments (Section~\ref{sec:experiments}) show ILA matches or exceeds greedy on every tested scenario. Each round runs in $O(KM + \max(K,M)^3)$, and at most $O(NM)$ rounds are required since each commit strictly advances some $\ell_j$, giving overall complexity $O(NM\!\cdot\!\max(K,M)^3)$.
+Each round (Algorithm~1) solves this Linear Sum Assignment Problem (LSAP) optimally with the Jonker--Volgenant algorithm~\cite{scipy2020,kuhn1955hungarian}. Returned pairs are then sequentially confirmed against point-wise capacity at the critical points; pairs that fail (because multiple slots of the same AV matched a non-disjoint set of segments in one round) are discarded and remain eligible in later rounds. Confirmed pairs advance the corresponding PV route-states, so the next round operates on the residual problem. Rounds repeat until no feasible match remains, yielding multi-segment service whenever the same PV is matched to different AVs across rounds. Jonker--Volgenant guarantees per-round optimality on the constructed bipartite subproblem; global optimality across rounds is not guaranteed, but our experiments (Section~\ref{sec:experiments}) show ILA matches or exceeds greedy on every tested scenario. Each round runs in $O(KM + \max(K,M)^3)$, and at most $O(NM)$ rounds are required since each commit strictly advances some $\ell_j$, giving overall complexity $O(NM\!\cdot\!\max(K,M)^3)$.
 
-\smallskip
-\noindent\textbf{Algorithm 1 (ILA).}\label{alg:ila}
+\noindent\textbf{Algorithm 1 (ILA).}
 \begin{algorithmic}[1]
 \Require AVs $\mathcal{A}$, PVs $\mathcal{P}$, $L_{\min}$, $\tau$
 \Ensure $\mathcal{X}$
 \State $(\ell_j,\hat{t}_j)\!\leftarrow\!(e^p_j,t^p_j)\;\forall j$;\; $\mathcal{X}\!\leftarrow\!\emptyset$
 \Repeat
-  \State Build $W$ on $K{=}\sum_i C_i$ virtual slots; $\mathcal{M}\!\leftarrow\!\textsc{JonkerVolgenant}(W)$
+  \State Build $W$ on $K{=}\sum_i C_i$ virtual slots; $\mathcal{M}\!\leftarrow\!\textsc{LSAP}(W)$
   \For{$(slot{:}\,a_i,p_j)\!\in\!\mathcal{M}$ with $W_{slot,j}{<}+\infty$, in order}
     \State $s\!\leftarrow\!\max(e^a_i,\ell_j),\; e\!\leftarrow\!dp_{ij}$
     \If{$(a_i,p_j,s,e)$ feasible w.r.t.\ prior commits this round}
@@ -348,7 +347,6 @@ Each round (Alg.~\ref{alg:ila}) solves this Linear Sum Assignment Problem (LSAP)
 \Until{no commit in the last round}
 \State \Return $\mathcal{X}$
 \end{algorithmic}
-\smallskip
 
 
 %% ===========================================================================
@@ -381,16 +379,29 @@ Each round (Alg.~\ref{alg:ila}) solves this Linear Sum Assignment Problem (LSAP)
 \label{sec:experiments}
 
 \subsection{Setup}
-%% TODO: Synthetic data generator, fleet sizes (50--80 AVs, 200--400
-%% PVs), capacity range, highway length range with explicit units.
-%% Source: ITSC L.549--591. Compress aggressively.
+\label{sec:setup}
+Both algorithms are implemented in Python~3.11 with NumPy~1.26 and SciPy~1.11~\cite{scipy2020}; ILA's per-round LSAP is solved by SciPy's \texttt{linear\_sum\_assignment}, which calls a compiled-C Jonker--Volgenant routine. Experiments run single-threaded on an Apple M4 Pro (16\,GB unified memory, macOS~15). Synthetic corridor instances are generated as follows: AV and PV entry/exit positions are sampled uniformly from $[0,L]$, each vehicle's entry time is drawn uniformly from $[0, W]$ over a scenario time window $W$, and each vehicle's speed is drawn from a $\pm 20\%$ uniform interval around a unit reference. Unless varied, default parameters are $L{=}100$\,m, $N{=}50$ AVs, $M{=}200$ PVs, $C_i{\sim}\text{Uniform}\{1,2,3\}$, $L_{\min}{=}10$\,m, $\tau{=}5$\,s, $W{=}100$\,s. We report means over four random seeds (42--45) and study two sweeps: AV capacity $C_i{\sim}\text{Uniform}\{1,C_{\max}\}$ with $C_{\max}\!\in\!\{2,4,8,16\}$ at default $N,M,L$, and corridor length $L\!\in\!\{50,100,200,400,800,1600\}$\,m at $N{=}80, M{=}400, C_{\max}{=}3$; for the length sweep we scale $W$ linearly with $L$ ($W=L$\,s) so that average vehicle density per unit time stays comparable across corridor lengths. The headline metric is \emph{saving~\%}, the total towed distance divided by the no-towing baseline distance $\sum_j(x^p_j\!-\!e^p_j)$; we also report wall-clock runtime.
 
 \subsection{Results}
-%% TODO: Two paragraphs + two figures (capacity sweep, length sweep).
-%% Headline numbers: 25--52% saving range, ILA 0.2--0.9 pp higher than
-%% greedy, 2.8--11.5x faster.
-%% Fold 1--2 sentences of Discussion (when does ILA matter most) and
-%% 1 sentence on Limitations (1D abstraction) into the closing paragraph.
+\label{sec:results}
+Figure~\ref{fig:results} reports both sweeps. As $C_{\max}$ grows from 2 to 16, saving~\% rises from 24.5\% to 51.4\% for Greedy and from 24.8\% to 52.3\% for ILA, an ILA advantage of 0.2--0.9 percentage points across the four capacity settings; as $L$ grows from 50\,m to 1600\,m, saving~\% falls from 31.4\% to 7.4\% (Greedy) and 31.6\% to 7.5\% (ILA), reflecting the diminishing pairwise overlap on longer corridors. ILA matches or exceeds Greedy in every tested configuration. The two algorithms are close in solution quality on a 1D corridor because the linear route structure restricts the combinatorial diversity of feasible matchings; in 2D road networks with richer overlap patterns we expect Greedy's myopic commits to block more globally superior assignments, widening ILA's margin. Wall-clock runtime in our implementation is 2.8--11.5$\times$ lower for ILA on the capacity sweep and 5.5--26.9$\times$ lower on the length sweep, attributable to SciPy's compiled LSAP solver and to Greedy's repeated $O(NM\log NM)$ candidate sorting; we report this as an empirical implementation observation rather than a theoretical claim, since worst-case complexity favors Greedy (Section~\ref{sec:algorithms}). Two limitations bound our interpretation: (i)~towed distance is a proxy for PV propulsion-energy reduction and ignores the AV-side towing load, and (ii)~the offline, full-information setting assumes deterministic trajectories. Section~\ref{sec:conclusion} discusses the 2D extension and a stochastic online formulation as the natural next steps.
+
+\begin{figure}[t]
+\centering
+\begin{minipage}[t]{0.48\columnwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/capacity_saving_percent_comparison.png}\\
+{\small (a) Capacity sweep ($L{=}100$\,m, $N{=}50$, $M{=}200$).}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.48\columnwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/length_saving_percent_comparison.png}\\
+{\small (b) Length sweep ($N{=}80$, $M{=}400$, $C_{\max}{=}3$).}
+\end{minipage}
+\caption{Saving~\% under (a) varying AV capacity upper bound $C_{\max}$ and (b) varying corridor length $L$. ILA matches or exceeds Greedy in every tested configuration. Bars are 4-seed means.}
+\label{fig:results}
+\Description{Two side-by-side bar charts comparing Greedy and ILA on saving percentage: (a) saving rises with AV capacity from about 24 to 52 percent with ILA slightly above Greedy at each capacity; (b) saving decreases with corridor length from about 31 percent at 50 meters to about 7 percent at 1600 meters, with ILA matching or slightly exceeding Greedy throughout.}
+\end{figure}
 
 
 %% ===========================================================================
@@ -402,15 +413,7 @@ Each round (Alg.~\ref{alg:ila}) solves this Linear Sum Assignment Problem (LSAP)
 %% ===========================================================================
 \section{Conclusion and Future Work}
 \label{sec:conclusion}
-
-%% TODO: 3--4 sentences:
-%%   - Summarise the dynamic platoon formation problem + ILA result.
-%%   - 1D abstraction is a deliberate modeling choice; extension to 2D
-%%     road networks with routing decisions is the primary future work
-%%     (pre-empts the obvious reviewer ask).
-%%   - Briefly mention: relaxing constant-speed and deterministic-entry
-%%     assumptions, modelling coupling/decoupling overhead, energy model
-%%     refinement.
+We formalized \emph{dynamic platoon formation} as a spatio-temporal multi-segment matching problem with point-wise AV capacity and showed that an iterative LSAP-based solver matches or exceeds a greedy baseline on every tested 1D corridor configuration. The natural next step is a 2D road-network extension: each PV then has a set of feasible paths rather than a fixed one, lifting the formulation from segment overlap on a single corridor to overlap on a graph with shared edges, which couples our matching layer with route choice. Beyond geometry, two algorithmic openings are interesting at SIGSPATIAL: a stochastic online variant where entry times and routes are revealed over time, and an energy model that internalizes the AV-side towing load so that the objective trades PV savings against AV overhead rather than treating distance as a free proxy.
 
 
 %% ===========================================================================

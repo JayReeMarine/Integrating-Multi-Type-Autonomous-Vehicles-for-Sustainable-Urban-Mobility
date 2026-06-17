@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2026.2.2)  17 JUN 2026 13:00
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2026.2.2)  17 JUN 2026 13:15
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1559,26 +1559,58 @@ Package natbib Warning: Citation `scipy2020' on page 3 undefined on input line
 Package natbib Warning: Citation `kuhn1955hungarian' on page 3 undefined on inp
 ut line 332.
 
-
-Class acmart Warning: \vspace should only be used to provide space above/below 
-surrounding objects on input line 334.
-
 LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/sc' will be
-(Font)              scaled to size 9.0pt on input line 341.
+(Font)              scaled to size 9.0pt on input line 340.
 
-Overfull \hbox (17.16788pt too wide) in paragraph at lines 341--342
-[] \T1/LinuxLibertineT-TLF/m/n/9 (-20) Build $\OML/nxlmi/m/it/9 W$ \T1/LinuxLib
-ertineT-TLF/m/n/9 (-20) on $\OML/nxlmi/m/it/9 K[] [][] C[]$ \T1/LinuxLibertineT
--TLF/m/n/9 (-20) vir-tual slots; $\LMS/ntxsy/m/n/9 M     []¹\OML/nxlmi/m/it/9 W
-\LMS/ntxsy/m/n/9 º$ 
+Package natbib Warning: Citation `scipy2020' on page 3 undefined on input line 
+383.
+
+LaTeX Font Info:    Trying to load font information for T1+zi4 on input line 38
+3.
+(/usr/local/texlive/2025/texmf-dist/tex/latex/inconsolata/t1zi4.fd
+File: t1zi4.fd 2018/01/14 T1/zi4 (Inconsolata)
+)
+LaTeX Font Info:    Font shape `T1/zi4/m/n' will be
+(Font)              scaled to size 9.0pt on input line 383.
+Package microtype Info: Loading generic protrusion settings for font family
+(microtype)             `zi4' (encoding: T1).
+(microtype)             For optimal results, create family-specific settings.
+(microtype)             See the microtype manual for details.
+
+Overfull \hbox (11.33632pt too wide) in paragraph at lines 383--384
+\T1/zi4/m/n/9 linear_sum_assignment\T1/LinuxLibertineT-TLF/m/n/9 (-20) , which 
+calls a compiled-C Jonker--Volgenant
  []
 
 
-Class acmart Warning: \vspace should only be used to provide space above/below 
-surrounding objects on input line 351.
+Underfull \vbox (badness 1546) has occurred while \output is active []
 
 
-Package natbib Warning: Empty `thebibliography' environment on input line 438.
+
+[3.3{/usr/local/texlive/2025/texmf-dist/fonts/enc/dvips/libertine/lbtn_ncsllp.e
+nc}{/usr/local/texlive/2025/texmf-dist/fonts/enc/dvips/inconsolata/i4-t1-4.enc}
+]
+<figures/capacity_saving_percent_comparison.png, id=146, 562.0197pt x 382.0674p
+t>
+File: figures/capacity_saving_percent_comparison.png Graphic file (type png)
+<use figures/capacity_saving_percent_comparison.png>
+Package pdftex.def Info: figures/capacity_saving_percent_comparison.png  used o
+n input line 393.
+(pdftex.def)             Requested size: 115.74976pt x 78.68576pt.
+<figures/length_saving_percent_comparison.png, id=148, 562.0197pt x 382.3083pt>
+
+File: figures/length_saving_percent_comparison.png Graphic file (type png)
+<use figures/length_saving_percent_comparison.png>
+Package pdftex.def Info: figures/length_saving_percent_comparison.png  used on 
+input line 398.
+(pdftex.def)             Requested size: 115.74976pt x 78.73538pt.
+
+Underfull \vbox (badness 1152) has occurred while \output is active []
+
+
+
+
+Package natbib Warning: Empty `thebibliography' environment on input line 441.
 
 
 Package natbib Warning: There were undefined citations.
@@ -1594,43 +1626,43 @@ File: se-pdfdoc.def 2019/11/29 v1.12 stringenc: PDFDocEncoding
 )
 (/usr/local/texlive/2025/texmf-dist/tex/generic/stringenc/se-utf8.def
 File: se-utf8.def 2019/11/29 v1.12 stringenc: UTF-8
-) [3.3{/usr/local/texlive/2025/texmf-dist/fonts/enc/dvips/libertine/lbtn_ncsllp
-.enc}]
-(./sigconf.aux)
+) [4.4 <./figures/capacity_saving_percent_comparison.png> <./figures/length_sav
+ing_percent_comparison.png>] (./sigconf.aux)
  ***********
 LaTeX2e <2024-11-01> patch level 2
 L3 programming layer <2025-01-18>
  ***********
 Package rerunfilecheck Info: File `sigconf.out' has not changed.
-(rerunfilecheck)             Checksum: 1282DEB0FDBA6FB292F9CFC6F8035D2F;2593.
+(rerunfilecheck)             Checksum: EB7CFC8D38AE3CD169C606D36B217780;2594.
  ) 
 Here is how much of TeX's memory you used:
- 32473 strings out of 473190
- 590674 string characters out of 5715801
- 1054209 words of memory out of 5000000
- 54457 multiletter control sequences out of 15000+600000
- 757310 words of font info for 434 fonts, out of 8000000 for 9000
+ 32550 strings out of 473190
+ 592709 string characters out of 5715801
+ 1050865 words of memory out of 5000000
+ 54496 multiletter control sequences out of 15000+600000
+ 761988 words of font info for 457 fonts, out of 8000000 for 9000
  1302 hyphenation exceptions out of 8191
- 90i,13n,131p,1530b,780s stack positions out of 10000i,1000n,20000p,200000b,200000s
-</usr/local/texlive/2025/texmf-dist/fonts/type1/public/newtx/LibertineMathMI.
-pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/newtx/LibertineMathM
-I5.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/newtx/LibertineMa
-thMI7.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/libertine/LinB
-iolinumT.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/libertine/L
-inBiolinumTB.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/liberti
-ne/LinLibertineT.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/lib
-ertine/LinLibertineTB.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/publi
-c/libertine/LinLibertineTBI.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1
-/public/libertine/LinLibertineTI.pfb></usr/local/texlive/2025/texmf-dist/fonts/
-type1/public/newtx/NewTXMI.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/
-public/newtx/txexs.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/n
-ewtx/txmiaX.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/newtx/tx
-sym.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/newtx/txsys.pfb>
-
-Output written on sigconf.pdf (3 pages, 499375 bytes).
+ 90i,13n,131p,1588b,780s stack positions out of 10000i,1000n,20000p,200000b,200000s
+</usr/local/texlive/2025/texmf-dist/fonts/type1/public/inconsolata/Inconsolat
+a-zi4r.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/newtx/Liberti
+neMathMI.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/newtx/Liber
+tineMathMI5.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/newtx/Li
+bertineMathMI7.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/liber
+tine/LinBiolinumT.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/li
+bertine/LinBiolinumTB.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/publi
+c/libertine/LinLibertineT.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/p
+ublic/libertine/LinLibertineTB.pfb></usr/local/texlive/2025/texmf-dist/fonts/ty
+pe1/public/libertine/LinLibertineTBI.pfb></usr/local/texlive/2025/texmf-dist/fo
+nts/type1/public/libertine/LinLibertineTI.pfb></usr/local/texlive/2025/texmf-di
+st/fonts/type1/public/newtx/NewTXMI.pfb></usr/local/texlive/2025/texmf-dist/fon
+ts/type1/public/newtx/txexs.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1
+/public/newtx/txmiaX.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public
+/newtx/txsym.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/newtx/t
+xsys.pfb>
+Output written on sigconf.pdf (4 pages, 688689 bytes).
 PDF statistics:
- 226 PDF objects out of 1000 (max. 8388607)
- 177 compressed objects within 2 object streams
- 31 named destinations out of 1000 (max. 500000)
- 110741 words of extra memory for PDF output out of 128383 (max. 10000000)
+ 243 PDF objects out of 1000 (max. 8388607)
+ 188 compressed objects within 2 object streams
+ 33 named destinations out of 1000 (max. 500000)
+ 115359 words of extra memory for PDF output out of 128383 (max. 10000000)
 

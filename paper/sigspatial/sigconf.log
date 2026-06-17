@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2026.2.2)  17 JUN 2026 12:49
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2026.2.2)  17 JUN 2026 13:00
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1464,109 +1464,121 @@ usr/local/texlive/2025/texmf-dist/fonts/enc/dvips/libertine/lbtn_7grukw.enc}{/u
 sr/local/texlive/2025/texmf-dist/fonts/enc/dvips/libertine/lbtn_oexx6f.enc}]
 
 Package natbib Warning: Citation `tsugawa2016review' on page 2 undefined on inp
-ut line 231.
+ut line 230.
 
 
 Package natbib Warning: Citation `bergenhem2012overview' on page 2 undefined on
- input line 231.
+ input line 230.
 
 
 Package natbib Warning: Citation `shladover2009cooperative' on page 2 undefined
- on input line 231.
+ on input line 230.
 
 
 Package natbib Warning: Citation `ploeg2011design' on page 2 undefined on input
- line 231.
+ line 230.
 
 
 Package natbib Warning: Citation `furuhata2013ridesharing' on page 2 undefined 
-on input line 231.
+on input line 230.
 
 
 Package natbib Warning: Citation `agatz2012optimization' on page 2 undefined on
- input line 231.
+ input line 230.
 
 
 Package natbib Warning: Citation `alonso2017demand' on page 2 undefined on inpu
-t line 231.
+t line 230.
 
 
 Package natbib Warning: Citation `cordeau2007dial' on page 2 undefined on input
- line 231.
+ line 230.
 
 
 Package natbib Warning: Citation `kuhn1955hungarian' on page 2 undefined on inp
-ut line 231.
+ut line 230.
 
 
 Package natbib Warning: Citation `munkres1957algorithms' on page 2 undefined on
- input line 231.
+ input line 230.
 
 
 Package natbib Warning: Citation `cattrysse1992survey' on page 2 undefined on i
-nput line 235.
+nput line 234.
 
 
 Package natbib Warning: Citation `scipy2020' on page 2 undefined on input line 
-235.
+234.
+
+
+Underfull \vbox (badness 1303) has occurred while \output is active []
 
 
 
 
-Overfull \hbox (8.03795pt too wide) in paragraph at lines 270--271
-\T1/LinuxLibertineT-TLF/m/n/9 (-20) (AVs) $\LMS/ntxsy/m/n/9 A \U/ntxmia/m/it/9 
-= \LMS/ntxsy/m/n/9 f\OML/nxlmi/m/it/9 a[]; [] ; a[]\LMS/ntxsy/m/n/9 g$ \T1/Linu
-xLibertineT-TLF/m/n/9 (-20) and $\OML/nxlmi/m/it/9 M$ \T1/LinuxLibertineT-TLF/m
-/it/9 (-20) Pas-sive Ve-hi-cles \T1/LinuxLibertineT-TLF/m/n/9 (-20) (PVs) $\LMS
-/ntxsy/m/n/9 P \U/ntxmia/m/it/9 = \LMS/ntxsy/m/n/9 f\OML/nxlmi/m/it/9 p[]; [] ;
- p[]\LMS/ntxsy/m/n/9 g$\T1/LinuxLibertineT-TLF/m/n/9 (-20) .
+Overfull \hbox (13.10748pt too wide) in paragraph at lines 269--270
+\T1/LinuxLibertineT-TLF/m/n/9 (-20) A prob-lem in-stance con-sists of $\OML/nxl
+mi/m/it/9 N$ \T1/LinuxLibertineT-TLF/m/it/9 (-20) Ac-tive Ve-hi-cles \T1/LinuxL
+ibertineT-TLF/m/n/9 (-20) (AVs) $\LMS/ntxsy/m/n/9 A \U/ntxmia/m/it/9 = \LMS/ntx
+sy/m/n/9 f\OML/nxlmi/m/it/9 a[]; [] ; a[]\LMS/ntxsy/m/n/9 g$
  []
 
+LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/n' will be
+(Font)              scaled to size 6.6pt on input line 291.
+LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/n' will be
+(Font)              scaled to size 5.5pt on input line 291.
 
-Overfull \hbox (37.31389pt too wide) in paragraph at lines 277--294
- [][] 
- []
+Underfull \vbox (badness 1281) has occurred while \output is active []
 
 
 
 LaTeX Font Info:    Font shape `T1/LinuxBiolinumT-TLF/m/n' will be
-(Font)              scaled to size 9.0pt on input line 300.
+(Font)              scaled to size 9.0pt on input line 291.
 LaTeX Font Info:    Font shape `T1/LinuxBiolinumT-TLF/m/n' will be
-(Font)              scaled to size 7.0pt on input line 300.
+(Font)              scaled to size 7.0pt on input line 291.
 [2.2{/usr/local/texlive/2025/texmf-dist/fonts/enc/dvips/libertine/lbtn_ki75ao.e
 nc}]
-LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/n' will be
-(Font)              scaled to size 6.6pt on input line 321.
-LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/n' will be
-(Font)              scaled to size 5.5pt on input line 321.
-
 
 Package natbib Warning: Citation `cattrysse1992survey' on page 3 undefined on i
-nput line 324.
+nput line 294.
+
+
+Overfull \hbox (17.29066pt too wide) in paragraph at lines 326--327
+\T1/LinuxLibertineT-TLF/m/n/9 (-20) The greedy base-line re-peat-edly enu-mer-a
+tes fea-si-ble seg-ments $\LMS/ntxsy/m/n/9 ¹\OML/nxlmi/m/it/9 a[]; p[]; s; e\LM
+S/ntxsy/m/n/9 º$
+ []
 
 
 
 
 Package natbib Warning: Citation `scipy2020' on page 3 undefined on input line 
-369.
+332.
 
 
 Package natbib Warning: Citation `kuhn1955hungarian' on page 3 undefined on inp
-ut line 369.
+ut line 332.
 
 
-Underfull \vbox (badness 1515) has occurred while \output is active []
+Class acmart Warning: \vspace should only be used to provide space above/below 
+surrounding objects on input line 334.
 
-
-
-[3.3]
-Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
-put line 372.
 LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/sc' will be
-(Font)              scaled to size 9.0pt on input line 380.
+(Font)              scaled to size 9.0pt on input line 341.
+
+Overfull \hbox (17.16788pt too wide) in paragraph at lines 341--342
+[] \T1/LinuxLibertineT-TLF/m/n/9 (-20) Build $\OML/nxlmi/m/it/9 W$ \T1/LinuxLib
+ertineT-TLF/m/n/9 (-20) on $\OML/nxlmi/m/it/9 K[] [][] C[]$ \T1/LinuxLibertineT
+-TLF/m/n/9 (-20) vir-tual slots; $\LMS/ntxsy/m/n/9 M     []¹\OML/nxlmi/m/it/9 W
+\LMS/ntxsy/m/n/9 º$ 
+ []
 
 
-Package natbib Warning: Empty `thebibliography' environment on input line 477.
+Class acmart Warning: \vspace should only be used to provide space above/below 
+surrounding objects on input line 351.
+
+
+Package natbib Warning: Empty `thebibliography' environment on input line 438.
 
 
 Package natbib Warning: There were undefined citations.
@@ -1574,17 +1586,15 @@ Package natbib Warning: There were undefined citations.
 
 
 
-
-
-Overfull \vbox (1.1893pt too high) has occurred while \output is active []
-
+Package balance Warning: You have called \balance in second column
+(balance)                Columns might not be balanced.
 
 (/usr/local/texlive/2025/texmf-dist/tex/generic/stringenc/se-pdfdoc.def
 File: se-pdfdoc.def 2019/11/29 v1.12 stringenc: PDFDocEncoding
 )
 (/usr/local/texlive/2025/texmf-dist/tex/generic/stringenc/se-utf8.def
 File: se-utf8.def 2019/11/29 v1.12 stringenc: UTF-8
-) [4.4{/usr/local/texlive/2025/texmf-dist/fonts/enc/dvips/libertine/lbtn_ncsllp
+) [3.3{/usr/local/texlive/2025/texmf-dist/fonts/enc/dvips/libertine/lbtn_ncsllp
 .enc}]
 (./sigconf.aux)
  ***********
@@ -1592,14 +1602,14 @@ LaTeX2e <2024-11-01> patch level 2
 L3 programming layer <2025-01-18>
  ***********
 Package rerunfilecheck Info: File `sigconf.out' has not changed.
-(rerunfilecheck)             Checksum: EB7CFC8D38AE3CD169C606D36B217780;2594.
+(rerunfilecheck)             Checksum: 1282DEB0FDBA6FB292F9CFC6F8035D2F;2593.
  ) 
 Here is how much of TeX's memory you used:
- 32517 strings out of 473190
- 591511 string characters out of 5715801
- 1050052 words of memory out of 5000000
- 54471 multiletter control sequences out of 15000+600000
- 755262 words of font info for 455 fonts, out of 8000000 for 9000
+ 32473 strings out of 473190
+ 590674 string characters out of 5715801
+ 1054209 words of memory out of 5000000
+ 54457 multiletter control sequences out of 15000+600000
+ 757310 words of font info for 434 fonts, out of 8000000 for 9000
  1302 hyphenation exceptions out of 8191
  90i,13n,131p,1530b,780s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2025/texmf-dist/fonts/type1/public/newtx/LibertineMathMI.
@@ -1617,10 +1627,10 @@ public/newtx/txexs.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/n
 ewtx/txmiaX.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/newtx/tx
 sym.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/newtx/txsys.pfb>
 
-Output written on sigconf.pdf (4 pages, 504153 bytes).
+Output written on sigconf.pdf (3 pages, 499375 bytes).
 PDF statistics:
- 234 PDF objects out of 1000 (max. 8388607)
- 184 compressed objects within 2 object streams
- 35 named destinations out of 1000 (max. 500000)
- 108693 words of extra memory for PDF output out of 128383 (max. 10000000)
+ 226 PDF objects out of 1000 (max. 8388607)
+ 177 compressed objects within 2 object streams
+ 31 named destinations out of 1000 (max. 500000)
+ 110741 words of extra memory for PDF output out of 128383 (max. 10000000)
 

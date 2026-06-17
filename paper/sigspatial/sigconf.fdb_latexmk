@@ -1,5 +1,5 @@
 # Fdb version 4
-["pdflatex"] 1781664578.9791 "sigconf.tex" "sigconf.pdf" "sigconf" 1781664581.2231 0
+["pdflatex"] 1781665254.2965 "sigconf.tex" "sigconf.pdf" "sigconf" 1781665255.26617 0
   "/usr/local/texlive/2025/texmf-dist/fonts/enc/dvips/libertine/lbtn_25tcsq.enc" 1490131464 2921 8ca0eb0831f9bc5da080d3697cfe67bf ""
   "/usr/local/texlive/2025/texmf-dist/fonts/enc/dvips/libertine/lbtn_76gpa5.enc" 1490131464 2933 9ad527ce78d7c5fa0a642dead095f172 ""
   "/usr/local/texlive/2025/texmf-dist/fonts/enc/dvips/libertine/lbtn_7grukw.enc" 1490131464 2934 a4a9158faed2e9e89c771b4e3b7fc12f ""
@@ -86,7 +86,6 @@
   "/usr/local/texlive/2025/texmf-dist/fonts/vf/public/libertine/LinLibertineTI-tlf-t1.vf" 1490131464 1768 b3bfd8ed1fe2dce5fd19610abe4c3dbe ""
   "/usr/local/texlive/2025/texmf-dist/fonts/vf/public/newtx/ntxexx.vf" 1699567298 1716 73c8d39d4c3ace9ec98a8f066bb3b494 ""
   "/usr/local/texlive/2025/texmf-dist/fonts/vf/public/newtx/ntxsy.vf" 1724614892 1792 7cf99effbd74f7851ca7683a6d12b685 ""
-  "/usr/local/texlive/2025/texmf-dist/fonts/vf/public/newtx/ntxsy5.vf" 1724614892 1856 05afd1fb7a543fb973348907ffdabf53 ""
   "/usr/local/texlive/2025/texmf-dist/fonts/vf/public/newtx/ntxsy7.vf" 1724614892 1940 bf4bac1135a7513fb45cfd9280176019 ""
   "/usr/local/texlive/2025/texmf-dist/fonts/vf/public/newtx/nxlmi.vf" 1569879884 2744 3e5ba39e1559219ae379b7645e2f9524 ""
   "/usr/local/texlive/2025/texmf-dist/fonts/vf/public/newtx/nxlmi5.vf" 1569879884 2740 c8b5f27ae076b0aa71375fdbd19167ca ""
@@ -283,9 +282,9 @@
   "/usr/local/texlive/2025/texmf-var/web2c/pdftex/pdflatex.fmt" 1769998056 3345737 ae722fa48b5f41748137f5374ed13cd6 ""
   "/usr/local/texlive/2025/texmf.cnf" 1741450484 577 418a7058ec8e006d8704f60ecd22c938 ""
   "acmart.cls" 1781618103.58731 121673 237171c824d412bde1a66cc8867ba17f ""
-  "sigconf.aux" 1781664581.03433 5958 9a50a37a2a00ce11f8ed1917e37ccc7b "pdflatex"
-  "sigconf.out" 1781664581.03569 2594 eb7cfc8d38ae3cd169c606d36b217780 "pdflatex"
-  "sigconf.tex" 1781664379.65783 34905 8c4eed3ef761f84693dc41d9cc67ea82 ""
+  "sigconf.aux" 1781665255.11139 4995 8fd469908a8b866697aa31766e424c8d "pdflatex"
+  "sigconf.out" 1781665255.11194 2593 1282deb0fdba6fb292f9cfc6f8035d2f "pdflatex"
+  "sigconf.tex" 1781665129.0224 32272 fee032dc0d8ec96c960cbb5a7cc6872b ""
   (generated)
   "sigconf.aux"
   "sigconf.log"

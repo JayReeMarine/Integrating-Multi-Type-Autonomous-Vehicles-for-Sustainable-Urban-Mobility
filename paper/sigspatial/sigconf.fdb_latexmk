@@ -1,5 +1,5 @@
 # Fdb version 4
-["pdflatex"] 1781666387.04648 "sigconf.tex" "sigconf.pdf" "sigconf" 1781666388.2502 0
+["pdflatex"] 1781679454.98546 "sigconf.tex" "sigconf.pdf" "sigconf" 1781679456.19246 0
   "/usr/local/texlive/2025/texmf-dist/fonts/enc/dvips/libertine/lbtn_25tcsq.enc" 1490131464 2921 8ca0eb0831f9bc5da080d3697cfe67bf ""
   "/usr/local/texlive/2025/texmf-dist/fonts/enc/dvips/libertine/lbtn_76gpa5.enc" 1490131464 2933 9ad527ce78d7c5fa0a642dead095f172 ""
   "/usr/local/texlive/2025/texmf-dist/fonts/enc/dvips/libertine/lbtn_7grukw.enc" 1490131464 2934 a4a9158faed2e9e89c771b4e3b7fc12f ""
@@ -284,9 +284,9 @@
   "acmart.cls" 1781618103.58731 121673 237171c824d412bde1a66cc8867ba17f ""
   "figures/capacity_saving_percent_comparison.png" 1781665564.36999 88830 7b18c5d352434015bbab3deb52eb5c24 ""
   "figures/length_saving_percent_comparison.png" 1781665564.37546 83689 83ad84a7a94db479525fbfa1fa1ac33d ""
-  "sigconf.aux" 1781666388.09844 6310 97d2b91092fd4aec139e90875cbbde14 "pdflatex"
-  "sigconf.out" 1781666388.09914 2594 eb7cfc8d38ae3cd169c606d36b217780 "pdflatex"
-  "sigconf.tex" 1781666299.91896 38762 ccaf016eaf5179e70f3f3c73bcfea722 ""
+  "sigconf.aux" 1781679456.0432 6367 c9fcd90e3302438b7738d7c197743d60 "pdflatex"
+  "sigconf.out" 1781679456.04394 2594 eb7cfc8d38ae3cd169c606d36b217780 "pdflatex"
+  "sigconf.tex" 1781679441.26479 39418 14701b5cc4d882dab88129f35116ee1b ""
   (generated)
   "sigconf.aux"
   "sigconf.log"

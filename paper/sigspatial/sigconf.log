@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2026.2.2)  17 JUN 2026 13:15
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (TeX Live 2025) (preloaded format=pdflatex 2026.2.2)  17 JUN 2026 13:19
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1410,26 +1410,6 @@ Underfull \vbox (badness 6268) has occurred while \output is active []
 
 
 
-
-Package natbib Warning: Citation `usdot2024' on page 1 undefined on input line 
-160.
-
-
-Package natbib Warning: Citation `epa2023' on page 1 undefined on input line 16
-0.
-
-
-Package natbib Warning: Citation `yurtsever2020survey' on page 1 undefined on i
-nput line 160.
-
-
-Package natbib Warning: Citation `yurtsever2020survey' on page 1 undefined on i
-nput line 168.
-
-
-Package natbib Warning: Citation `shladover2009cooperative' on page 1 undefined
- on input line 168.
-
 LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/it' will be
 (Font)              scaled to size 9.0pt on input line 168.
 LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/n' will be
@@ -1463,58 +1443,6 @@ local/texlive/2025/texmf-dist/fonts/enc/dvips/libertine/lbtn_76gpa5.enc}
 usr/local/texlive/2025/texmf-dist/fonts/enc/dvips/libertine/lbtn_7grukw.enc}{/u
 sr/local/texlive/2025/texmf-dist/fonts/enc/dvips/libertine/lbtn_oexx6f.enc}]
 
-Package natbib Warning: Citation `tsugawa2016review' on page 2 undefined on inp
-ut line 230.
-
-
-Package natbib Warning: Citation `bergenhem2012overview' on page 2 undefined on
- input line 230.
-
-
-Package natbib Warning: Citation `shladover2009cooperative' on page 2 undefined
- on input line 230.
-
-
-Package natbib Warning: Citation `ploeg2011design' on page 2 undefined on input
- line 230.
-
-
-Package natbib Warning: Citation `furuhata2013ridesharing' on page 2 undefined 
-on input line 230.
-
-
-Package natbib Warning: Citation `agatz2012optimization' on page 2 undefined on
- input line 230.
-
-
-Package natbib Warning: Citation `alonso2017demand' on page 2 undefined on inpu
-t line 230.
-
-
-Package natbib Warning: Citation `cordeau2007dial' on page 2 undefined on input
- line 230.
-
-
-Package natbib Warning: Citation `kuhn1955hungarian' on page 2 undefined on inp
-ut line 230.
-
-
-Package natbib Warning: Citation `munkres1957algorithms' on page 2 undefined on
- input line 230.
-
-
-Package natbib Warning: Citation `cattrysse1992survey' on page 2 undefined on i
-nput line 234.
-
-
-Package natbib Warning: Citation `scipy2020' on page 2 undefined on input line 
-234.
-
-
-Underfull \vbox (badness 1303) has occurred while \output is active []
-
-
-
 
 Overfull \hbox (13.10748pt too wide) in paragraph at lines 269--270
 \T1/LinuxLibertineT-TLF/m/n/9 (-20) A prob-lem in-stance con-sists of $\OML/nxl
@@ -1538,11 +1466,6 @@ LaTeX Font Info:    Font shape `T1/LinuxBiolinumT-TLF/m/n' will be
 (Font)              scaled to size 7.0pt on input line 291.
 [2.2{/usr/local/texlive/2025/texmf-dist/fonts/enc/dvips/libertine/lbtn_ki75ao.e
 nc}]
-
-Package natbib Warning: Citation `cattrysse1992survey' on page 3 undefined on i
-nput line 294.
-
-
 Overfull \hbox (17.29066pt too wide) in paragraph at lines 326--327
 \T1/LinuxLibertineT-TLF/m/n/9 (-20) The greedy base-line re-peat-edly enu-mer-a
 tes fea-si-ble seg-ments $\LMS/ntxsy/m/n/9 ¹\OML/nxlmi/m/it/9 a[]; p[]; s; e\LM
@@ -1551,35 +1474,21 @@ S/ntxsy/m/n/9 º$
 
 
 
-
-Package natbib Warning: Citation `scipy2020' on page 3 undefined on input line 
-332.
-
-
-Package natbib Warning: Citation `kuhn1955hungarian' on page 3 undefined on inp
-ut line 332.
-
 LaTeX Font Info:    Font shape `T1/LinuxLibertineT-TLF/m/sc' will be
 (Font)              scaled to size 9.0pt on input line 340.
 
-Package natbib Warning: Citation `scipy2020' on page 3 undefined on input line 
-383.
-
-LaTeX Font Info:    Trying to load font information for T1+zi4 on input line 38
-3.
-(/usr/local/texlive/2025/texmf-dist/tex/latex/inconsolata/t1zi4.fd
-File: t1zi4.fd 2018/01/14 T1/zi4 (Inconsolata)
-)
-LaTeX Font Info:    Font shape `T1/zi4/m/n' will be
-(Font)              scaled to size 9.0pt on input line 383.
-Package microtype Info: Loading generic protrusion settings for font family
-(microtype)             `zi4' (encoding: T1).
-(microtype)             For optimal results, create family-specific settings.
-(microtype)             See the microtype manual for details.
-
-Overfull \hbox (11.33632pt too wide) in paragraph at lines 383--384
-\T1/zi4/m/n/9 linear_sum_assignment\T1/LinuxLibertineT-TLF/m/n/9 (-20) , which 
-calls a compiled-C Jonker--Volgenant
+Overfull \hbox (77.63354pt too wide) in paragraph at lines 383--384
+\OML/nxlmi/m/it/9 C[]  \LMS/ntxsy/m/n/9 2  f\OT1/LinuxLibertineT-TLF/m/n/9 (-20
+) 2\OML/nxlmi/m/it/9 ; \OT1/LinuxLibertineT-TLF/m/n/9 (-20) 4\OML/nxlmi/m/it/9 
+; \OT1/LinuxLibertineT-TLF/m/n/9 (-20) 8\OML/nxlmi/m/it/9 ; \OT1/LinuxLibertine
+T-TLF/m/n/9 (-20) 16\LMS/ntxsy/m/n/9 g$ \T1/LinuxLibertineT-TLF/m/n/9 (-20) at 
+de-fault $\OML/nxlmi/m/it/9 N; M; L$\T1/LinuxLibertineT-TLF/m/n/9 (-20) , and c
+or-ri-dor length $\OML/nxlmi/m/it/9 L  \LMS/ntxsy/m/n/9 2  f\OT1/LinuxLibertine
+T-TLF/m/n/9 (-20) 50\OML/nxlmi/m/it/9 ; \OT1/LinuxLibertineT-TLF/m/n/9 (-20) 10
+0\OML/nxlmi/m/it/9 ; \OT1/LinuxLibertineT-TLF/m/n/9 (-20) 200\OML/nxlmi/m/it/9 
+; \OT1/LinuxLibertineT-TLF/m/n/9 (-20) 400\OML/nxlmi/m/it/9 ; \OT1/LinuxLiberti
+neT-TLF/m/n/9 (-20) 800\OML/nxlmi/m/it/9 ; \OT1/LinuxLibertineT-TLF/m/n/9 (-20)
+ 1600\LMS/ntxsy/m/n/9 g$\T1/LinuxLibertineT-TLF/m/n/9 (-20) m
  []
 
 
@@ -1588,16 +1497,15 @@ Underfull \vbox (badness 1546) has occurred while \output is active []
 
 
 [3.3{/usr/local/texlive/2025/texmf-dist/fonts/enc/dvips/libertine/lbtn_ncsllp.e
-nc}{/usr/local/texlive/2025/texmf-dist/fonts/enc/dvips/inconsolata/i4-t1-4.enc}
-]
-<figures/capacity_saving_percent_comparison.png, id=146, 562.0197pt x 382.0674p
+nc}]
+<figures/capacity_saving_percent_comparison.png, id=174, 562.0197pt x 382.0674p
 t>
 File: figures/capacity_saving_percent_comparison.png Graphic file (type png)
 <use figures/capacity_saving_percent_comparison.png>
 Package pdftex.def Info: figures/capacity_saving_percent_comparison.png  used o
 n input line 393.
 (pdftex.def)             Requested size: 115.74976pt x 78.68576pt.
-<figures/length_saving_percent_comparison.png, id=148, 562.0197pt x 382.3083pt>
+<figures/length_saving_percent_comparison.png, id=176, 562.0197pt x 382.3083pt>
 
 File: figures/length_saving_percent_comparison.png Graphic file (type png)
 <use figures/length_saving_percent_comparison.png>
@@ -1605,15 +1513,9 @@ Package pdftex.def Info: figures/length_saving_percent_comparison.png  used on
 input line 398.
 (pdftex.def)             Requested size: 115.74976pt x 78.73538pt.
 
-Underfull \vbox (badness 1152) has occurred while \output is active []
+Underfull \vbox (badness 3792) has occurred while \output is active []
 
 
-
-
-Package natbib Warning: Empty `thebibliography' environment on input line 441.
-
-
-Package natbib Warning: There were undefined citations.
 
 
 
@@ -1636,33 +1538,32 @@ Package rerunfilecheck Info: File `sigconf.out' has not changed.
 (rerunfilecheck)             Checksum: EB7CFC8D38AE3CD169C606D36B217780;2594.
  ) 
 Here is how much of TeX's memory you used:
- 32550 strings out of 473190
- 592709 string characters out of 5715801
- 1050865 words of memory out of 5000000
- 54496 multiletter control sequences out of 15000+600000
- 761988 words of font info for 457 fonts, out of 8000000 for 9000
+ 32615 strings out of 473190
+ 594476 string characters out of 5715801
+ 1053632 words of memory out of 5000000
+ 54520 multiletter control sequences out of 15000+600000
+ 764858 words of font info for 478 fonts, out of 8000000 for 9000
  1302 hyphenation exceptions out of 8191
  90i,13n,131p,1588b,780s stack positions out of 10000i,1000n,20000p,200000b,200000s
-</usr/local/texlive/2025/texmf-dist/fonts/type1/public/inconsolata/Inconsolat
-a-zi4r.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/newtx/Liberti
-neMathMI.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/newtx/Liber
-tineMathMI5.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/newtx/Li
-bertineMathMI7.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/liber
-tine/LinBiolinumT.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/li
-bertine/LinBiolinumTB.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/publi
-c/libertine/LinLibertineT.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/p
-ublic/libertine/LinLibertineTB.pfb></usr/local/texlive/2025/texmf-dist/fonts/ty
-pe1/public/libertine/LinLibertineTBI.pfb></usr/local/texlive/2025/texmf-dist/fo
-nts/type1/public/libertine/LinLibertineTI.pfb></usr/local/texlive/2025/texmf-di
-st/fonts/type1/public/newtx/NewTXMI.pfb></usr/local/texlive/2025/texmf-dist/fon
-ts/type1/public/newtx/txexs.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1
-/public/newtx/txmiaX.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public
-/newtx/txsym.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/newtx/t
-xsys.pfb>
-Output written on sigconf.pdf (4 pages, 688689 bytes).
+</usr/local/texlive/2025/texmf-dist/fonts/type1/public/newtx/LibertineMathMI.
+pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/newtx/LibertineMathM
+I5.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/newtx/LibertineMa
+thMI7.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/libertine/LinB
+iolinumT.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/libertine/L
+inBiolinumTB.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/liberti
+ne/LinLibertineT.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/lib
+ertine/LinLibertineTB.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/publi
+c/libertine/LinLibertineTBI.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1
+/public/libertine/LinLibertineTI.pfb></usr/local/texlive/2025/texmf-dist/fonts/
+type1/public/newtx/NewTXMI.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/
+public/newtx/txexs.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/n
+ewtx/txmiaX.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/newtx/tx
+sym.pfb></usr/local/texlive/2025/texmf-dist/fonts/type1/public/newtx/txsys.pfb>
+
+Output written on sigconf.pdf (4 pages, 693834 bytes).
 PDF statistics:
- 243 PDF objects out of 1000 (max. 8388607)
- 188 compressed objects within 2 object streams
- 33 named destinations out of 1000 (max. 500000)
- 115359 words of extra memory for PDF output out of 128383 (max. 10000000)
+ 275 PDF objects out of 1000 (max. 8388607)
+ 220 compressed objects within 3 object streams
+ 48 named destinations out of 1000 (max. 500000)
+ 114847 words of extra memory for PDF output out of 128383 (max. 10000000)
 

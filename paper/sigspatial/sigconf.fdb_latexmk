@@ -1,6 +1,5 @@
 # Fdb version 4
-["pdflatex"] 1781666142.98938 "sigconf.tex" "sigconf.pdf" "sigconf" 1781666144.19888 0
-  "/usr/local/texlive/2025/texmf-dist/fonts/enc/dvips/inconsolata/i4-t1-4.enc" 1558214095 7693 0f2dce6d313c82989ec3a67fc24df2a0 ""
+["pdflatex"] 1781666387.04648 "sigconf.tex" "sigconf.pdf" "sigconf" 1781666388.2502 0
   "/usr/local/texlive/2025/texmf-dist/fonts/enc/dvips/libertine/lbtn_25tcsq.enc" 1490131464 2921 8ca0eb0831f9bc5da080d3697cfe67bf ""
   "/usr/local/texlive/2025/texmf-dist/fonts/enc/dvips/libertine/lbtn_76gpa5.enc" 1490131464 2933 9ad527ce78d7c5fa0a642dead095f172 ""
   "/usr/local/texlive/2025/texmf-dist/fonts/enc/dvips/libertine/lbtn_7grukw.enc" 1490131464 2934 a4a9158faed2e9e89c771b4e3b7fc12f ""
@@ -20,7 +19,6 @@
   "/usr/local/texlive/2025/texmf-dist/fonts/tfm/public/amsfonts/symbols/msbm5.tfm" 1246382020 940 75ac932a52f80982a9f8ea75d03a34cf ""
   "/usr/local/texlive/2025/texmf-dist/fonts/tfm/public/amsfonts/symbols/msbm7.tfm" 1246382020 940 228d6584342e91276bf566bcf9716b83 ""
   "/usr/local/texlive/2025/texmf-dist/fonts/tfm/public/cm/cmr9.tfm" 1136768653 1292 6b21b9c2c7bebb38aa2273f7ca0fb3af ""
-  "/usr/local/texlive/2025/texmf-dist/fonts/tfm/public/inconsolata/t1-zi4r-4.tfm" 1558214095 1328 82f7955e88a105d8e5acd89cb6526b12 ""
   "/usr/local/texlive/2025/texmf-dist/fonts/tfm/public/libertine/LinBiolinumT-tlf-t1--base.tfm" 1490131464 1744 9486ddc64e90094bbb83f53a83b0e415 ""
   "/usr/local/texlive/2025/texmf-dist/fonts/tfm/public/libertine/LinBiolinumT-tlf-t1.tfm" 1490131464 19548 768852037f39958c435d71846b8877ea ""
   "/usr/local/texlive/2025/texmf-dist/fonts/tfm/public/libertine/LinBiolinumTB-tlf-t1--base.tfm" 1490131464 1768 23aace73e6def3193d6e0453af90487b ""
@@ -63,7 +61,6 @@
   "/usr/local/texlive/2025/texmf-dist/fonts/tfm/public/newtx/txmiaSTbb.tfm" 1569879884 920 99acdf374993fd46fd345f9cac168080 ""
   "/usr/local/texlive/2025/texmf-dist/fonts/tfm/public/newtx/txmiaX.tfm" 1736550153 1708 e6ab41b8c6f33e297f8c7977f1424a40 ""
   "/usr/local/texlive/2025/texmf-dist/fonts/tfm/public/newtx/txsys.tfm" 1724614892 1656 68b5079c64f1cefe2cf442b6a60cf2fd ""
-  "/usr/local/texlive/2025/texmf-dist/fonts/type1/public/inconsolata/Inconsolata-zi4r.pfb" 1558214095 55526 184de5d68af8c544d6d1653244a2b006 ""
   "/usr/local/texlive/2025/texmf-dist/fonts/type1/public/libertine/LinBiolinumT.pfb" 1354061736 548786 1e51d517556d29f2841d57da58668a69 ""
   "/usr/local/texlive/2025/texmf-dist/fonts/type1/public/libertine/LinBiolinumTB.pfb" 1354061736 687959 b99c9f5a9b28f3dba077d1c078bceb3f ""
   "/usr/local/texlive/2025/texmf-dist/fonts/type1/public/libertine/LinLibertineT.pfb" 1354061736 614791 ea39341e4db76f25cb20c361802d3cd5 ""
@@ -227,7 +224,6 @@
   "/usr/local/texlive/2025/texmf-dist/tex/latex/hyperref/puenc.def" 1730838014 117112 7533bff456301d32e6d6356fad15f543 ""
   "/usr/local/texlive/2025/texmf-dist/tex/latex/hyperxmp/hyperxmp.sty" 1710792253 62205 a7f89f92229cfedbace009eb0e06c099 ""
   "/usr/local/texlive/2025/texmf-dist/tex/latex/ifmtarg/ifmtarg.sty" 1525197427 318 019510c713feab56160631df4423d2aa ""
-  "/usr/local/texlive/2025/texmf-dist/tex/latex/inconsolata/t1zi4.fd" 1516054831 1021 03341d1cf7f388bbac1915f944d5d128 ""
   "/usr/local/texlive/2025/texmf-dist/tex/latex/inconsolata/zi4.sty" 1558214095 4319 14e5db0b68d045ed49e4ed232b58e93f ""
   "/usr/local/texlive/2025/texmf-dist/tex/latex/kvoptions/kvoptions.sty" 1655478651 22555 6d8e155cfef6d82c3d5c742fea7c992e ""
   "/usr/local/texlive/2025/texmf-dist/tex/latex/kvsetkeys/kvsetkeys.sty" 1665067230 13815 760b0c02f691ea230f5359c4e1de23a7 ""
@@ -288,9 +284,9 @@
   "acmart.cls" 1781618103.58731 121673 237171c824d412bde1a66cc8867ba17f ""
   "figures/capacity_saving_percent_comparison.png" 1781665564.36999 88830 7b18c5d352434015bbab3deb52eb5c24 ""
   "figures/length_saving_percent_comparison.png" 1781665564.37546 83689 83ad84a7a94db479525fbfa1fa1ac33d ""
-  "sigconf.aux" 1781666144.04269 5607 f8b55d2ce38c2352093417fef9c0a9e9 "pdflatex"
-  "sigconf.out" 1781666144.04335 2594 eb7cfc8d38ae3cd169c606d36b217780 "pdflatex"
-  "sigconf.tex" 1781666088.57273 36160 6dbac3b0e9a0ee107f4483ae702b96e8 ""
+  "sigconf.aux" 1781666388.09844 6310 97d2b91092fd4aec139e90875cbbde14 "pdflatex"
+  "sigconf.out" 1781666388.09914 2594 eb7cfc8d38ae3cd169c606d36b217780 "pdflatex"
+  "sigconf.tex" 1781666299.91896 38762 ccaf016eaf5179e70f3f3c73bcfea722 ""
   (generated)
   "sigconf.aux"
   "sigconf.log"

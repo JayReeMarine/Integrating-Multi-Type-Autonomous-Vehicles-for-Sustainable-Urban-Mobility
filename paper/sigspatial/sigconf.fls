@@ -577,10 +577,6 @@ INPUT /usr/local/texlive/2025/texmf-dist/fonts/tfm/public/newtx/txexs.tfm
 INPUT /usr/local/texlive/2025/texmf-dist/fonts/tfm/public/libertine/LinLibertineT-tlf-sc-t1.tfm
 INPUT /usr/local/texlive/2025/texmf-dist/fonts/tfm/public/libertine/LinLibertineT-tlf-sc-t1.tfm
 INPUT /usr/local/texlive/2025/texmf-dist/fonts/tfm/public/libertine/LinLibertineT-tlf-sc-t1.tfm
-INPUT /usr/local/texlive/2025/texmf-dist/tex/latex/inconsolata/t1zi4.fd
-INPUT /usr/local/texlive/2025/texmf-dist/tex/latex/inconsolata/t1zi4.fd
-INPUT /usr/local/texlive/2025/texmf-dist/tex/latex/inconsolata/t1zi4.fd
-INPUT /usr/local/texlive/2025/texmf-dist/fonts/tfm/public/inconsolata/t1-zi4r-4.tfm
 INPUT /usr/local/texlive/2025/texmf-dist/fonts/vf/public/newtx/nxlmi5.vf
 INPUT /usr/local/texlive/2025/texmf-dist/fonts/tfm/public/newtx/LibertineMathMI5.tfm
 INPUT /usr/local/texlive/2025/texmf-dist/fonts/tfm/public/newtx/NewTXMI5.tfm
@@ -590,7 +586,6 @@ INPUT /usr/local/texlive/2025/texmf-dist/fonts/tfm/public/libertine/LinLibertine
 INPUT /usr/local/texlive/2025/texmf-dist/fonts/vf/public/libertine/LinLibertineT-tlf-sc-t1.vf
 INPUT /usr/local/texlive/2025/texmf-dist/fonts/tfm/public/libertine/LinLibertineT-tlf-sc-t1--base.tfm
 INPUT /usr/local/texlive/2025/texmf-dist/fonts/enc/dvips/libertine/lbtn_ncsllp.enc
-INPUT /usr/local/texlive/2025/texmf-dist/fonts/enc/dvips/inconsolata/i4-t1-4.enc
 INPUT ./figures/capacity_saving_percent_comparison.png
 INPUT ./figures/capacity_saving_percent_comparison.png
 INPUT ./figures/capacity_saving_percent_comparison.png
@@ -622,7 +617,6 @@ INPUT /usr/local/texlive/2025/texmf-dist/fonts/tfm/public/libertine/LinLibertine
 INPUT sigconf.aux
 INPUT ./sigconf.out
 INPUT ./sigconf.out
-INPUT /usr/local/texlive/2025/texmf-dist/fonts/type1/public/inconsolata/Inconsolata-zi4r.pfb
 INPUT /usr/local/texlive/2025/texmf-dist/fonts/type1/public/newtx/LibertineMathMI.pfb
 INPUT /usr/local/texlive/2025/texmf-dist/fonts/type1/public/newtx/LibertineMathMI5.pfb
 INPUT /usr/local/texlive/2025/texmf-dist/fonts/type1/public/newtx/LibertineMathMI7.pfb

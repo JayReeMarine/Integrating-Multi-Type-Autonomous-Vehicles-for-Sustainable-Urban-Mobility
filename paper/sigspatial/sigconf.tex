@@ -266,7 +266,7 @@ We formalize \emph{dynamic platoon formation} on a one-dimensional corridor of l
 \subsection{Vehicles and Notation}
 \label{sec:notation}
 
-A problem instance consists of $N$ \emph{Active Vehicles} (AVs) $\mathcal{A}=\{a_1,\dots,a_N\}$ and $M$ \emph{Passive Vehicles} (PVs) $\mathcal{P}=\{p_1,\dots,p_M\}$ on a corridor of length $L$ (in m). Each AV $a_i$ is the tuple $(e^a_i, x^a_i, C_i, t^a_i, v^a_i)$: entry/exit positions $e^a_i, x^a_i\!\in\![0,L]$ with $e^a_i\!<\!x^a_i$ (m), a \emph{scalar} towing capacity $C_i\!\in\!\mathbb{Z}_{\ge 0}$, an entry time $t^a_i$ (s) and a constant speed $v^a_i\!>\!0$ (m/s); each PV $p_j$ is defined analogously by $(e^p_j, x^p_j, t^p_j, v^p_j)$ but has no towing capacity. Two instance-level parameters complete the input: a minimum towing-segment length $L_{\min}$ (m) and a temporal coupling tolerance $\tau$ (s). We emphasize that $C_i$ is a per-AV bound; the capacity ranges varied in Section~\ref{sec:experiments} are values swept \emph{across} instances, not per-route vectors for a single AV.
+A problem instance consists of $N$ \emph{Active Vehicles} (AVs) $\mathcal{A}=\{a_1,\dots,a_N\}$ and $M$ \emph{Passive Vehicles} (PVs) $\mathcal{P}=\{p_1,\dots,p_M\}$ on a corridor of length $L$\,(m). Each AV $a_i$ is described by the tuple $(e^a_i, x^a_i, C_i, t^a_i, v^a_i)$ where $e^a_i,x^a_i\!\in\![0,L]$ are entry/exit positions in m with $e^a_i\!<\!x^a_i$, $C_i\!\in\!\mathbb{Z}_{\ge 0}$ is a \emph{scalar} towing capacity, $t^a_i$ is the entry time in s, and $v^a_i\!>\!0$ is a constant speed in m/s. Each PV $p_j$ is described analogously by $(e^p_j, x^p_j, t^p_j, v^p_j)$ but has no towing capacity. Two instance-level parameters complete the input: a minimum towing-segment length $L_{\min}$\,(m) and a temporal coupling tolerance $\tau$\,(s). The capacity \emph{ranges} reported in Section~\ref{sec:experiments} are values swept across instances, not per-route vectors for a single AV.
 
 \subsection{Feasibility of a Towed Segment}
 \label{sec:feasibility}
@@ -323,7 +323,7 @@ Both algorithms maintain a PV \emph{route-state} $(\ell_j, \hat{t}_j)$ where $\e
 
 \subsection{Greedy Maximum-Weight Matching}
 \label{sec:greedy}
-The greedy baseline repeatedly enumerates feasible segments $(a_i,p_j,s,e)$ under current PV states---using the critical-point capacity check of Sec.~\ref{sec:opt}---commits the one with the largest $e\!-\!s$, updates the route-state, and stops when no feasible segment remains. Each iteration costs $O(NM\log NM)$ to generate and sort candidates, giving $O((NM)^2\log NM)$ in the worst case; the baseline is fast but myopic, as a high-saving commit can block a co-optimal alternative.
+The greedy baseline repeatedly enumerates feasible segments $(a_i,p_j,s,e)$ under current PV states, using the critical-point capacity check of Sec.~\ref{sec:opt}. It commits the segment with the largest $e\!-\!s$, updates the route-state, and stops when no feasible segment remains. Each iteration costs $O(NM\log NM)$ for candidate sorting, giving $O((NM)^2 \log NM)$ overall; the baseline is fast but myopic, as a high-saving commit can block a co-optimal alternative.
 
 \subsection{Iterative Linear Assignment (ILA)}
 \label{sec:ila}
@@ -380,7 +380,7 @@ Each round (Algorithm~1) solves this Linear Sum Assignment Problem (LSAP) optima
 
 \subsection{Setup}
 \label{sec:setup}
-Both algorithms are implemented in Python~3.11 with NumPy~1.26 and SciPy~1.11~\cite{scipy2020}; ILA's per-round LSAP is solved by SciPy's \texttt{linear\_sum\_assignment}, which calls a compiled-C Jonker--Volgenant routine. Experiments run single-threaded on an Apple M4 Pro (16\,GB unified memory, macOS~15). Synthetic corridor instances are generated as follows: AV and PV entry/exit positions are sampled uniformly from $[0,L]$, each vehicle's entry time is drawn uniformly from $[0, W]$ over a scenario time window $W$, and each vehicle's speed is drawn from a $\pm 20\%$ uniform interval around a unit reference. Unless varied, default parameters are $L{=}100$\,m, $N{=}50$ AVs, $M{=}200$ PVs, $C_i{\sim}\text{Uniform}\{1,2,3\}$, $L_{\min}{=}10$\,m, $\tau{=}5$\,s, $W{=}100$\,s. We report means over four random seeds (42--45) and study two sweeps: AV capacity $C_i{\sim}\text{Uniform}\{1,C_{\max}\}$ with $C_{\max}\!\in\!\{2,4,8,16\}$ at default $N,M,L$, and corridor length $L\!\in\!\{50,100,200,400,800,1600\}$\,m at $N{=}80, M{=}400, C_{\max}{=}3$; for the length sweep we scale $W$ linearly with $L$ ($W=L$\,s) so that average vehicle density per unit time stays comparable across corridor lengths. The headline metric is \emph{saving~\%}, the total towed distance divided by the no-towing baseline distance $\sum_j(x^p_j\!-\!e^p_j)$; we also report wall-clock runtime.
+Both algorithms are implemented in Python~3.11 with NumPy~1.26 and SciPy~1.11~\cite{scipy2020}; ILA's per-round LSAP uses SciPy's compiled Jonker--Volgenant routine. Experiments run single-threaded on an Apple M4 Pro (16\,GB unified memory, macOS~15). For synthetic corridor instances, AV and PV entry/exit positions are sampled uniformly from $[0,L]$, entry times uniformly from $[0,W]$ over a scenario time window $W$, and speeds uniformly within $\pm 20\%$ of a unit reference. Default parameters are $L{=}100$\,m, $N{=}50$, $M{=}200$, $L_{\min}{=}10$\,m, $\tau{=}5$\,s, $W{=}100$\,s, with $C_i$ drawn uniformly from $\{1,2,3\}$. We report means over four seeds (42--45) and run two sweeps. The \emph{capacity sweep} varies the upper bound $C_{\max}\!\in\!\{2,4,8,16\}$ at default $N,M,L$, sampling $C_i$ uniformly from $\{1,\dots,C_{\max}\}$. The \emph{length sweep} varies $L$ over $\{50,100,200,400,800,1600\}$\,m at $N{=}80$, $M{=}400$, $C_{\max}{=}3$, with $W{=}L$\,s so that vehicle density per unit time stays comparable across corridor lengths. The headline metric is \emph{saving~\%}, the total towed distance divided by the no-towing baseline $\sum_j(x^p_j\!-\!e^p_j)$; we also report wall-clock runtime.
 
 \subsection{Results}
 \label{sec:results}
@@ -432,12 +432,35 @@ We formalized \emph{dynamic platoon formation} as a spatio-temporal multi-segmen
 %% Switch to BibTeX (\bibliography{references}) later if time permits.
 %% ===========================================================================
 \begin{thebibliography}{00}
-%% TODO: migrate \bibitem entries from conference_101719.tex L.727+.
-%% Add NEW references for:
-%%   - Vision papers / patents on cooperative AV coupling (motivation
-%%     section, paragraph 2).
-%%   - Train-style modular vehicle concept reference (analogue).
-%%   - SIGSPATIAL-aligned spatial-temporal matching references if useful.
+\bibitem{usdot2024} U.S. Department of Transportation, Federal Highway Administration, ``Summary of Travel Trends: 2022 National Household Travel Survey,'' Report FHWA-HPL-24-009, 2024.
+
+\bibitem{epa2023} U.S. Environmental Protection Agency, ``Inventory of U.S. Greenhouse Gas Emissions and Sinks: 1990--2021,'' EPA 430-R-23-003, 2023.
+
+\bibitem{yurtsever2020survey} E. Yurtsever, J. Lambert, A. Carballo, and K. Takeda, ``A survey of autonomous driving: Common practices and emerging technologies,'' \textit{IEEE Access}, vol. 8, pp. 58443--58469, 2020.
+
+\bibitem{shladover2009cooperative} S. E. Shladover, ``Cooperative (rather than autonomous) vehicle-highway automation systems,'' \textit{IEEE Intell. Transp. Syst. Mag.}, vol. 1, no. 1, pp. 10--19, 2009.
+
+\bibitem{tsugawa2016review} S. Tsugawa, S. Jeschke, and S. E. Shladover, ``A review of truck platooning projects for energy savings,'' \textit{IEEE Trans. Intell. Veh.}, vol. 1, no. 1, pp. 68--77, 2016.
+
+\bibitem{bergenhem2012overview} C. Bergenhem, H. Pettersson, E. Coelingh, C. Englund, S. Shladover, and S. Tsugawa, ``Overview of platooning systems,'' in \textit{Proc. 19th ITS World Congress}, 2012.
+
+\bibitem{ploeg2011design} J. Ploeg, B. T. M. Scheepers, E. van Nunen, N. van de Wouw, and H. Nijmeijer, ``Design and experimental evaluation of cooperative adaptive cruise control,'' in \textit{Proc. IEEE Int. Conf. Intell. Transp. Syst.}, 2011, pp. 260--265.
+
+\bibitem{furuhata2013ridesharing} M. Furuhata, M. Dessouky, F. Ord{\'o}{\~n}ez, M.-E. Brunet, X. Wang, and S. Koenig, ``Ridesharing: The state-of-the-art and future directions,'' \textit{Transp. Res. B Methodol.}, vol. 57, pp. 28--46, 2013.
+
+\bibitem{agatz2012optimization} N. Agatz, A. Erera, M. Savelsbergh, and X. Wang, ``Optimization for dynamic ride-sharing: A review,'' \textit{Eur. J. Oper. Res.}, vol. 223, no. 2, pp. 295--303, 2012.
+
+\bibitem{alonso2017demand} J. Alonso-Mora, S. Samaranayake, A. Wallar, E. Frazzoli, and D. Rus, ``On-demand high-capacity ride-sharing via dynamic trip-vehicle assignment,'' \textit{Proc. Natl. Acad. Sci.}, vol. 114, no. 3, pp. 462--467, 2017.
+
+\bibitem{cordeau2007dial} J.-F. Cordeau and G. Laporte, ``The dial-a-ride problem: models and algorithms,'' \textit{Ann. Oper. Res.}, vol. 153, no. 1, pp. 29--46, 2007.
+
+\bibitem{kuhn1955hungarian} H. W. Kuhn, ``The Hungarian method for the assignment problem,'' \textit{Nav. Res. Logist. Q.}, vol. 2, no. 1--2, pp. 83--97, 1955.
+
+\bibitem{munkres1957algorithms} J. Munkres, ``Algorithms for the assignment and transportation problems,'' \textit{J. Soc. Ind. Appl. Math.}, vol. 5, no. 1, pp. 32--38, 1957.
+
+\bibitem{cattrysse1992survey} D. G. Cattrysse and L. N. Van Wassenhove, ``A survey of algorithms for the generalized assignment problem,'' \textit{Eur. J. Oper. Res.}, vol. 60, no. 3, pp. 260--272, 1992.
+
+\bibitem{scipy2020} P. Virtanen et al., ``SciPy 1.0: Fundamental algorithms for scientific computing in Python,'' \textit{Nat. Methods}, vol. 17, pp. 261--272, 2020.
 \end{thebibliography}
 
 \end{document}

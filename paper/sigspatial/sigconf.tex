@@ -156,61 +156,89 @@ We study an algorithmic abstraction for future cooperative autonomous mobility i
 \section{Introduction}
 \label{sec:introduction}
 
-%% TODO: Paragraph 1 -- Motivation (energy / mobility crisis).
-%% Source: ITSC L.74. Keep ~3 sentences. Cite usdot2024, epa2023.
+%% Paragraph 1 -- Motivation (migrated from ITSC L.74).
+Single-occupancy travel remains a major barrier to sustainable urban mobility. U.S. National Household Travel Survey data show that drive-alone commuting dominates trip demand~\cite{usdot2024}, while the transportation sector contributes about 29\% of U.S. greenhouse gas emissions~\cite{epa2023}. This inefficiency is pronounced when many vehicles traverse overlapping routes but still consume propulsion energy independently. With rapid advances in autonomous driving~\cite{yurtsever2020survey}, future transportation can realize physically coordinated vehicle platoons that go beyond independent driving.
 
-%% TODO: Paragraph 2 -- Near-future AV coordination is plausible.
-%% This is the NEW paragraph addressing ITSC reviewer feedback.
-%% Cite (a) vision papers on cooperative/connected autonomous vehicles,
-%% (b) any white paper or patent that proposes physical coupling between road
-%%     vehicles (mention train-style modular concepts as a known analogue),
-%% (c) yurtsever2020survey, shladover2009cooperative as warm-ups.
-%% Eunus on 2026-05-08: explicitly say that mechanical, safety, regulatory
-%% details are orthogonal and OUT OF SCOPE; we focus on the algorithmic side.
+%% Paragraph 2 -- Near-future plausibility + explicit scope statement
+%% (NEW: addresses ITSC reviewer feedback. The wording here is intentionally
+%% close to the abstract's scope statement so the framing is consistent.)
+%% TODO (Step 3): fold in references from Eunus's motivation.tex once we
+%% have read that file, and add 1--2 vision-paper / patent citations on
+%% cooperative coupling.
+In a near-future setting where vehicles are fully autonomous, new forms of physical coordination between vehicles become feasible: a large autonomous vehicle could mechanically couple with smaller vehicles on a shared road segment, towing them and offsetting a substantial share of their independent propulsion energy~\cite{yurtsever2020survey,shladover2009cooperative}. Realizing such coordinated interaction at scale requires \emph{systematic decisions} about which vehicles should couple, when, and for how long along their routes. We therefore treat mechanical coupling, safety, and regulatory design as system assumptions outside the scope of this short paper, and focus on the spatio-temporal matching layer that would be required if such coupling were available.
 
-%% TODO: Paragraph 3 -- Introduce AV / PV terminology and the dynamic
-%% platoon formation problem. Source: ITSC L.133. Keep tight.
-
-%% TODO: Paragraph 4 -- Figure 1 walk-through (illustrative example).
-%% Source: ITSC L.136. Keep figure; trim text to 2--3 sentences.
-%% Figure migration: copy the tikzpicture from ITSC L.78--123 verbatim;
-%% ensure it fits one column in acmart layout.
+%% Paragraph 3 -- Problem introduction (migrated from ITSC L.133).
+To address this challenge we introduce a new problem that we call \textit{dynamic platoon formation}. We consider two classes of autonomous vehicles: larger \textit{Active Vehicles (AVs)} capable of physically towing smaller vehicles, and smaller \textit{Passive Vehicles (PVs)} that can be attached to AVs during shared road segments. Unlike drafting-based platooning, which yields modest aerodynamic savings while vehicles remain physically separated, our model assumes mechanical coupling: while a PV is attached to an AV we model the PV as not self-propelled over that segment, with the segment's towing load attributed to the AV. Given a set of AVs and PVs with known, fixed routes (AVs do not deviate from their pre-planned paths), entry times, and speeds, the goal is to \textbf{maximize the total PV distance covered by towing}. We use towed distance as a proxy for PV-side propulsion-energy reduction and reserve physics-level load modeling for future work.
 
 \begin{figure}[t]
 \centering
-%% TODO: paste TikZ figure from conference_101719.tex (L.78--123).
-%% After paste, verify caption matches ACM style and fits one column.
-\caption{Conceptual overview of towing-based cooperation. Activators $A_1$ and $A_2$ each have capacity 2; $T2$ is towed by $A_1$ to $x{=}60$, self-drives to $x{=}70$, then is handed off to $A_2$.}
-\Description{A one-dimensional highway with three passive vehicles and two active vehicles, showing dashed self-driving segments and solid towed segments along positions 0 to 100.}
+\resizebox{0.98\columnwidth}{!}{%
+\begin{tikzpicture}[x=0.06cm,y=0.22cm,>=Stealth]
+    % Highway axis
+    \draw[very thick, ->] (0,0) -- (103,0);
+    \foreach \x in {0,20,40,60,80,100} {
+        \draw (\x,-0.35) -- (\x,0.35);
+    }
+    \node[below, font=\scriptsize] at (0,-0.45) {$0$};
+    \node[below, font=\scriptsize] at (50,-0.45) {$50$};
+    \node[below, font=\scriptsize] at (100,-0.45) {$100$};
+    \node[right, font=\scriptsize] at (103,0) {$x$};
+
+    % Towable vehicles (dashed full path + solid towed segments)
+    \draw[thick, dashed, gray] (10,2) -- (80,2);
+    \draw[ultra thick, blue!70] (20,2) -- (60,2);
+    \node[left, font=\scriptsize] at (9,2) {T1};
+
+    \draw[thick, dashed, gray] (20,4) -- (90,4);
+    \draw[ultra thick, blue!70] (20,4) -- (60,4);
+    \draw[ultra thick, red!75!black] (70,4) -- (90,4);
+    \node[left, font=\scriptsize] at (19,4) {T2};
+
+    \draw[thick, dashed, gray] (50,6) -- (100,6);
+    \draw[ultra thick, red!75!black] (60,6) -- (90,6);
+    \node[left, font=\scriptsize] at (49,6) {T3};
+
+    % Activators
+    \draw[ultra thick, blue] (10,9) -- (70,9);
+    \fill[blue] (10,9) circle (1.2);
+    \fill[blue] (70,9) circle (1.2);
+    \node[left, blue, font=\scriptsize] at (8.6,8.8) {AV $A_1$};
+    \node[above, blue, font=\scriptsize] at (22,9.9) {capacity $=2$};
+
+    \draw[ultra thick, red!75!black] (50,13) -- (90,13);
+    \fill[red!75!black] (50,13) circle (1.2);
+    \fill[red!75!black] (90,13) circle (1.2);
+    \node[left, red!75!black, font=\scriptsize] at (48.5,14.0) {AV $A_2$};
+    \node[above, red!75!black, font=\scriptsize] at (70,13.3) {capacity $=2$};
+
+    % Handoff marker
+    \draw[gray, dashed] (70,3.2) -- (70,4.8);
+    \node[below, gray, font=\scriptsize] at (70,2.5) {handoff};
+\end{tikzpicture}
+}
+\caption{Conceptual overview of towing-based cooperation on a 1D corridor (positions $0$--$100$\,m). Dashed gray segments denote self-driving portions (PV uses own propulsion); solid colored segments denote towed travel (PV propulsion offset by AV). AVs $A_1$ and $A_2$ each have towing capacity~2. $T2$ is towed by $A_1$ over $[20,60]$, self-drives over $[60,70]$, and is handed off to $A_2$ over $[70,90]$ -- an instance of \emph{multi-segment matching}.}
+\Description{A one-dimensional corridor with three passive vehicles (T1, T2, T3) and two active vehicles ($A_1$, $A_2$), showing dashed self-driving segments and solid towed segments along positions 0 to 100, with a handoff marker at position 70 indicating that T2 is reassigned from $A_1$ to $A_2$.}
 \label{fig:intro_concept}
 \end{figure}
 
-%% TODO: Paragraph 5 -- Prior work compressed into ONE paragraph.
-%% Source: ITSC L.138, L.140, L.142 + the old Related Work section
-%% (L.149--158 in ITSC). Three threads to mention briefly:
-%%   (i)   Platooning / drafting (cite tsugawa2016review, bergenhem2012overview).
-%%   (ii)  Ridesharing / assignment (cite furuhata2013ridesharing,
-%%         agatz2012optimization, alonso2017demand).
-%%   (iii) Combinatorial assignment algorithms (cite kuhn1955hungarian,
-%%         munkres1957algorithms, cattrysse1992survey).
-%% Make the gap explicit: none of these capture (a) sustained physical
-%% coupling, (b) multi-segment coverage of one PV by multiple AVs, and
-%% (c) point-wise AV capacity constraints simultaneously.
+%% Paragraph 4 -- Figure 1 walk-through (compressed: the caption already
+%% covers T2's multi-segment story, so the body only highlights the two
+%% spatial features that matter for the formulation).
+Figure~\ref{fig:intro_concept} illustrates this on a shared corridor with two AVs and three PVs. Two features are central to our formulation: \emph{point-wise capacity}---between $x{=}20$ and $x{=}60$, $A_1$ simultaneously tows $T1$ and $T2$, reaching its capacity of~2---and \emph{multi-segment matching}, where $T2$ is served by $A_1$ and $A_2$ on disjoint portions of its route with a self-driving gap in between.
 
-%% TODO: Paragraph 6 -- Approach overview (Greedy + ILA), framed for
-%% SIGSPATIAL's spatial-algorithm audience. Source: ITSC L.142.
-%% Emphasize: spatial-temporal matching, bipartite subproblems via
-%% Jonker--Volgenant (scipy2020), virtual-slot capacity encoding.
-%% Define LSAP and GAP here (reviewer 3 complaint).
+%% Paragraph 5 -- Related work compressed into ONE paragraph
+%% (replaces the deleted ITSC Related Work section; merges L.138, L.140).
+Prior work spans three threads. (i)~Platooning research focuses on aerodynamic coordination among physically separated vehicles via cooperative adaptive cruise control~\cite{tsugawa2016review,bergenhem2012overview,shladover2009cooperative,ploeg2011design}. (ii)~Ridesharing and dial-a-ride methods match passengers or trips to vehicles under spatial and temporal constraints, but the decision variable is passenger placement rather than vehicle-to-vehicle coupling along route segments~\cite{furuhata2013ridesharing,agatz2012optimization,alonso2017demand,cordeau2007dial}. (iii)~Combinatorial assignment provides algorithmic tools for one-to-one matching, including the Hungarian method and its extensions~\cite{kuhn1955hungarian,munkres1957algorithms}. None of these lines captures the combination of features required for dynamic towing coordination: sustained physical coupling, multi-segment coverage of a single PV by different AVs, and \emph{point-wise} AV capacity constraints---the requirement that the number of PVs an AV tows simultaneously is enforced at every position along its route and can change as PVs attach and detach.
 
-%% TODO: Paragraph 7 -- Contributions (3 bullets or 3 sentences).
-%% Source: ITSC L.144.
-%%   1. Formalize dynamic platoon formation with multi-segment matching
-%%      and point-wise capacity, on a 1D highway abstraction.
-%%   2. Two solution strategies: greedy + ILA.
-%%   3. Controlled experimental study showing 25--52% coverage with ILA
-%%      matching or exceeding greedy at 2.8--11.5x lower runtime.
-%% Frame 2D extension as future work to pre-empt the obvious reviewer push.
+%% Paragraph 6 -- Approach overview (migrated and trimmed from L.142).
+%% Spells out LSAP and GAP on first use (addresses Reviewer 3 of ITSC).
+We formulate the problem as: given AVs and PVs with fixed routes, entry times and speeds, decide which PVs attach to which AVs over which road segments to maximize the total towed PV distance, subject to spatial overlap requirements, point-wise capacity, and temporal synchronization at coupling points. This multi-segment matching problem generalizes the \emph{Generalized Assignment Problem} (GAP), which is NP-hard~\cite{cattrysse1992survey}; exact solutions are intractable at realistic fleet sizes. We propose two approximations. The first, a \textit{Greedy Maximum-Weight Matching}, repeatedly commits to the highest-saving feasible AV--PV segment until no feasible pair remains---fast but myopic. The second, an \textit{Iterative Linear Assignment} (ILA) algorithm, takes a globally coordinated view: in each round it expands every AV into virtual capacity slots, builds a bipartite graph of feasible AV-slot--PV pairings, and solves the resulting \emph{Linear Sum Assignment Problem} (LSAP) optimally via the Jonker--Volgenant method~\cite{scipy2020}. PV states are then updated to reflect newly covered segments and the round repeats until no further assignment is possible. For tractability we evaluate both algorithms on a one-dimensional corridor abstraction; we discuss extensions to 2D road networks in Section~\ref{sec:conclusion}.
+
+%% Paragraph 7 -- Contributions (migrated and trimmed from L.144).
+\noindent\textbf{Contributions.}
+\textbf{(1)}~We formalize \emph{dynamic platoon formation} as a spatio-temporal matching problem with multi-segment service and point-wise AV capacity, instantiated on a 1D corridor.
+\textbf{(2)}~We develop and compare two approximation algorithms---a greedy maximum-weight baseline and an iterative LSAP-based method with virtual-slot capacity encoding.
+\textbf{(3)}~On synthetic corridor scenarios with up to 80 AVs and 400 PVs, ILA matches or exceeds greedy solution quality (25--52\% towed-distance coverage depending on capacity) while running 2.8--11.5$\times$ faster.
 
 
 %% ===========================================================================

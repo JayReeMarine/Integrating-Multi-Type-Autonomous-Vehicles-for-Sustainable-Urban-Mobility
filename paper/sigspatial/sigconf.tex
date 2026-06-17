@@ -216,7 +216,7 @@ To address this challenge we introduce a new problem that we call \textit{dynami
     \node[below, gray, font=\scriptsize] at (70,2.5) {handoff};
 \end{tikzpicture}
 }
-\caption{Conceptual overview of towing-based cooperation on a 1D corridor (positions $0$--$100$\,m). Dashed gray segments denote self-driving portions (PV uses own propulsion); solid colored segments denote towed travel (PV propulsion offset by AV). AVs $A_1$ and $A_2$ each have towing capacity~2. $T2$ is towed by $A_1$ over $[20,60]$, self-drives over $[60,70]$, and is handed off to $A_2$ over $[70,90]$ -- an instance of \emph{multi-segment matching}.}
+\caption{Conceptual overview of towing-based cooperation on a 1D corridor (positions $0$--$100$\,m). Dashed gray segments denote self-driving portions; solid colored segments denote towed travel, on which the PV is modeled as not self-propelled. AVs $A_1$ and $A_2$ each have towing capacity~2. $T2$ is towed by $A_1$ over $[20,60]$, self-drives over $[60,70]$, and is handed off to $A_2$ over $[70,90]$---an instance of \emph{multi-segment matching}.}
 \Description{A one-dimensional corridor with three passive vehicles (T1, T2, T3) and two active vehicles ($A_1$, $A_2$), showing dashed self-driving segments and solid towed segments along positions 0 to 100, with a handoff marker at position 70 indicating that T2 is reassigned from $A_1$ to $A_2$.}
 \label{fig:intro_concept}
 \end{figure}
@@ -232,7 +232,7 @@ Prior work spans three threads. (i)~Platooning research focuses on aerodynamic c
 
 %% Paragraph 6 -- Approach overview (migrated and trimmed from L.142).
 %% Spells out LSAP and GAP on first use (addresses Reviewer 3 of ITSC).
-We formulate the problem as: given AVs and PVs with fixed routes, entry times and speeds, decide which PVs attach to which AVs over which road segments to maximize the total towed PV distance, subject to spatial overlap requirements, point-wise capacity, and temporal synchronization at coupling points. This multi-segment matching problem generalizes the \emph{Generalized Assignment Problem} (GAP), which is NP-hard~\cite{cattrysse1992survey}; exact solutions are intractable at realistic fleet sizes. We propose two approximations. The first, a \textit{Greedy Maximum-Weight Matching}, repeatedly commits to the highest-saving feasible AV--PV segment until no feasible pair remains---fast but myopic. The second, an \textit{Iterative Linear Assignment} (ILA) algorithm, takes a globally coordinated view: in each round it expands every AV into virtual capacity slots, builds a bipartite graph of feasible AV-slot--PV pairings, and solves the resulting \emph{Linear Sum Assignment Problem} (LSAP) optimally via the Jonker--Volgenant method~\cite{scipy2020}. PV states are then updated to reflect newly covered segments and the round repeats until no further assignment is possible. For tractability we evaluate both algorithms on a one-dimensional corridor abstraction; we discuss extensions to 2D road networks in Section~\ref{sec:conclusion}.
+We formulate the problem as: given AVs and PVs with fixed routes, entry times and speeds, decide which PVs attach to which AVs over which road segments to maximize the total towed PV distance, subject to spatial overlap requirements, point-wise capacity, and temporal synchronization at coupling points. This yields a state-dependent combinatorial matching problem that differs from a static Generalized Assignment Problem (GAP)~\cite{cattrysse1992survey}, because assigning one towing segment can change later temporal feasibility for the same PV. Exact global solvers are therefore impractical at fleet scale, and we propose two approximations. The first, a \textit{Greedy Maximum-Weight Matching}, repeatedly commits to the highest-saving feasible AV--PV segment until no feasible pair remains---fast but myopic. The second, an \textit{Iterative Linear Assignment} (ILA) algorithm, takes a globally coordinated view: in each round it expands every AV into virtual capacity slots, builds a bipartite graph of feasible AV-slot--PV pairings, and solves the resulting \emph{Linear Sum Assignment Problem} (LSAP) optimally via the Jonker--Volgenant method~\cite{scipy2020}. PV states are then updated to reflect newly covered segments and the round repeats until no further assignment is possible. For tractability we evaluate both algorithms on a one-dimensional corridor abstraction; we discuss extensions to 2D road networks in Section~\ref{sec:conclusion}.
 
 %% Paragraph 7 -- Contributions (migrated and trimmed from L.144).
 \noindent\textbf{Contributions.}
@@ -260,63 +260,82 @@ We formulate the problem as: given AVs and PVs with fixed routes, entry times an
 \section{Problem Formulation}
 \label{sec:formulation}
 
-%% TODO: Lead paragraph -- 1D highway abstraction is a deliberate
-%% modeling choice to isolate the matching problem; 2D extension is
-%% future work. Reviewer 1 + 3 of ITSC pushed back here, so be explicit.
+%% Lead paragraph: 1D abstraction is a deliberate modeling choice that
+%% isolates the spatio-temporal matching structure from routing.
+We formalize \emph{dynamic platoon formation} on a one-dimensional corridor of length $L$. Restricting attention to a single corridor isolates the spatio-temporal matching structure---segment overlap, point-wise capacity, and temporal synchronization---from routing decisions; extending the formulation to 2D road networks is discussed in Section~\ref{sec:conclusion}. Throughout, positions are in meters (m), times in seconds (s), and speeds in m/s; towing capacities are nonnegative integers.
 
-\subsection{Notation and System Model}
-%% TODO: Compact notation table. Source: ITSC L.170--194.
-%% IMPORTANT FIX (Reviewer 3, ITSC): add UNITS for every dimensional
-%% quantity in the description column:
-%%   L       -> meters
-%%   e^a, x^a, e^p, x^p, cp, dp, ell  -> meters (position)
-%%   C_i     -> integer (vehicles)
-%%   t_*, hat_t   -> seconds
-%%   v_*     -> meters per second
-%%   d_ij, S_ij   -> meters (saving proxy)
-%%   L_min   -> meters
-%%   tau     -> seconds
-%% Also explicitly say capacity is a scalar per AV, not a vector,
-%% to fix Reviewer 3's confusion between body text and Table II.
+\subsection{Vehicles and Notation}
+\label{sec:notation}
 
-%% TODO: One paragraph definition of Active Vehicle and Passive Vehicle
-%% (source: ITSC L.200--206). Trim to essentials.
+A problem instance consists of two finite sets: $N$ \emph{Active Vehicles} (AVs) $\mathcal{A}=\{a_1,\dots,a_N\}$ and $M$ \emph{Passive Vehicles} (PVs) $\mathcal{P}=\{p_1,\dots,p_M\}$. Each AV $a_i$ is described by the tuple $(e^a_i, x^a_i, C_i, t^a_i, v^a_i)$ with entry/exit positions $e^a_i, x^a_i\!\in\![0,L]$ (where $e^a_i\!<\!x^a_i$), a scalar towing capacity $C_i\!\in\!\mathbb{Z}_{\ge 0}$, an entry time $t^a_i$ and a constant speed $v^a_i\!>\!0$. Each PV $p_j$ is described by $(e^p_j, x^p_j, t^p_j, v^p_j)$, defined analogously, but has no towing capacity of its own. Table~\ref{tab:notation} summarizes the symbols. We emphasize that $C_i$ is a \emph{scalar} per-AV bound, not a vector: the capacity ranges varied in Section~\ref{sec:experiments} are values swept \emph{across} instances, not per-route vectors for a single AV.
 
-\subsection{Shared Path and Energy Saving}
-%% TODO: Define shared travel distance d_ij and saving S_ij = d_ij when
-%% d_ij >= L_min, else 0. Source: ITSC L.208--217.
-%% Add one sentence: "We use towed distance as a proxy for PV-side
-%% propulsion energy reduction and reserve physics-level modeling for
-%% future work" (already in ITSC abstract; restate here for review3).
+\begin{table}[t]
+\caption{Summary of notation. Positions and lengths are in meters, times in seconds, speeds in m/s. Capacities are dimensionless integer counts.}
+\label{tab:notation}
+\centering
+\small
+\begin{tabular}{cl}
+\toprule
+\textbf{Symbol} & \textbf{Description (unit)} \\
+\midrule
+$L$ & Corridor length (m) \\
+$N, M$ & Number of AVs and PVs (dimensionless) \\
+$e^a_i, x^a_i$ & Entry/exit position of AV $a_i$ (m) \\
+$e^p_j, x^p_j$ & Entry/exit position of PV $p_j$ (m) \\
+$C_i$ & Towing capacity of AV $a_i$ ($\in\mathbb{Z}_{\ge 0}$, count) \\
+$t^a_i, v^a_i$ & Entry time (s) and constant speed (m/s) of $a_i$ \\
+$t^p_j, v^p_j$ & Entry time (s) and self-driving speed (m/s) of $p_j$ \\
+$cp_{ij}, dp_{ij}$ & Earliest possible coupling / latest decoupling positions of $(a_i,p_j)$ (m) \\
+$d_{ij}$ & Shared overlap distance of $(a_i,p_j)$ (m) \\
+$L_{\min}$ & Minimum towing-segment length (m) \\
+$\tau$ & Temporal coupling tolerance (s) \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-\subsection{Multi-Segment Matching and Point-wise Capacity}
-%% TODO: Define multi-segment matching M_j (a PV can be towed by
-%% multiple AVs across disjoint route segments). Source: ITSC L.219--228.
-%% State point-wise capacity constraint formally: for every AV a_i and
-%% every position x along its route, |{p : (a_i, p) active at x}| <= C_i.
-%% This is the spatial-temporal constraint that distinguishes our
-%% formulation from standard GAP / LSAP -- emphasise for SIGSPATIAL.
+\subsection{Feasibility of a Towed Segment}
+\label{sec:feasibility}
 
-\subsection{Optimization Problem}
-%% TODO: Compact problem statement -- maximise total towed distance
-%% subject to (a) overlap >= L_min, (b) point-wise capacity, (c)
-%% temporal synchronisation. Source: ITSC L.230--250.
-%% Spell out LSAP (Linear Sum Assignment Problem) and GAP (Generalized
-%% Assignment Problem) on first use, with citations
-%% (kuhn1955hungarian, cattrysse1992survey).
+A candidate towing segment is a tuple $(a_i, p_j, s, e)$ with $0\!\le\! s\!<\!e\!\le\!L$, meaning that $p_j$ is towed by $a_i$ over the spatial interval $[s,e]$. The maximum geometrically realizable overlap of routes $(a_i,p_j)$ is the closed interval $[cp_{ij}, dp_{ij}]$, where $cp_{ij}=\max(e^a_i,e^p_j)$ is the earliest possible coupling position and $dp_{ij}=\min(x^a_i,x^p_j)$ the latest possible decoupling; selected $s,e$ may satisfy $cp_{ij}\le s<e\le dp_{ij}$. The overlap length is
+\begin{equation}
+d_{ij} = \max\bigl(0,\; dp_{ij} - cp_{ij}\bigr).
+\label{eq:dij}
+\end{equation}
+A segment $(a_i, p_j, s, e)$ is \emph{feasible} if (i) $[s,e]\subseteq[cp_{ij},dp_{ij}]$ (spatial inclusion), (ii) $e\!-\!s\ge L_{\min}$ (minimum length, justifying coupling overhead), and (iii) the two vehicles reach the segment's starting point within tolerance $\tau$:
+\begin{equation}
+\bigl| T^a_i(s) - T^p_j(s) \bigr| \le \tau,
+\label{eq:time}
+\end{equation}
+where $T^a_i(x) = t^a_i + (x - e^a_i)/v^a_i$ is AV $a_i$'s arrival time at position $x$. The PV arrival time $T^p_j(s)$ is \emph{state-dependent}: for an initially uncovered PV it is the self-driving time $t^p_j + (s - e^p_j)/v^p_j$, but after $p_j$ has been towed on an earlier segment, our algorithms (Section~\ref{sec:algorithms}) update its route-state time before evaluating later segments. We use the towed distance $e-s$ directly as the saving proxy on a feasible segment, reserving energy-level modeling that accounts for AV-side towing load for future work.
 
-\subsection{Assumptions}
-%% TODO: BULLETIZED assumption list. Source: ITSC L.252--263.
-%% Critical to address ITSC reviewer pushback head-on:
-%%   - Known, fixed routes; AVs do not re-route.
-%%   - Constant per-vehicle speed; deterministic entry times.
-%%   - Coupling/decoupling cost negligible at the algorithmic layer
-%%     (reviewer 1 + 3 of ITSC complained -- acknowledge as a modeling
-%%     simplification and cite as future work).
-%%   - No induced congestion: total vehicle count is unchanged; only
-%%     who tows whom changes (reviewer 1 of ITSC).
-%%   - Mechanical, safety, and regulatory aspects are out of scope
-%%     (refer back to Section 1 scope statement).
+\subsection{Multi-Segment Matching and Optimization}
+\label{sec:opt}
+
+Let $\mathcal{X}$ denote a set of feasible segments selected by the algorithm. We allow a single PV to be served by multiple AVs along disjoint portions of its route---\emph{multi-segment matching}---but the same PV cannot be towed by two AVs at the same position. The optimization problem is
+\begin{align}
+\max_{\mathcal{X}} \quad & \sum_{(a_i,p_j,s,e)\in\mathcal{X}}\!\!\!(e-s) \label{eq:obj}\\
+\text{s.t.}\quad & \bigl|\{(a_i,p_j,s,e)\in\mathcal{X} : x\in[s,e)\}\bigr|\le C_i \notag\\
+                 & \qquad\qquad\quad \forall a_i\in\mathcal{A},\; \forall x\in[e^a_i,x^a_i] \label{eq:capacity}\\
+                 & \text{Segments assigned to each } p_j \text{ are pairwise disjoint} \label{eq:nooverlap}\\
+                 & \text{Each } (a_i,p_j,s,e)\in\mathcal{X} \text{ is feasible (Sec.~\ref{sec:feasibility})}.
+\end{align}
+The objective~\eqref{eq:obj} is the total towed distance across all selected segments. Constraint~\eqref{eq:capacity} is the \emph{point-wise capacity} requirement: at every position $x$ along an AV's route, the number of PVs currently attached to it is bounded by $C_i$. Constraint~\eqref{eq:nooverlap} forbids assigning two AVs to the same PV over overlapping positions.
+
+\paragraph{Problem structure.} The problem has a combinatorial assignment structure with \emph{state-dependent} feasibility: selecting one towing segment changes a PV's residual route timing and can affect the temporal feasibility of later segments, distinguishing it from a static GAP-style assignment~\cite{cattrysse1992survey}. We therefore do not pursue an exact global solver in this short paper and instead study scalable approximation algorithms in Section~\ref{sec:algorithms}.
+
+\paragraph{Critical-points reduction.} Although constraint~\eqref{eq:capacity} ranges over a continuum of positions $x$, the count of attached PVs is a step function that changes only at the endpoints of selected segments. It therefore suffices to enforce capacity at the finite set of \emph{critical points} $\mathcal{C}_i=\{e^a_i, x^a_i\}\cup\{s,e : (a_i,p_j,s,e)\in\mathcal{X}\}$ for each AV $a_i$. Both algorithms in Section~\ref{sec:algorithms} exploit this reduction so that each feasibility check costs $O(|\mathcal{C}_i|)$ rather than continuous verification.
+
+\subsection{Modeling Assumptions}
+\label{sec:assumptions}
+
+For tractability and to keep the contribution focused on the matching layer, we adopt the following assumptions; relaxing each is left to future work.
+\begin{itemize}\itemsep 1pt
+\item \textbf{Fixed routes and speeds.} AV and PV routes, entry times, and speeds are known and deterministic, and AVs do not re-route to attract PVs.
+\item \textbf{Coupled motion.} While a PV is attached to an AV, the PV follows the AV's speed; decoupling occurs at the end of the assigned segment or when either vehicle exits the corridor.
+\item \textbf{Negligible coupling overhead.} Coupling and decoupling are modeled as instantaneous and cost-free at the algorithmic layer; we partly absorb the physical overhead through the minimum-segment constraint $L_{\min}$.
+\item \textbf{Invariant demand.} The total set of vehicles is unchanged by matching---only \emph{which} vehicle tows which changes---so we do not model induced congestion within this short paper.
+\item \textbf{Out-of-scope physical layer.} As noted in Section~\ref{sec:introduction}, mechanical coupling, safety, and regulatory design are treated as system-level assumptions outside the scope of this work.
+\end{itemize}
 
 
 %% ===========================================================================
@@ -337,37 +356,38 @@ We formulate the problem as: given AVs and PVs with fixed routes, entry times an
 \section{Proposed Algorithms}
 \label{sec:algorithms}
 
+Both algorithms maintain a PV \emph{route-state} $(\ell_j, \hat{t}_j)$ where $\ell_j$ is the start of the unprocessed suffix of $p_j$'s route (initially $e^p_j$) and $\hat{t}_j$ its arrival time at $\ell_j$ (initially $t^p_j$). When $p_j$ is committed to a segment $[s,e]$ on AV $a_i$, the state advances by $\ell_j \!\leftarrow\! e$ and $\hat{t}_j \!\leftarrow\! \hat{t}_j + (s\!-\!\ell_j^{\text{old}})/v^p_j + (e\!-\!s)/v^a_i$, reflecting self-driving to $s$ followed by towing at the AV's speed to $e$. The state-dependent arrival time $T^p_j$ in Eq.~\eqref{eq:time} reads from this $\hat{t}_j$.
+
 \subsection{Greedy Maximum-Weight Matching}
-%% TODO: 1 short paragraph -- generate all feasible (AV,PV,segment)
-%% candidates, sort by saving, commit greedily while respecting point-
-%% wise capacity. Mention worst-case O((NM)^2 log NM). Source: ITSC
-%% L.382--419. Keep tight; this is the BASELINE.
+\label{sec:greedy}
+At each iteration the greedy algorithm enumerates all feasible candidate segments $(a_i, p_j, s, e)$ under the current PV states, selects the segment with the largest towed distance $e\!-\!s$, commits it, and updates the PV route-state; point-wise capacity is checked at the finite critical points of Section~\ref{sec:opt}. The procedure terminates when no feasible segment remains. Each iteration generates and sorts $O(NM)$ candidates in $O(NM\log NM)$, and with up to $O(NM)$ commitments the total worst-case complexity is $O((NM)^2 \log NM)$. This baseline is fast but myopic: committing one high-saving segment can block a co-optimal alternative.
 
 \subsection{Iterative Linear Assignment (ILA)}
-%% TODO: 2--3 paragraph explanation of ILA, then ONE pseudocode block.
-%% Source: ITSC L.421--517.
-%% Key points to keep:
-%%   - Each iteration: build bipartite graph (PVs vs AV virtual slots),
-%%     solve LSAP via Jonker--Volgenant (scipy2020).
-%%   - Virtual-slot encoding handles point-wise capacity inside the LSAP.
-%%   - Update PV state after each iteration; repeat until no feasible
-%%     match remains.
-%%   - Per-iteration optimality on the linear subproblem (one sentence
-%%     replacing the dropped Theoretical Analysis subsection).
-%% Migrate pseudocode using algpseudocode (NOT algorithmic) to avoid
-%% acmart compatibility warnings.
+\label{sec:ila}
+ILA replaces the myopic commit with a sequence of \emph{global} matching rounds. In each round, every AV $a_i$ is replicated into $C_i$ identical \emph{virtual slots}, encoding per-AV multiplicity in the LSAP while leaving the position-dependent capacity check to the commit step. With $K\!=\!\sum_i C_i$ slot nodes on the left and $M$ PV nodes on the right, we form a cost matrix $W\!\in\!\mathbb{R}^{K\times M}$ whose entry for slot $k$ of AV $a_i$ and PV $p_j$ is $-\bar{d}_{ij}$ for a feasible pair and $+\infty$ otherwise, where $\bar{d}_{ij}=\max(0,\;dp_{ij}-\max(e^a_i,\ell_j))$ is the residual overlap that uses $\ell_j$ in place of $e^p_j$. Minimum-cost matching on $W$ therefore maximizes total towed distance for the current round.
 
-%% TODO: Migrate pseudocode here. Switch \algorithmic -> algpseudocode.
-%% Commented out until the body is migrated so the file compiles cleanly.
-% \begin{algorithm}
-% \caption{Iterative Linear Assignment (ILA)}
-% \label{alg:ila}
-% \begin{algorithmic}[1]
-%   \State \textbf{Input:} AVs $\mathcal{A}$, PVs $\mathcal{P}$, parameters $L_{\min}, \tau$
-%   \State \textbf{Output:} Multi-segment matching $\mathcal{M}$
-%   \State \Comment{TODO: paste algorithm body from ITSC L.421--517}
-% \end{algorithmic}
-% \end{algorithm}
+Each round (Alg.~\ref{alg:ila}) solves this Linear Sum Assignment Problem (LSAP) optimally with the Jonker--Volgenant algorithm~\cite{scipy2020,kuhn1955hungarian}. Returned pairs are then sequentially confirmed against point-wise capacity at the critical points; pairs that fail (because multiple slots of the same AV matched a non-disjoint set of segments in one round) are discarded and remain eligible in later rounds. Confirmed pairs advance the corresponding PV route-states, so the next round operates on the residual problem. Rounds repeat until no feasible match remains, yielding multi-segment service whenever the same PV is matched to different AVs across rounds. Jonker--Volgenant guarantees per-round optimality on the constructed bipartite subproblem; global optimality across rounds is not guaranteed, but our experiments (Section~\ref{sec:experiments}) show ILA matches or exceeds greedy on every tested scenario. Each round runs in $O(KM + \max(K,M)^3)$, and at most $O(NM)$ rounds are required since each commit strictly advances some $\ell_j$, giving overall complexity $O(NM\!\cdot\!\max(K,M)^3)$.
+
+\begin{algorithm}[t]
+\caption{Iterative Linear Assignment (ILA)}
+\label{alg:ila}
+\begin{algorithmic}[1]
+\Require AVs $\mathcal{A}$, PVs $\mathcal{P}$, parameters $L_{\min}, \tau$
+\Ensure Selected segments $\mathcal{X}$
+\State Initialize $(\ell_j,\hat{t}_j) \leftarrow (e^p_j, t^p_j)$ for all $p_j$; $\mathcal{X} \leftarrow \emptyset$
+\Repeat
+  \State Expand $\mathcal{A}$ into $K\!=\!\sum_i C_i$ virtual slots; build cost matrix $W$
+  \State $\mathcal{M} \leftarrow$ \Call{JonkerVolgenant}{$W$} \Comment{per-round LSAP optimum}
+  \For{each pair $(slot{:}\,a_i, p_j) \in \mathcal{M}$ with $W_{slot,j} < +\infty$}
+    \State Let $s\!\leftarrow\!\max(e^a_i,\ell_j),\; e\!\leftarrow\!dp_{ij}$
+    \If{$(a_i, p_j, s, e)$ feasible given prior commits this round}
+      \State $\mathcal{X} \leftarrow \mathcal{X} \cup \{(a_i, p_j, s, e)\}$; update $\ell_j, \hat{t}_j$
+    \EndIf
+  \EndFor
+\Until{no new pair was added in the last round}
+\State \Return $\mathcal{X}$
+\end{algorithmic}
+\end{algorithm}
 
 
 %% ===========================================================================

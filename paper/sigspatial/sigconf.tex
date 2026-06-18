@@ -335,12 +335,12 @@ Let $\mathcal{X}$ denote a set of feasible segments selected by the algorithm. W
 \max_{\mathcal{X}} \;\; \sum_{(a_i,p_j,s,e)\in\mathcal{X}} (e-s)
 \label{eq:obj}
 \end{equation}
-subject to the \emph{point-wise capacity} requirement
+subject to three conditions: (i) the \emph{point-wise capacity} constraint
 \begin{equation}
 \bigl|\{(a_i,p_j,s,e)\in\mathcal{X} : x\in[s,e)\}\bigr|\le C_i \;\; \forall a_i\!\in\!\mathcal{A},\; \forall x\!\in\![e^a_i,x^a_i],
 \label{eq:capacity}
 \end{equation}
-together with two further conditions: (ii) segments assigned to the same PV are pairwise disjoint, and (iii) each $(a_i,p_j,s,e)\!\in\!\mathcal{X}$ is feasible in the sense of Section~\ref{sec:feasibility} \Eunus{ii and iii are not clear}. The objective~\eqref{eq:obj} is the total towed distance across all selected segments, and constraint~\eqref{eq:capacity} enforces that at every position $x$ along an AV's route the number of PVs currently attached to it is bounded by $C_i$.
+which bounds, at every position $x$ along AV $a_i$'s route, the number of PVs currently attached to $a_i$ by $C_i$; (ii) \emph{PV non-overlap}, meaning that segments assigned to the same PV have disjoint spatial intervals, so a PV is never towed by two AVs at the same position; and (iii) \emph{per-segment feasibility}, meaning that every selected segment satisfies the overlap, minimum-length, and temporal-synchronization conditions in Section~\ref{sec:feasibility} \Eunus{ii and iii are not clear}.
 
 \paragraph{Problem structure.} The problem has a combinatorial assignment structure with \emph{state-dependent} feasibility: selecting one towing segment changes a PV's residual route timing and can affect the temporal feasibility of later segments, distinguishing it from a static GAP-style assignment~\cite{cattrysse1992survey}. We therefore do not pursue an exact global solver in this short paper and instead study scalable approximation algorithms in Section~\ref{sec:algorithms}.
 

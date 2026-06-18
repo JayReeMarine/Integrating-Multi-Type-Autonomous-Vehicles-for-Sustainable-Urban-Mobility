@@ -50,7 +50,8 @@
 %% ===========================================================================
 %% TITLE
 %% ===========================================================================
-\title{Dynamic Platoon Formation of Multi-Type Autonomous Vehicles for Sustainable Urban Mobility}
+%\title{Dynamic Platoon Formation of Multi-Type Autonomous Vehicles for Sustainable Urban Mobility}
+\title{Dynamic Platoon Formation: Spatio-Temporal Matching for Towing-Based Cooperative Autonomous Mobility}
 
 %% ===========================================================================
 %% AUTHORS (single-blind: names required)
@@ -97,7 +98,31 @@
 %% submission #83 so the metadata matches the PDF.
 %% ===========================================================================
 \begin{abstract}
-We study an algorithmic abstraction for future cooperative autonomous mobility in which larger active vehicles can tow smaller passive vehicles along shared road segments. The core problem is spatio-temporal: given fixed vehicle trajectories, entry times, speeds, and active-vehicle towing capacities, determine which passive vehicles should be matched to which active vehicles, and over which route segments, to maximize total covered distance. Unlike standard platooning or one-to-one assignment, the problem allows multi-segment service, where a passive vehicle may be towed by different active vehicles over disjoint portions of its route, while active-vehicle capacity must be respected at every position along the corridor. We formulate this dynamic platoon formation problem and propose two approximation methods: a greedy maximum-weight matching baseline and an Iterative Linear Assignment method that expands active vehicles into virtual capacity slots and repeatedly solves linear sum assignment subproblems. Experiments on synthetic corridor scenarios with up to 400 passive and 80 active vehicles show that both methods achieve substantial towed-distance coverage (25--52\% depending on capacity), with the assignment-based method consistently matching or exceeding greedy solution quality while reducing empirical runtime by 2.8--11.5$\times$. We position the model as a corridor-level spatial matching primitive; mechanical coupling, safety, and full road-network routing are left as future extensions.
+
+We introduce \emph{dynamic platoon formation}, a spatio-temporal 
+matching problem in which larger active vehicles mechanically tow 
+smaller passive vehicles along shared road segments to maximise total 
+towed distance as a proxy for propulsion-energy reduction. Given fixed 
+vehicle trajectories, entry times, speeds, and towing capacities, the 
+problem requires deciding which passive vehicles attach to which active 
+vehicles and over which segments, subject to spatial overlap, point-wise 
+capacity, and temporal synchronisation at coupling points. Unlike standard 
+platooning or one-to-one assignment, the problem allows multi-segment 
+service, where a passive vehicle may be towed by different active vehicles 
+over disjoint portions of its route while active-vehicle capacity is 
+respected at every position along the corridor. We propose two 
+approximation algorithms: a greedy maximum-weight matching baseline and 
+an Iterative Linear Assignment (ILA) method that expands active vehicles 
+into virtual capacity slots and repeatedly solves linear sum assignment 
+subproblems. On synthetic corridor scenarios with up to 400 passive and 
+80 active vehicles, both methods achieve 25--52\% towed-distance coverage 
+depending on capacity, with ILA consistently matching or exceeding greedy 
+solution quality while reducing empirical runtime by 2.8--11.5$\times$, 
+suggesting that iterative globally-coordinated assignment is both more 
+effective and more scalable than myopic matching for dynamic platoon 
+formation at fleet scale. \Eunus{in the abstract and intro...we need to emphasize how much the cost saving wrt baselines...that is all car runs without plattoning..}
+
+%We study an algorithmic abstraction for future cooperative autonomous mobility in which larger active vehicles can tow smaller passive vehicles along shared road segments. The core problem is spatio-temporal: given fixed vehicle trajectories, entry times, speeds, and active-vehicle towing capacities, determine which passive vehicles should be matched to which active vehicles, and over which route segments, to maximize total covered distance. Unlike standard platooning or one-to-one assignment, the problem allows multi-segment service, where a passive vehicle may be towed by different active vehicles over disjoint portions of its route, while active-vehicle capacity must be respected at every position along the corridor. We formulate this dynamic platoon formation problem and propose two approximation methods: a greedy maximum-weight matching baseline and an Iterative Linear Assignment method that expands active vehicles into virtual capacity slots and repeatedly solves linear sum assignment subproblems. Experiments on synthetic corridor scenarios with up to 400 passive and 80 active vehicles show that both methods achieve substantial towed-distance coverage (25--52\% depending on capacity), with the assignment-based method consistently matching or exceeding greedy solution quality while reducing empirical runtime by 2.8--11.5$\times$. We position the model as a corridor-level spatial matching primitive; mechanical coupling, safety, and full road-network routing are left as future extensions.
 \end{abstract}
 
 %% ===========================================================================
@@ -129,11 +154,11 @@ We study an algorithmic abstraction for future cooperative autonomous mobility i
 \ccsdesc[500]{Theory of computation~Network optimization}
 \ccsdesc[300]{Information systems~Spatial-temporal systems}
 \ccsdesc[100]{Applied computing~Transportation}
-
+\newcommand{\Eunus}[1]{\textcolor{purple}{\textsc{Eunus:} #1 }}
 %% ===========================================================================
 %% KEYWORDS (must match EasyChair submission)
 %% ===========================================================================
-\keywords{autonomous vehicles, vehicle platooning, spatial-temporal matching, linear assignment, sustainable mobility}
+\keywords{Autonomous vehicles, vehicle platooning, spatial-temporal matching, linear assignment, sustainable mobility}
 
 \maketitle
 
@@ -163,7 +188,7 @@ We study an algorithmic abstraction for future cooperative autonomous mobility i
 %% ===========================================================================
 \section{Introduction}
 \label{sec:introduction}
-
+\Eunus{I am not sure whether we can change THE NOTION OF AV as it commonly refers to autonomous vehicle what about V\_A and V\_P}
 %% Paragraph 1 -- Motivation (migrated from ITSC L.74).
 Single-occupancy travel remains a major barrier to sustainable urban mobility. U.S. National Household Travel Survey data show that drive-alone commuting dominates trip demand~\cite{usdot2024}, while the transportation sector contributes about 29\% of U.S. greenhouse gas emissions~\cite{epa2023}. This inefficiency is pronounced when many vehicles traverse overlapping routes but still consume propulsion energy independently. With rapid advances in autonomous driving~\cite{yurtsever2020survey}, future transportation can realize physically coordinated vehicle platoons that go beyond independent driving.
 
@@ -232,7 +257,21 @@ To address this challenge we introduce a new problem that we call \textit{dynami
 Figure~\ref{fig:intro_concept} illustrates this on a shared corridor with two AVs and three PVs. Two features are central to our formulation: \emph{point-wise capacity}---between $x{=}20$ and $x{=}60$, $A_1$ simultaneously tows $T1$ and $T2$, reaching its capacity of~2---and \emph{multi-segment matching}, where $T2$ is served by $A_1$ and $A_2$ on disjoint portions of its route with a self-driving gap in between.
 
 %% Paragraph 5 -- Related work compressed into ONE paragraph.
-Prior work falls into three threads: platooning via aerodynamic coordination among separated vehicles~\cite{tsugawa2016review,bergenhem2012overview,shladover2009cooperative,ploeg2011design}; ridesharing and dial-a-ride matching of passengers or trips~\cite{furuhata2013ridesharing,agatz2012optimization,alonso2017demand,cordeau2007dial}; and combinatorial one-to-one assignment~\cite{kuhn1955hungarian,munkres1957algorithms}. None captures the combination required for dynamic towing coordination: sustained physical coupling, multi-segment coverage of one PV by multiple AVs, and \emph{point-wise} AV capacity that changes as PVs attach and detach along a route.
+%Prior work falls into three threads: platooning via aerodynamic coordination among separated vehicles~\cite{tsugawa2016review,bergenhem2012overview,shladover2009cooperative,ploeg2011design}; ridesharing and dial-a-ride matching of passengers or trips~\cite{furuhata2013ridesharing,agatz2012optimization,alonso2017demand,cordeau2007dial}; and combinatorial one-to-one assignment~\cite{kuhn1955hungarian,munkres1957algorithms}. None captures the combination required for dynamic towing coordination: sustained physical coupling, multi-segment coverage of one PV by multiple AVs, and \emph{point-wise} AV capacity that changes as PVs attach and detach along a route.
+Prior work falls into three threads: platooning via aerodynamic 
+coordination among physically separated vehicles~\cite{tsugawa2016review,
+bergenhem2012overview,shladover2009cooperative,ploeg2011design}, 
+ridesharing and dial-a-ride matching of passengers or 
+trips~\cite{furuhata2013ridesharing,agatz2012optimization,alonso2017demand,
+cordeau2007dial}, and combinatorial one-to-one 
+assignment~\cite{kuhn1955hungarian,munkres1957algorithms}. None captures 
+the combination required here: aerodynamic platooning does not model 
+mechanical coupling, ridesharing matches people rather 
+than vehicles and does not enforce point-wise capacity along a corridor, 
+and one-to-one assignment cannot represent a single PV being served by 
+multiple AVs over disjoint segments. Dynamic platoon formation requires 
+all three features simultaneously, making it a distinct combinatorial 
+problem.
 
 %% Paragraph 6 -- Approach overview (migrated and trimmed from L.142).
 %% Spells out LSAP and GAP on first use (addresses Reviewer 3 of ITSC).
@@ -296,7 +335,7 @@ subject to the \emph{point-wise capacity} requirement
 \bigl|\{(a_i,p_j,s,e)\in\mathcal{X} : x\in[s,e)\}\bigr|\le C_i \;\; \forall a_i\!\in\!\mathcal{A},\; \forall x\!\in\![e^a_i,x^a_i],
 \label{eq:capacity}
 \end{equation}
-together with two further conditions: (ii) segments assigned to the same PV are pairwise disjoint, and (iii) each $(a_i,p_j,s,e)\!\in\!\mathcal{X}$ is feasible in the sense of Section~\ref{sec:feasibility}. The objective~\eqref{eq:obj} is the total towed distance across all selected segments, and constraint~\eqref{eq:capacity} enforces that at every position $x$ along an AV's route the number of PVs currently attached to it is bounded by $C_i$.
+together with two further conditions: (ii) segments assigned to the same PV are pairwise disjoint, and (iii) each $(a_i,p_j,s,e)\!\in\!\mathcal{X}$ is feasible in the sense of Section~\ref{sec:feasibility} \Eunus{ii and iii are not clear}. The objective~\eqref{eq:obj} is the total towed distance across all selected segments, and constraint~\eqref{eq:capacity} enforces that at every position $x$ along an AV's route the number of PVs currently attached to it is bounded by $C_i$.
 
 \paragraph{Problem structure.} The problem has a combinatorial assignment structure with \emph{state-dependent} feasibility: selecting one towing segment changes a PV's residual route timing and can affect the temporal feasibility of later segments, distinguishing it from a static GAP-style assignment~\cite{cattrysse1992survey}. We therefore do not pursue an exact global solver in this short paper and instead study scalable approximation algorithms in Section~\ref{sec:algorithms}.
 
@@ -387,7 +426,7 @@ Each round (Algorithm~1) solves this Linear Sum Assignment Problem (LSAP) optima
 
 \subsection{Setup}
 \label{sec:setup}
-Both algorithms are implemented in Python~3.11 with NumPy~1.26 and SciPy~1.11~\cite{scipy2020}; ILA's per-round LSAP uses SciPy's compiled Jonker--Volgenant routine. Experiments run single-threaded on an Apple M4 Pro (16\,GB unified memory, macOS~15). For synthetic corridor instances, AV and PV entry/exit positions are sampled uniformly from $[0,L]$, entry times uniformly from $[0,W]$ over a scenario time window $W$, and speeds uniformly within $\pm 20\%$ of a unit reference. Default parameters are $L{=}100$\,m, $N{=}50$, $M{=}200$, $L_{\min}{=}10$\,m, $\tau{=}5$\,s, $W{=}100$\,s, with $C_i$ drawn uniformly from $\{1,2,3\}$. We report means over four seeds (42--45) and run two sweeps. The \emph{capacity sweep} tests $C_{\max}=2,4,8,16$ at default $N,M,L$, sampling $C_i$ uniformly from $\{1,\dots,C_{\max}\}$. The \emph{length sweep} tests six lengths from 50 to 1600\,m at $N{=}80$, $M{=}400$, $C_{\max}{=}3$, with $W{=}L$\,s so that vehicle density per unit time stays comparable. The headline metric is \emph{saving~\%}, the total towed distance divided by the no-towing baseline $\sum_j(x^p_j\!-\!e^p_j)$; we also report wall-clock runtime.
+Both algorithms are implemented in Python~3.11 with NumPy~1.26 and SciPy~1.11~\cite{scipy2020}; ILA's per-round LSAP uses SciPy's compiled Jonker--Volgenant routine. Experiments run single-threaded on an Apple M4 Pro (16\,GB unified memory, macOS~15). For synthetic corridor instances, AV and PV entry/exit positions are sampled uniformly from $[0,L]$, entry times uniformly from $[0,W]$ over a scenario time window $W$, and speeds uniformly within $\pm 20\%$ of a unit reference. Default parameters are $L{=}100$\,m, $N{=}50$, $M{=}200$, $L_{\min}{=}10$\,m, $\tau{=}5$\,s, $W{=}100$\,s, with $C_i$ drawn uniformly from $\{1,2,3\}$. We report means over four seeds (42--45) and run two sweeps. The \emph{capacity sweep} tests $C_{\max}=2,4,8,16$ at default $N,M,L$, sampling $C_i$ uniformly from $\{1,\dots,C_{\max}\}$. The \emph{length sweep} tests six lengths from 50 to 1600\,m at $N{=}80$, $M{=}400$, $C_{\max}{=}3$, with $W{=}L$\,s so that vehicle density per unit time stays comparable. The headline metric is \emph{saving~\%}, the total towed distance divided by the no-towing baseline $\sum_j(x^p_j\!-\!e^p_j)$; we also report wall-clock runtime. \Eunus{Have you introduced these parameters and symboles, L, N, M, CI, W, etc..anywhere...even then it's better to remind it here}
 
 \subsection{Results}
 \label{sec:results}
@@ -420,7 +459,8 @@ Figure~\ref{fig:results} reports both sweeps. As $C_{\max}$ grows from 2 to 16, 
 %% ===========================================================================
 \section{Conclusion and Future Work}
 \label{sec:conclusion}
-We formalized \emph{dynamic platoon formation} as a spatio-temporal multi-segment matching problem with point-wise AV capacity and showed that an iterative LSAP-based solver matches or exceeds a greedy baseline on every tested 1D corridor configuration. The natural next step is a 2D road-network extension: each PV then has a set of feasible paths rather than a fixed one, lifting the formulation from segment overlap on a single corridor to overlap on a graph with shared edges, which couples our matching layer with route choice. Beyond geometry, two algorithmic openings are interesting at SIGSPATIAL: a stochastic online variant where entry times and routes are revealed over time, and an energy-and-incentive model that internalizes both the AV-side towing load and operator participation incentives, so that the objective trades PV savings against AV overhead and aligns multi-operator participation rather than treating distance as a free proxy.
+We formalized \emph{dynamic platoon formation} as a spatio-temporal multi-segment matching problem with point-wise AV capacity constraints and demonstrated that an iterative LSAP-based solver consistently matches or outperforms a greedy baseline across all tested 1D corridor configurations. A natural direction for future work is extending the framework to 2D road networks, where each PV may choose among multiple feasible routes rather than following a fixed corridor. This generalization transforms the problem from segment overlap on a single path to overlap on a graph with shared edges, coupling platoon formation with route-choice decisions. Additional research opportunities include a stochastic online setting in which vehicle arrivals and route information are revealed incrementally over time, as well as the incorporation of energy and incentive models that account for AV towing loads and operator participation costs. Such extensions would enable optimization objectives that explicitly balance PV energy savings against AV operational overhead while fostering incentive-compatible participation across multiple operators, rather than relying solely on distance-based proxies.
+%We formalized \emph{dynamic platoon formation} as a spatio-temporal multi-segment matching problem with point-wise AV capacity and showed that an iterative LSAP-based solver matches or exceeds a greedy baseline on every tested 1D corridor configuration. The natural next step is a 2D road-network extension: each PV then has a set of feasible paths rather than a fixed one, lifting the formulation from segment overlap on a single corridor to overlap on a graph with shared edges, which couples our matching layer with route choice. Beyond geometry, two algorithmic openings are interesting at SIGSPATIAL: a stochastic online variant where entry times and routes are revealed over time, and an energy-and-incentive model that internalizes both the AV-side towing load and operator participation incentives, so that the objective trades PV savings against AV overhead and aligns multi-operator participation rather than treating distance as a free proxy.
 
 
 %% ===========================================================================

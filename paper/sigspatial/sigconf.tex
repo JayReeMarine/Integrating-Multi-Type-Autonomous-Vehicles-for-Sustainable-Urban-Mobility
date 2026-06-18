@@ -99,28 +99,33 @@
 %% ===========================================================================
 \begin{abstract}
 
-We introduce \emph{dynamic platoon formation}, a spatio-temporal 
-matching problem in which larger active vehicles mechanically tow 
-smaller passive vehicles along shared road segments to maximise total 
-towed distance as a proxy for propulsion-energy reduction. Given fixed 
-vehicle trajectories, entry times, speeds, and towing capacities, the 
-problem requires deciding which passive vehicles attach to which active 
-vehicles and over which segments, subject to spatial overlap, point-wise 
-capacity, and temporal synchronisation at coupling points. Unlike standard 
-platooning or one-to-one assignment, the problem allows multi-segment 
-service, where a passive vehicle may be towed by different active vehicles 
-over disjoint portions of its route while active-vehicle capacity is 
-respected at every position along the corridor. We propose two 
-approximation algorithms: a greedy maximum-weight matching baseline and 
-an Iterative Linear Assignment (ILA) method that expands active vehicles 
-into virtual capacity slots and repeatedly solves linear sum assignment 
-subproblems. On synthetic corridor scenarios with up to 400 passive and 
-80 active vehicles, both methods achieve 25--52\% towed-distance coverage 
-depending on capacity, with ILA consistently matching or exceeding greedy 
-solution quality while reducing empirical runtime by 2.8--11.5$\times$, 
-suggesting that iterative globally-coordinated assignment is both more 
-effective and more scalable than myopic matching for dynamic platoon 
-formation at fleet scale. \Eunus{in the abstract and intro...we need to emphasize how much the cost saving wrt baselines...that is all car runs without plattoning..}
+We introduce \emph{dynamic platoon formation}, a spatio-temporal
+matching problem in which larger active vehicles mechanically tow
+smaller passive vehicles along shared road segments, reducing the
+self-propelled distance that passive vehicles would otherwise travel
+independently. Given fixed vehicle trajectories, entry times, speeds,
+and towing capacities, the problem requires deciding which passive
+vehicles attach to which active vehicles and over which segments,
+subject to spatial overlap, point-wise capacity, and temporal
+synchronisation at coupling points. Unlike standard platooning or
+one-to-one assignment, the problem allows multi-segment service, where
+a passive vehicle may be towed by different active vehicles over
+disjoint portions of its route while active-vehicle capacity is
+respected at every position along the corridor. We propose two
+approximation algorithms: a greedy maximum-weight matching baseline
+and an Iterative Linear Assignment (ILA) method that expands active
+vehicles into virtual capacity slots and repeatedly solves linear sum
+assignment subproblems. On synthetic corridor scenarios with up to 400
+passive and 80 active vehicles, both methods reduce passive vehicles'
+self-propelled distance by 25--52\% relative to a no-platooning
+baseline in which every vehicle drives independently---a direct proxy
+for passive-vehicle energy savings under a per-distance propulsion
+model---with
+ILA consistently matching or exceeding greedy solution
+quality while reducing empirical runtime by 2.8--11.5$\times$,
+suggesting that iterative globally-coordinated assignment is both more
+effective and more scalable than myopic matching for dynamic platoon
+formation at fleet scale.
 
 %We study an algorithmic abstraction for future cooperative autonomous mobility in which larger active vehicles can tow smaller passive vehicles along shared road segments. The core problem is spatio-temporal: given fixed vehicle trajectories, entry times, speeds, and active-vehicle towing capacities, determine which passive vehicles should be matched to which active vehicles, and over which route segments, to maximize total covered distance. Unlike standard platooning or one-to-one assignment, the problem allows multi-segment service, where a passive vehicle may be towed by different active vehicles over disjoint portions of its route, while active-vehicle capacity must be respected at every position along the corridor. We formulate this dynamic platoon formation problem and propose two approximation methods: a greedy maximum-weight matching baseline and an Iterative Linear Assignment method that expands active vehicles into virtual capacity slots and repeatedly solves linear sum assignment subproblems. Experiments on synthetic corridor scenarios with up to 400 passive and 80 active vehicles show that both methods achieve substantial towed-distance coverage (25--52\% depending on capacity), with the assignment-based method consistently matching or exceeding greedy solution quality while reducing empirical runtime by 2.8--11.5$\times$. We position the model as a corridor-level spatial matching primitive; mechanical coupling, safety, and full road-network routing are left as future extensions.
 \end{abstract}
@@ -190,7 +195,7 @@ formation at fleet scale. \Eunus{in the abstract and intro...we need to emphasiz
 \label{sec:introduction}
 \Eunus{I am not sure whether we can change THE NOTION OF AV as it commonly refers to autonomous vehicle what about V\_A and V\_P}
 %% Paragraph 1 -- Motivation (migrated from ITSC L.74).
-Single-occupancy travel remains a major barrier to sustainable urban mobility. U.S. National Household Travel Survey data show that drive-alone commuting dominates trip demand~\cite{usdot2024}, while the transportation sector contributes about 29\% of U.S. greenhouse gas emissions~\cite{epa2023}. This inefficiency is pronounced when many vehicles traverse overlapping routes but still consume propulsion energy independently. With rapid advances in autonomous driving~\cite{yurtsever2020survey}, future transportation can realize physically coordinated vehicle platoons that go beyond independent driving.
+Single-occupancy travel remains a major barrier to sustainable urban mobility. U.S. National Household Travel Survey data show that drive-alone commuting dominates trip demand~\cite{usdot2024}, while the transportation sector contributes about 29\% of U.S. greenhouse gas emissions~\cite{epa2023}. This inefficiency is pronounced when many vehicles traverse overlapping routes but still consume propulsion energy independently. With rapid advances in autonomous driving~\cite{yurtsever2020survey}, future transportation can realize physically coordinated vehicle platoons that offset a substantial share of the propulsion energy vehicles would otherwise spend driving on their own.
 
 %% Paragraph 2 -- Near-future plausibility + explicit scope statement
 %% (NEW: addresses ITSC reviewer feedback. The wording here is intentionally

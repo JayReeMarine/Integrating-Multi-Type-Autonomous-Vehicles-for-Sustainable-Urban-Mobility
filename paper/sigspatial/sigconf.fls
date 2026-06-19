@@ -581,9 +581,6 @@ INPUT /usr/local/texlive/2025/texmf-dist/fonts/vf/public/newtx/nxlmi5.vf
 INPUT /usr/local/texlive/2025/texmf-dist/fonts/tfm/public/newtx/LibertineMathMI5.tfm
 INPUT /usr/local/texlive/2025/texmf-dist/fonts/tfm/public/newtx/NewTXMI5.tfm
 INPUT /usr/local/texlive/2025/texmf-dist/fonts/tfm/public/newtx/stxscr.tfm
-INPUT /usr/local/texlive/2025/texmf-dist/fonts/vf/public/newtx/ntxsy5.vf
-INPUT /usr/local/texlive/2025/texmf-dist/fonts/tfm/public/newtx/txsys.tfm
-INPUT /usr/local/texlive/2025/texmf-dist/fonts/tfm/public/newtx/txex-bar.tfm
 INPUT /usr/local/texlive/2025/texmf-dist/fonts/vf/public/libertine/LinLibertineT-tlf-t1.vf
 INPUT /usr/local/texlive/2025/texmf-dist/fonts/tfm/public/libertine/LinLibertineT-tlf-t1--base.tfm
 INPUT /usr/local/texlive/2025/texmf-dist/fonts/vf/public/libertine/LinLibertineT-tlf-sc-t1.vf
@@ -599,6 +596,12 @@ INPUT ./figures/length_saving_percent_comparison.png
 INPUT ./figures/length_saving_percent_comparison.png
 INPUT ./figures/length_saving_percent_comparison.png
 INPUT ./figures/length_saving_percent_comparison.png
+INPUT /usr/local/texlive/2025/texmf-dist/tex/generic/stringenc/se-pdfdoc.def
+INPUT /usr/local/texlive/2025/texmf-dist/tex/generic/stringenc/se-pdfdoc.def
+INPUT /usr/local/texlive/2025/texmf-dist/tex/generic/stringenc/se-pdfdoc.def
+INPUT /usr/local/texlive/2025/texmf-dist/tex/generic/stringenc/se-utf8.def
+INPUT /usr/local/texlive/2025/texmf-dist/tex/generic/stringenc/se-utf8.def
+INPUT /usr/local/texlive/2025/texmf-dist/tex/generic/stringenc/se-utf8.def
 INPUT /usr/local/texlive/2025/texmf-dist/fonts/vf/public/newtx/nxlmi7.vf
 INPUT /usr/local/texlive/2025/texmf-dist/fonts/tfm/public/newtx/LibertineMathMI7.tfm
 INPUT /usr/local/texlive/2025/texmf-dist/fonts/tfm/public/newtx/NewTXMI7.tfm
@@ -611,12 +614,6 @@ INPUT /usr/local/texlive/2025/texmf-dist/fonts/vf/public/libertine/LinLibertineT
 INPUT /usr/local/texlive/2025/texmf-dist/fonts/tfm/public/libertine/LinLibertineT-tlf-ot1--base.tfm
 INPUT /usr/local/texlive/2025/texmf-dist/fonts/vf/public/libertine/LinLibertineT-tlf-ot1.vf
 INPUT /usr/local/texlive/2025/texmf-dist/fonts/tfm/public/libertine/LinLibertineT-tlf-ot1--base.tfm
-INPUT /usr/local/texlive/2025/texmf-dist/tex/generic/stringenc/se-pdfdoc.def
-INPUT /usr/local/texlive/2025/texmf-dist/tex/generic/stringenc/se-pdfdoc.def
-INPUT /usr/local/texlive/2025/texmf-dist/tex/generic/stringenc/se-pdfdoc.def
-INPUT /usr/local/texlive/2025/texmf-dist/tex/generic/stringenc/se-utf8.def
-INPUT /usr/local/texlive/2025/texmf-dist/tex/generic/stringenc/se-utf8.def
-INPUT /usr/local/texlive/2025/texmf-dist/tex/generic/stringenc/se-utf8.def
 INPUT sigconf.aux
 INPUT ./sigconf.out
 INPUT ./sigconf.out

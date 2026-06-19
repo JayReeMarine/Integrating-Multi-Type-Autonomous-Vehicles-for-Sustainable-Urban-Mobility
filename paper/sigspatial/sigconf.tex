@@ -378,7 +378,7 @@ Both algorithms maintain a PV \emph{route-state} $(\ell_j, \hat{t}_j)$ where $\e
 
 \subsection{Greedy Maximum-Weight Matching}
 \label{sec:greedy}
-The greedy baseline repeatedly builds the current feasible segment set using the critical-point capacity check of Sec.~\ref{sec:opt}. It commits the segment with the largest $e\!-\!s$, updates the route-state, and stops when no feasible segment remains. Each iteration costs $O(NM\log NM)$ for candidate sorting, giving $O((NM)^2 \log NM)$ overall; the baseline is fast but myopic, as a high-saving commit can block a co-optimal alternative.
+The greedy baseline repeatedly enumerates feasible segments using the critical-point capacity check (Sec.~\ref{sec:opt}), commits the highest-saving segment $(e\!-\!s)$, updates the route-state, and stops when no feasible segment remains. Sorting $O(NM)$ candidates per iteration gives $O((NM)^2\log NM)$ total time; the method is fast but myopic, since one high-saving commit can block a co-optimal alternative.
 
 \subsection{Iterative Linear Assignment (ILA)}
 \label{sec:ila}

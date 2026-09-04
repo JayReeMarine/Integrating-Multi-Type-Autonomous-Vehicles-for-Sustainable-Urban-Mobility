@@ -4,3 +4,5 @@ paper/*.aux
 paper/*.log
 paper/*.fls
 paper/*.fdb_latexmk
+venv/
+.venv/

@@ -1,0 +1,9 @@
+# SUMO generated outputs (regenerate with the scripts; do not commit)
+*.net.xml
+net.xml
+fcd.xml
+tripinfo.xml
+*.rou.xml
+*.trips.xml
+osm/
+out/

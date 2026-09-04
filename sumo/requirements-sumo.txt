@@ -1,0 +1,13 @@
+# SUMO toolchain, installed into the shared venv/ on 2026-09-04.
+# Kept separate from the root requirements-lock.txt so the reproduction
+# guarantee for the published results is not touched.
+#
+#   PYTHONPATH=. venv/bin/pip install -r sumo/requirements-sumo.txt
+#
+# Verified 2026-09-04: adding these changed no existing package version
+# (numpy/scipy/pandas/matplotlib untouched), so analysis/reproduce_check.py
+# still passes 48/48.
+eclipse-sumo==1.27.1
+sumolib==1.27.1
+traci==1.27.1
+sumo-data==1.27.1

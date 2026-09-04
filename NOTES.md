@@ -248,29 +248,125 @@ what the optimum exploits and the two algorithms underuse.
   the AV is already near capacity) is the most direct candidate fix, and the one
   that would give ILA a reason to exist.
 
+### Trying to fix the algorithms: congestion-aware variants
+
+`core/congestion.py` adds three variants. None of them touches the shipped code;
+each reproduces its original exactly at the neutral parameter, which the sanity
+checks assert.
+
+For AV *i* at position *x*, let `contest(i,x)` be the number of still-uncovered
+PVs that AV *i* could tow across *x*, and `free(i,x)` its remaining capacity
+there. `scarcity = contest / free`. Then:
+
+- `greedy_congestion_matching(lam)` ranks candidates by
+  `saving / (1 + lam * mean scarcity)` instead of by `saving`. `lam=0` is the
+  shipped greedy.
+- `ila_congestion_matching(lam)` puts the same adjusted value into the LSAP cost
+  matrix. `lam=0` is the shipped ILA.
+- `ila_filter_matching(theta)` keeps the LSAP objective as raw towed distance and
+  instead withholds candidates whose mean scarcity exceeds `theta` from the
+  current round; they stay eligible later. A round that would be empty falls
+  back to the unfiltered set. `theta=inf` is the shipped ILA.
+
+**Time-free, against the exact optimum** (`milp/sweep_variants.py`, the same 15
+instances):
+
+| variant | mean % of optimum | worst |
+|---|---|---|
+| greedy (shipped) | 93.79% | 87.11% |
+| **greedy + lam=2** | **95.99%** | 89.69% |
+| ILA (shipped) | 93.43% | 83.51% |
+| ILA + lam=1 | 92.43% | 83.51% |
+| **ILA + filter theta=2.5** | **94.80%** | 83.51% |
+
+Two things follow. First, congestion is a real signal: it recovers roughly a
+third of greedy's shortfall from one cheap statistic. Second, *where* it is
+injected matters. Discounting the LSAP cost makes ILA worse at every weight
+tried, because the round then maximises adjusted score and trades real towed
+distance away to avoid contested road. Using the same signal only to withhold
+candidates, leaving the objective as raw distance, improves ILA by 1.37 pp. The
+framework is not broken; the first injection point was wrong.
+
+But in this setting greedy still ends up 1.18 pp ahead of the best ILA variant.
+On the spatial problem alone, the signal does not need global coordination.
+
+**Time on, at paper scale** (`milp/sweep_time_on.py`, AV 50-320, 4 seeds), as a
+percentage of the shipped greedy:
+
+| configuration | greedy | greedy+lam2 | ILA | ILA+lam1 | ILA+filter |
+|---|---|---|---|---|---|
+| capacity sweep 50:200 | 100% | +2.02% | +1.82% | +1.95% | +0.12% |
+| length sweep 80:400 | 100% | +1.62% | +1.34% | +1.50% | +1.22% |
+| ratio 0.8, 160:200 | 100% | +1.41% | **+1.91%** | +0.69% | +0.60% |
+| ratio 0.8, 320:400 | 100% | **-1.59%** | **+2.47%** | +0.06% | -0.91% |
+| **mean** | 100.00% | 100.87% | **101.88%** | 101.05% | 100.26% |
+
+**With the temporal constraint active and at the paper's own scale, the shipped
+ILA is the best of the five.** The congestion variants do not help it there, and
+the congestion-aware greedy actually turns negative on the largest
+configuration while ILA is at its strongest.
+
+### The two regimes disagree, and that is the finding
+
+| setting | best |
+|---|---|
+| temporal constraint off, small instances | greedy + congestion (96.0% of optimum) |
+| temporal constraint on, paper scale | ILA (+1.88% over greedy) |
+
+Taken with the ON/OFF comparison above, the picture is consistent: **ILA earns
+its place only where temporal feasibility binds.** On the purely spatial problem
+a myopic rule with a capacity-aware ranking does better, and ILA's per-round
+optimality buys nothing. Once arrival-time synchronisation starts eliminating
+candidate pairs, which pairs are chosen begins to matter and the global
+assignment pays for itself.
+
+That is a sharper and better-supported claim than the paper's current
+explanation, which attributes the advantage to spatial coordination on a 1D
+corridor and predicts it will widen on 2D road networks.
+
+### What to change in the paper
+
+1. **Report the ratio sweep, and report it at the contested end.** The paper
+   measures only at |AV|/|PV| of 0.20 and 0.25, where ILA gains 1.3-1.8%. At 0.8
+   it gains 1.9-2.5%. Showing the whole sweep and the trend answers item #2 with
+   a mechanism rather than a single number - and is not cherry-picking, provided
+   the full curve is shown.
+2. **Explain the advantage as temporal, not spatial**, and support it with the
+   ON/OFF contrast. This also means the premise behind the 2D paper needs
+   re-examining before that project starts.
+3. **Add congestion-aware greedy as the second baseline** item #4 asks for. It
+   beats the shipped greedy in three of four configurations, so showing ILA
+   ahead of it is a stronger result than beating plain greedy. Its instability
+   at the largest configuration should be reported, not hidden.
+
+Remaining weaknesses, to state plainly in any write-up: ILA's advantage is still
+small (~1.9%); four seeds; no exact reference in the time-on setting, since the
+MILP cannot express state-dependent arrival times, so only relative comparisons
+are available there; and the congestion variants are a first cut with a coarse
+parameter grid.
+
 ### What this means for the go/no-go question
 
-Aamir asked for early clarity on whether the work has potential. The answer:
+Aamir asked for early clarity on whether the work has potential. The answer is
+**conditional go**.
 
-- There **is** headroom - about 7% against the exact optimum, not the sub-1%
-  that would have made an algorithmic contribution impossible.
-- **It is reachable within the current problem definition.** Only 0.65% of it
-  needs segment shapes the algorithms cannot express; the rest is choice
-  quality. So the formulation does not have to change.
-- **Neither algorithm captures it.** greedy reaches 93.96% of what its own move
-  set allows, and ILA 93.64% - ILA is not converting global per-round matching
-  into better selections.
+- There is about 7% of headroom against the exact optimum, so an algorithmic
+  contribution is possible in principle. It is not the sub-1% that would have
+  ended the work.
+- **ILA does earn its place, but only in the regime the paper actually uses**:
+  with temporal synchronisation active and at fleet scale it is the best of the
+  five variants tried, by 1.88% over greedy on average and 2.47% at the most
+  contested configuration. On the purely spatial problem it does not, and a
+  capacity-aware greedy beats it.
+- The advantage is still modest, and the reviewers rejected 0.2-0.9 pp as too
+  small. Measuring at the contested ratio rather than at 0.20-0.25 roughly
+  doubles it, which helps but may not be enough on its own.
 
-So the honest position on item #2 is that ILA, as it stands, does not earn its
-place; but the problem does have roughly 6% of headroom for an algorithm that
-chooses better, and that is a well-defined target rather than a hope. What such
-an algorithm looks like - local search over committed segments, a lookahead on
-the capacity-critical positions, or an LSAP whose costs price in the capacity
-conflict instead of discarding afterwards - is the open question.
-
-Still to verify: all of this is on the uniform synthetic generator, on small
-instances, and with the temporal constraint disabled in the exact comparison.
-The SUMO data (item #1) has not entered yet.
+The decision to put to Aamir and Eunus is therefore not "continue or stop" but
+which of these to spend the next weeks on: strengthening ILA's margin by
+reporting it where it is real, or accepting that the algorithmic contribution is
+thin and rebuilding the paper around the exact solver and the characterisation
+of when coordination pays.
 
 ### Next
 
@@ -278,10 +374,16 @@ The SUMO data (item #1) has not entered yet.
       (item #4) - done 2026-09-04; see above
 - [x] Find where the ~6% of bad choices occur - done 2026-09-04, see the
       diagnosis section above
-- [ ] Price point-wise capacity into ILA's cost matrix and re-measure against
-      the exact optimum. This is the route to item #2
-- [ ] Try ranking greedy by saving per unit of occupied capacity rather than by
-      saving alone, as a second baseline
+- [x] Price point-wise capacity into ILA and into greedy, and measure both
+      against the exact optimum - done 2026-09-04, see above
+- [ ] Re-run the ratio sweep with many more seeds, temporal constraint on,
+      covering 0.2 to 1.6, to establish the trend in ILA's advantage properly
+      (items #2 and #5 together)
+- [ ] Decide with Aamir and Eunus between strengthening ILA's margin and
+      rebuilding the contribution around the exact solver
+- [ ] Vectorise greedy (item #3). Quality is unaffected - implementation does
+      not change which segments are selected - but the runtime claim in the
+      abstract cannot stand until both run at compiled speed
 - [ ] Report item #9 as measured rather than assumed: the restriction costs
       0.65% of achievable distance
 - [ ] Install SUMO, import a small OSM network; confirm the 1D projection

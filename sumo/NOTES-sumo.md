@@ -317,3 +317,104 @@ familiarity and has not yet been confirmed by reading the script in
       `core/data.py::generate_mock_data()`, with |AV|, |PV|, capacity and
       corridor length as independent knobs (D3). AV/PV labelling is ours to
       define; SUMO has no such concept.
+
+---
+
+## 2026-09-04 — 코리도어 확정 및 OSM 임포트
+
+### D4 — 코리도어: M1 Monash Freeway, inbound (CBD 방향)
+
+Jay가 "CBD ~ Clayton"을 지정. 원래 제안(EastLink→Burnley)보다 나은 선택 —
+Monash 통근 축이라 "임의로 고른 프리웨이"가 아니라 실제 통근 코리도어로
+동기부여할 수 있다. 터널은 제외하기로 결정(1차 반복).
+
+**데이터 취득.** Overpass API, bbox `(-37.93, 145.00, -37.81, 145.17)`,
+필터 `highway=motorway|motorway_link`. 결과 `sumo/osm/monash-m1.osm`,
+305 KB, way 341개 / node 1811개. 쿼리는 `sumo/osm/query.overpassql`에 보존.
+bbox 서쪽 경계 145.00이 Burnley 터널을 사실상 잘라냈다(터널 way 2개만 잔존).
+
+**변환.**
+
+```bash
+netconvert --osm-files monash-m1.osm \
+  --type-files "$SUMO_HOME/data/typemap/osmNetconvert.typ.xml" \
+  --output-file m1.net.xml \
+  --geometry.remove --ramps.guess --junctions.join \
+  --remove-edges.isolated --keep-edges.by-vclass passenger \
+  --output.street-names true --output.original-names true
+```
+
+`--output.street-names true`가 필수다. 없으면 엣지 이름이 전부 버려져서
+본선/램프를 구분할 수 없다(처음 시도에서 이것 때문에 본선 엣지 0개가 나왔다).
+
+### 코리도어 구조
+
+| | inbound (CBD 방향) | outbound (Clayton 방향) |
+|---|---|---|
+| 최장 연결 체인 | **31/31 엣지 (끊김 없음)** | 36/40 (4개 끊김) |
+| 길이 | **20.53 km** | 22.60 km |
+| 램프 접속점 | 16 (ON 8 / OFF 8) | 16 |
+
+**inbound 채택.** 완전 연결이고 오전 첨두 방향과 일치한다.
+
+차선 수가 CBD 방향으로 3 → 4 → 5 → 6으로 증가한다. 합성 데이터에 없는
+현실성이며, AV 용량 모델과 연결지을 여지가 있다.
+
+### 검증 결과 (코드로 수행, netedit 육안 검사 아님)
+
+- **막다른 램프 0개.** 코리도어에 붙은 모든 램프가 도로망으로 이어진다.
+  OSM 임포트 품질 문제 없음.
+- **8.96–12.58 km 구간이 단일 엣지(3.62 km).** 갈림길이 하나도 없다.
+  Warrigal Rd와 Burke Rd 사이. 실제로 나들목이 없는 구간이며, 데이터
+  결손이 아니다. **자연 발생한 희소성 구간**으로, 균등 합성 데이터가
+  만들어낼 수 없는 구조다.
+
+### 램프 위치 (100단위 격자 환산) — 핵심 결과
+
+```
+ 5.6 OFF Springvale Rd    43.6 ON  Monash Fwy
+12.5 ON  Monash Fwy       62.9 ON  Monash Fwy
+15.5 OFF Blackburn Rd     64.8 OFF Burke Rd
+20.3 ON  Monash Fwy       67.9 ON  Monash Fwy
+20.9 OFF Forster Rd       72.1 OFF Monash In-Toorak
+25.6 ON  Monash Fwy       75.5 ON  Toorak-Citylink
+31.2 OFF Huntingdale Rd   86.8 OFF Yarra Boulevard
+37.4 OFF Warrigal Rd      92.1 ON  CityLink
+```
+
+**합성 데이터는 0–100의 101개 정수 지점에 균등하게 위치를 뿌렸다.
+실제 M1은 진입/진출이 16개 지점에만 존재한다.** 이것이 SUMO 도입으로
+확인된 첫 번째 실질적 차이이며, `NOTES-sumo.md` 앞부분의 "1D 투영이
+숫자 4개만 통과시킨다"는 회의론에 대한 부분적 반례이기도 하다 —
+`entry_point`/`exit_point`의 주변 분포가 실제로 크게 달라진다.
+
+(다만 이것이 ILA–greedy 격차를 벌리는지는 별개 문제로 남아 있다.
+격차는 경합 수준의 함수이고, 경합은 여전히 우리가 정하는 파라미터다.)
+
+### D5 — 단위: 100단위 격자 유지
+
+20.53 km / 100 = **1단위 ≈ 205 m**. 따라서 `L_MIN = 10단위 ≈ 2.05 km`
+최소 견인 거리로, 물리적으로 타당하다.
+
+미터 단위로 전환하지 않는 이유: 기존 48개 조합과 같은 축을 유지해야
+"합성 곡선 vs SUMO 곡선을 같은 경합 수준에서 겹쳐 그리기"가 성립한다.
+단위를 바꾸면 그 비교가 불가능해진다.
+
+주의: `ActiveVehicle.entry_point`는 `int`이므로 변환기는 205 m 단위로
+양자화해야 한다. 램프 간격이 1–3 km이므로 양자화 손실은 실질적으로 없다.
+
+### 남은 위험
+
+- **Ramp metering.** M1은 램프 신호 제어가 있는 managed motorway인데
+  OSM 임포트는 재현하지 못한다. 1차에서는 무시하되, 진입 패턴의 현실성을
+  논할 때 리뷰어가 짚을 수 있다.
+- **On-ramp 이름 소실.** off-ramp는 이름이 살아 있으나(Blackburn, Warrigal
+  등) on-ramp는 대부분 `Monash Freeway On Ramp`로만 태깅되어 유입 도로를
+  알 수 없다. 위치만 필요한 현 단계에서는 무해하다.
+- **CityLink 유료 구간 포함.** 코리도어 서쪽 끝(75.5단위 이후)이 CityLink다.
+  통행료가 실제 경로 선택에 영향을 주지만 randomTrips는 이를 무시한다.
+
+### 다음
+
+- [ ] 수요 생성 방식 결정 (여전히 블로커) — Mushfiq 자문 내용 확인
+- [ ] 첫 시나리오 실행 후 D2 선형화 오차 측정

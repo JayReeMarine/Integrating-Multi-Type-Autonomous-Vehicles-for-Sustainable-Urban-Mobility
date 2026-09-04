@@ -1,0 +1,33 @@
+config,num_av,num_pv,ratio,time_constraints,seed,greedy,ila
+capacity sweep,50,200,0.25,False,42,2944,2945
+capacity sweep,50,200,0.25,False,43,3418,3438
+capacity sweep,50,200,0.25,False,44,3617,3644
+capacity sweep,50,200,0.25,False,45,3251,3241
+capacity sweep,50,200,0.25,True,42,2488,2500
+capacity sweep,50,200,0.25,True,43,2301,2365
+capacity sweep,50,200,0.25,True,44,2300,2350
+capacity sweep,50,200,0.25,True,45,2642,2693
+length sweep,80,400,0.20,False,42,4325,4325
+length sweep,80,400,0.20,False,43,5556,5563
+length sweep,80,400,0.20,False,44,5677,5685
+length sweep,80,400,0.20,False,45,5342,5351
+length sweep,80,400,0.20,True,42,4258,4349
+length sweep,80,400,0.20,True,43,4789,4884
+length sweep,80,400,0.20,True,44,4212,4268
+length sweep,80,400,0.20,True,45,5117,5121
+ratio 0.8,160,200,0.80,False,42,6028,6153
+ratio 0.8,160,200,0.80,False,43,6360,6390
+ratio 0.8,160,200,0.80,False,44,6467,6540
+ratio 0.8,160,200,0.80,False,45,6751,6823
+ratio 0.8,160,200,0.80,True,42,5214,5274
+ratio 0.8,160,200,0.80,True,43,5510,5646
+ratio 0.8,160,200,0.80,True,44,5221,5286
+ratio 0.8,160,200,0.80,True,45,5669,5821
+ratio 0.8 (large),320,400,0.80,False,42,12377,12440
+ratio 0.8 (large),320,400,0.80,False,43,12580,12587
+ratio 0.8 (large),320,400,0.80,False,44,13047,13089
+ratio 0.8 (large),320,400,0.80,False,45,12122,12126
+ratio 0.8 (large),320,400,0.80,True,42,12109,12402
+ratio 0.8 (large),320,400,0.80,True,43,12100,12447
+ratio 0.8 (large),320,400,0.80,True,44,11908,12230
+ratio 0.8 (large),320,400,0.80,True,45,11880,12104

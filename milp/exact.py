@@ -67,8 +67,22 @@ def _overlap(av: ActiveVehicle, pv: PassiveVehicle) -> Tuple[int, int]:
     return cp, dp
 
 
-def build(avs: Sequence[ActiveVehicle], pvs: Sequence[PassiveVehicle], l_min: int):
-    """Build the MILP. Returns (c, A, lb, ub, integrality, n_z, index maps)."""
+def build(avs: Sequence[ActiveVehicle], pvs: Sequence[PassiveVehicle], l_min: int,
+          *, suffix_only: bool = False, full_only: bool = False):
+    """Build the MILP. Returns (c, A, lb, ub, integrality, n_z, index maps).
+
+    With ``suffix_only=True`` every towing segment must run to the end of the
+    pair's overlap. That is exactly the shape both heuristics can produce: they
+    commit ``s = max(e_i, l_j)``, ``e = dp_ij``, so the start can be pushed back
+    by earlier towing but the end never is. Solving under this restriction
+    separates the part of the optimality gap that comes from choosing badly
+    among available moves from the part that needs segment shapes the algorithms
+    cannot express at all.
+
+    The restricted optimum is an upper bound on what the heuristics could reach:
+    it may start a segment late anywhere, whereas they can only do so as a
+    consequence of an earlier commit on the same PV.
+    """
     # ---- variables -------------------------------------------------------
     z_index: Dict[Tuple[int, int, int], int] = {}
     pair_span: Dict[Tuple[int, int], Tuple[int, int]] = {}
@@ -129,6 +143,14 @@ def build(avs: Sequence[ActiveVehicle], pvs: Sequence[PassiveVehicle], l_min: in
                 zprev = z_index[(i, j, x - 1)]
                 add_row([(zx, 1.0), (zprev, -1.0), (sx, -1.0)], -np.inf, 0.0)
 
+            # full-only: a pair is towed over its whole overlap or not at all
+            if full_only and x > cp:
+                add_row([(zx, 1.0), (z_index[(i, j, cp)], -1.0)], 0.0, 0.0)
+
+            # suffix-only: towing at x forces towing at x+1, so runs reach dp
+            if (suffix_only or full_only) and x + 1 < dp:
+                add_row([(zx, 1.0), (z_index[(i, j, x + 1)], -1.0)], -np.inf, 0.0)
+
             # a start must be followed by at least l_min towed units
             if x + l_min > dp:
                 add_row([(sx, 1.0)], 0.0, 0.0)          # no room: forbid start
@@ -144,19 +166,22 @@ def build(avs: Sequence[ActiveVehicle], pvs: Sequence[PassiveVehicle], l_min: in
 
 
 def solve(avs: Sequence[ActiveVehicle], pvs: Sequence[PassiveVehicle],
-          l_min: int, *, time_limit: float = 600.0) -> ExactResult:
+          l_min: int, *, time_limit: float = 600.0,
+          suffix_only: bool = False, full_only: bool = False) -> ExactResult:
     """Solve one instance exactly (or return the LP bound if the limit is hit)."""
     import time as _time
 
-    c, A, lb, ub, integrality, n_z, z_index, _ = build(avs, pvs, l_min)
+    c, A, lb, ub, integrality, n_z, z_index, _ = build(
+        avs, pvs, l_min, suffix_only=suffix_only, full_only=full_only)
     constraints = LinearConstraint(A, lb, ub)
     bounds = Bounds(0, 1)
 
     # LP relaxation first: cheap, and an upper bound even if the MILP times out.
     t0 = _time.perf_counter()
     lp = milp(c=c, constraints=constraints, bounds=bounds,
-              integrality=np.zeros_like(integrality))
-    upper = -lp.fun if lp.success else float("inf")
+              integrality=np.zeros_like(integrality),
+              options={"time_limit": time_limit})
+    upper = -lp.fun if lp.success and lp.fun is not None else float("inf")
 
     res = milp(c=c, constraints=constraints, bounds=bounds,
                integrality=integrality,

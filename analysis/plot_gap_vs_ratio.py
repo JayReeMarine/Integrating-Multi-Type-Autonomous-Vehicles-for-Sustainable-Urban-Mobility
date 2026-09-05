@@ -70,7 +70,7 @@ ax.annotate(f"peak {peak[1]:.2f} pp\n(AV {peak[3]} / PV {peak[4]})",
 ax.grid(alpha=0.25, lw=0.6)
 ax.spines[["top", "right"]].set_visible(False)
 fig.tight_layout()
-fig.savefig("gap_vs_ratio.png", dpi=190)
+fig.savefig("analysis/figures/gap_vs_ratio.png", dpi=190, bbox_inches="tight")
 print(f"points: {len(pts)}   peak {peak[1]:.3f} pp at ratio {peak[0]:.2f}")
 print("gap in proposed range (ratio <= 0.26): "
       f"{[f'{p[1]:.3f}' for p in pts if p[0] <= 0.26]}")

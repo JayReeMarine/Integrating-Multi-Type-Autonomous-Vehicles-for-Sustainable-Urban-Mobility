@@ -827,6 +827,14 @@ Reading:
    and then falls as the AV share of the denominator grows (PV share of the
    baseline: 83% → 56%). PV coverage is monotone (53% → 98%). Which metric to
    report is worth raising at the meeting.
+Figure: `analysis/plot_ratio_m1_vs_synth.py` → `analysis/figures/ratio_m1_vs_synth.png`
+(M1 overlaid on the stored synthetic pv_av sweep). Against synthetic cells of
+comparable size: M1 gap is larger at 0.2 (+0.60 vs +0.17–0.40) and 0.4 (+1.86
+vs +1.12–1.25), smaller at 0.8 (+0.49 vs +1.26). Saving level is 10–15 pp higher
+on M1 at every ratio (concentrated entries → more overlap). Same algorithms;
+nothing was "improved" — only the instance distribution changed. Synthetic cells
+at the same ratio already differ by up to 1.25 pp among themselves, so one M1
+seed cannot confirm or refute Revision Plan item #2; it is consistent with it.
 4. Direction and shape (time-only advantage, inverted U) agree with the
    synthetic sweep and are somewhat trustworthy; magnitude and peak position
    are one seed on placeholder demand and are not.

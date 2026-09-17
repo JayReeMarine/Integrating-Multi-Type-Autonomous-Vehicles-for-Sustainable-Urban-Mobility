@@ -21,7 +21,7 @@ the numbers it produces mean anything.
 | trips shorter than L_min (2 km) | 0 by design | **18 %** |
 | constant-speed error vs τ = 5 s | 0 by assumption | 0.6 s for < 4 km trips, **22 s for > 15 km trips** |
 
-Figures: `analysis/figures/m1_corridor.png` (the corridor), `analysis/figures/entry_dist_synth_vs_m1.png` (distributions).
+Figures: `analysis/figures/m1_corridor.png` (the corridor), `analysis/figures/entry_dist_synth_vs_m1.png` (distributions), `analysis/figures/ratio_m1_vs_synth.png` (ratio sweep, M1 vs synthetic).
 First ratio sweep on M1 (placeholder demand, random AV/PV labels, one seed —
 a first look, not a result):
 

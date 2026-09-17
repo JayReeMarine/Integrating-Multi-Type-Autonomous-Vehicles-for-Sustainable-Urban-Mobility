@@ -1,5 +1,7 @@
 """AV:PV ratio sweep on the converted M1 instance, random labelling.
 
+Resumable: re-running with the same --seeds skips cells already in the CSV.
+
 "Pure" run: no labelling rule, no calibration -- the placeholder demand and a
 random AV/PV split, ratio varied.  One seed unless --seeds given.
 Time constraints in model units (mean speed = 1, tau = 5 model units).
@@ -23,9 +25,14 @@ a = ap.parse_args()
 
 corr, trips = load_corridor_trips(a.scenario)
 out = Path(a.scenario) / "ratio_sweep.csv"
-rows = []
+# resume: keep existing rows and skip (seed, ratio) cells already complete (4 rows each)
+rows = list(csv.DictReader(out.open())) if out.exists() else []
+done = {k for k in {(int(x["seed"]), float(x["ratio"])) for x in rows}
+        if sum(1 for x in rows if (int(x["seed"]), float(x["ratio"])) == k) == 4}
 for seed in a.seeds:
     for r in a.ratios:
+        if (seed, r) in done:
+            print(f"seed {seed} ratio {r:.1f} already done, skipping", flush=True); continue
         # usable count is independent of the split, so size AV from a dummy split
         _, _, l_min, info = label(corr, trips, av_fraction=0.5, seed=seed, time_unit_s=0)
         n_usable = info["n_av"] + info["n_pv"]

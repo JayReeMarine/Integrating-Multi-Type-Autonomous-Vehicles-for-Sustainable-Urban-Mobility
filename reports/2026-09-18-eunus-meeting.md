@@ -36,6 +36,20 @@ inverted U), but the peak is at 0.4 rather than 0.8: on the M1, PVs are almost
 all served by ratio 0.6, so there is nothing left to compete for.
 
 ## Decisions I need
+0. **The claim.** SUMO did not widen the ILA–greedy gap: +0.5 to +1.9 pp on M1
+   versus +0.2 to +1.3 pp on synthetic data, and exactly 0 without time
+   constraints. Meanwhile both heuristics reach only ~93 % of the exact optimum.
+   The 7 % headroom is seven times the ILA–greedy difference. My reading: the
+   Revision Plan's Phase-2 decision point ("if the gap does not widen, the
+   contribution needs rethinking") has arrived early. Options:
+   (A) design a method that closes part of the 7 % — the exact solutions show
+   how: shorter segments, more hand-offs, 88 % of PVs served vs 75 %;
+   (B) reposition the paper as problem + exact benchmark + realistic evaluation,
+   with ILA as "greedy-quality, faster"; (C) 2D — but the exact-solver diagnosis
+   says the loss is choice quality, not model expressiveness, so 2D alone
+   would not change it. I would test (A) for two weeks with a local-search
+   post-processor against the 21 exact instances; if it cannot reach ~96 %,
+   go with (B). Do you agree with this reading, and with the test?
 1. **AV:PV ratio.** Your note "specialized → quite high": did you mean the ratio
    is high (many AVs) or the gap should be high? My framing: ratio =
    (share of heavy vehicles that can tow) ÷ (share of cars opting in). What range

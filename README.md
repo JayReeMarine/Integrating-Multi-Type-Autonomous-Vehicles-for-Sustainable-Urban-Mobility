@@ -75,14 +75,38 @@ python3 -m visualization.plot_all
 │   ├── conference_101719.pdf      # Compiled PDF
 │   └── figures/                   # Paper figures
 │
-└── requirements.txt               # Python dependencies
+├── milp/                          # Revision: exact MILP solver (HiGHS via SciPy)
+│   ├── exact.py                   # build() / solve() / extract_segments()
+│   ├── run_comparison.py          # greedy & ILA vs optimum on small instances
+│   ├── scale_test.py              # how large the MILP stays tractable
+│   ├── restricted.py              # suffix-only / full-overlap restricted optima
+│   └── sweep_*.py, diagnose.py    # congestion-aware variants, structural diagnosis
+│
+├── sumo/                          # Revision: realistic scenarios on the M1 (SUMO)
+│   ├── PRIMER-sumo.md             # SUMO primer for this repo
+│   ├── NOTES-sumo.md              # SUMO track research notes
+│   ├── convert.py                 # SUMO output -> ActiveVehicle / PassiveVehicle
+│   ├── smoke_match.py             # greedy / ILA on the converted instance
+│   ├── ratio_sweep.py             # AV:PV ratio sweep on the converted instance
+│   ├── osm/                       # OSM extract + netconvert network (gitignored)
+│   └── m1/                        # M1 inbound scenario (corridor, demand, outputs)
+│
+├── analysis/                      # Revision: re-analysis and figures
+│   ├── reproduce_check.py         # verifies stored results reproduce exactly
+│   ├── plot_*.py                  # figures for the revision
+│   └── figures/
+│
+├── reports/                       # Interim findings and meeting memos
+├── NOTES.md                       # Revision research notes (main track)
+├── requirements.txt               # Python dependencies (ranges)
+└── requirements-lock.txt          # Pinned versions actually used in the revision
 ```
 
 ## Installation
 
 ### Prerequisites
 
-- Python 3.8 or higher (tested with Python 3.11)
+- Python 3.8 or higher (paper results: Python 3.11; revision work: Python 3.14, see `requirements-lock.txt`)
 - pip (Python package manager)
 - LaTeX distribution with `latexmk` (optional, for paper compilation)
 
@@ -164,6 +188,127 @@ Generated figures include:
 - Average saving per matched PV
 - Runtime performance
 - Saving percentage
+
+## Revision Work (2026-09, after ITSC / SIGSPATIAL reviews)
+
+Everything below runs from the repository root with the project `venv/`
+(Python 3.14, versions pinned in `requirements-lock.txt`). The `milp/`,
+`sumo/` and `analysis/` scripts import from `core/`, so they need
+`PYTHONPATH=.`; either activate the venv or call `venv/bin/python` directly.
+
+```bash
+cd /path/to/platoon-formation
+python3 -m venv venv
+venv/bin/pip install -r requirements-lock.txt      # exact versions used in the revision
+venv/bin/pip install -r sumo/requirements-sumo.txt # SUMO 1.27.1 (pip distribution)
+```
+
+Research notes: [`NOTES.md`](NOTES.md) (main track: environment, re-analysis,
+exact solver, diagnosis) and [`sumo/NOTES-sumo.md`](sumo/NOTES-sumo.md)
+(SUMO track: design decisions D1-D6, demand survey, M1 runs).
+
+### 0. Reproduction check
+
+Re-runs a subset of the stored `pv_av_sweep` cells with the current
+environment and compares `saving_percent` against the CSVs used in the paper.
+Expect `48/48` matches.
+
+```bash
+PYTHONPATH=. venv/bin/python analysis/reproduce_check.py
+```
+
+### 1. Exact optimum (MILP)
+
+Small instances (up to ~AV 15 / PV 30 within a few minutes) solved to proven
+optimality; greedy and ILA are scored as a percentage of the optimum.
+
+```bash
+PYTHONPATH=. venv/bin/python milp/run_comparison.py --quick          # a few instances, fast
+PYTHONPATH=. venv/bin/python milp/run_comparison.py --time-limit 600 # full set
+PYTHONPATH=. venv/bin/python milp/scale_test.py                      # where the MILP stops proving optimality
+PYTHONPATH=. venv/bin/python milp/restricted.py                      # suffix-only / full-overlap restricted optima
+PYTHONPATH=. venv/bin/python milp/diagnose.py                        # where greedy / ILA choose differently from the optimum
+PYTHONPATH=. venv/bin/python milp/collect_results.py                 # -> data/results/milp/*.csv
+```
+
+Figures from the stored results:
+
+```bash
+PYTHONPATH=. venv/bin/python analysis/plot_gap_vs_ratio.py   # ILA - greedy vs AV:PV ratio (existing sweep)
+PYTHONPATH=. venv/bin/python analysis/plot_milp_gap.py       # % of optimum per instance, choice vs shape
+PYTHONPATH=. venv/bin/python analysis/plot_time_effect.py    # ILA advantage with time constraints OFF vs ON
+```
+
+### 2. SUMO pipeline on the M1 Monash Freeway (inbound, 20.5 km)
+
+```
+osm/m1.net.xml -> m1/corridor.py -> randomTrips -> sumo -> convert.py -> greedy / ILA
+```
+
+Run the whole chain from scratch (about 5 minutes; the matching step is the
+slow part):
+
+```bash
+# a. main-line chain and the 16 ramp positions -> sumo/m1/corridor.json
+PYTHONPATH=. venv/bin/python sumo/m1/corridor.py
+
+# b. inbound-only origin / destination weights for randomTrips -> sumo/m1/inbound.{src,dst}.xml
+PYTHONPATH=. venv/bin/python sumo/m1/make_weights.py
+
+# c. placeholder demand, one hour, 1800 vehicles (uniform over inbound-side fringe edges)
+cd sumo/m1 && SUMO_HOME=../../venv/lib/python3.14/site-packages/sumo \
+  ../../venv/bin/python $SUMO_HOME/tools/randomTrips.py -n ../osm/m1.net.xml \
+  -o trips.xml -r routes.xml -b 0 -e 3600 --period 2 --weights-prefix inbound \
+  --vehicle-class passenger --seed 42 --validate && cd ../..
+
+# d. simulate (about 4 s) -> tripinfo.xml, fcd.xml (10 s sampling)
+cd sumo/m1 && ../../venv/bin/sumo -c m1.sumocfg && cd ../..
+
+# e. convert and measure instance structure -> sumo/m1/trips.json, stdout summary
+PYTHONPATH=. venv/bin/python sumo/convert.py sumo/m1 --summary --dump sumo/m1/trips.json
+
+# f. greedy / ILA on the converted instance -> sumo/m1/smoke_match.json
+PYTHONPATH=. venv/bin/python sumo/smoke_match.py
+
+# g. AV:PV ratio sweep -> sumo/m1/ratio_sweep.csv  (about 8 min per seed)
+PYTHONPATH=. venv/bin/python -u sumo/ratio_sweep.py --ratios 0.2 0.4 0.6 0.8 --seeds 42
+
+# h. figures -> analysis/figures/
+PYTHONPATH=. venv/bin/python analysis/plot_corridor.py            # corridor schematic
+PYTHONPATH=. venv/bin/python analysis/plot_entry_dist.py          # synthetic vs M1 distributions
+PYTHONPATH=. venv/bin/python analysis/plot_ratio_m1_vs_synth.py   # ratio sweep, M1 vs synthetic
+```
+
+Steps a-e are fast; f and g are slow because the greedy baseline is pure
+Python (see Revision Plan item #3).
+
+Demand is a `randomTrips` placeholder: only the road network is real. The
+structure measurements (9 entry / 9 exit points, 44 OD pairs, share of trips
+below `L_min`, constant-speed drift) do not depend on the demand model; the
+saving percentages do. Options for calibrating demand against DTP detector
+counts are in `sumo/NOTES-sumo.md`.
+
+Watching the simulation (needs XQuartz; the script re-registers the X
+authorisation cookie for the current hostname):
+
+```bash
+sumo/m1/gui.sh
+```
+
+In the GUI, open the visualisation settings (colour-wheel icon), set
+*Vehicles -> Exaggerate by* to 20 and *Colour by -> speed*; at the default
+zoom a 4.5 m car on a 20 km corridor is smaller than a pixel.
+
+### 3. Where results are stored
+
+| Path | Content |
+|---|---|
+| `data/results/greedy/`, `data/results/hungarian/` | original paper sweeps (unchanged) |
+| `data/results/milp/` | exact-optimum comparison, time-effect, restricted optima |
+| `sumo/m1/structure.json` | instance-structure metrics of the M1 scenario |
+| `sumo/m1/smoke_match.json`, `sumo/m1/ratio_sweep.csv` | greedy / ILA on M1 |
+| `analysis/figures/` | all revision figures |
+| `reports/` | interim findings (docx / md) and meeting memos |
 
 ## Algorithm Details
 

@@ -1,0 +1,22 @@
+<configuration>
+    <input>
+        <net-file value="../osm/m1.net.xml"/>
+        <route-files value="routes.xml"/>
+    </input>
+    <output>
+        <tripinfo-output value="tripinfo.xml"/>
+        <fcd-output value="fcd.xml"/>
+        <fcd-output.geo value="false"/>
+    </output>
+    <time>
+        <begin value="0"/>
+        <end value="7200"/>
+    </time>
+    <processing>
+        <device.fcd.period value="10"/>
+    </processing>
+    <report>
+        <no-step-log value="true"/>
+        <verbose value="false"/>
+    </report>
+</configuration>

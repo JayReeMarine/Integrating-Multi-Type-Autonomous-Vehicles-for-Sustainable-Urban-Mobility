@@ -1,0 +1,53 @@
+{
+ "route_users": 1800,
+ "fitted": 1749,
+ "distinct_entry_points": 9,
+ "distinct_exit_points": 9,
+ "distinct_od_pairs": 44,
+ "trips_shorter_than_lmin": 320,
+ "trip_len_grid": {
+  "min": 1,
+  "median": 25,
+  "max": 100
+ },
+ "speed_kmh": {
+  "mean": 87.58348368497676,
+  "min": 14.662799999999843,
+  "max": 120.08052000000002
+ },
+ "entry_time_s": {
+  "min": 22.875774780811867,
+  "max": 3649.1869690456474
+ },
+ "linearisation_resid_s": {
+  "max_over_vehicles": 35.4515699504409,
+  "median_of_max": 2.2936722284593998,
+  "p90_of_max": 20.86431325132162,
+  "share_max_gt_5s": 0.4265294453973699,
+  "median_rms": 1.0876671112571556
+ },
+ "linearisation_by_length": {
+  "<4 km": {
+   "n": 710,
+   "median_max_resid_s": 0.56,
+   "share_gt_5s": 0.003
+  },
+  "4-10 km": {
+   "n": 435,
+   "median_max_resid_s": 2.47,
+   "share_gt_5s": 0.356
+  },
+  "10-15 km": {
+   "n": 322,
+   "median_max_resid_s": 13.91,
+   "share_gt_5s": 0.953
+  },
+  ">15 km": {
+   "n": 282,
+   "median_max_resid_s": 21.85,
+   "share_gt_5s": 1.0
+  }
+ },
+ "demand": "randomTrips --weights-prefix inbound --period 2 --seed 42, 1 h (PLACEHOLDER: uniform over inbound-side fringe edges, not calibrated)",
+ "fcd_period_s": 10
+}

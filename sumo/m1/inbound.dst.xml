@@ -1,0 +1,17 @@
+<edgedata>
+  <interval begin="0" end="3600">
+    <edge id="1288197100" value="1.0"/>
+    <edge id="1288213446" value="1.0"/>
+    <edge id="139334279#2" value="1.0"/>
+    <edge id="145244392" value="1.0"/>
+    <edge id="29476871" value="1.0"/>
+    <edge id="29478463#1" value="1.0"/>
+    <edge id="29478465" value="1.0"/>
+    <edge id="393357534#1" value="1.0"/>
+    <edge id="4718143" value="1.0"/>
+    <edge id="4780445#2" value="1.0"/>
+    <edge id="53830385" value="1.0"/>
+    <edge id="715817459#2" value="1.0"/>
+    <edge id="766095686" value="1.0"/>
+  </interval>
+</edgedata>

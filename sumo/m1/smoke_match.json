@@ -1,0 +1,88 @@
+{
+ "av_fraction": 0.2,
+ "seed": 42,
+ "tau": 5.0,
+ "note": "placeholder demand, random labels -- not a result",
+ "rows": [
+  {
+   "time_unit": "model units (mean speed = 1)",
+   "algorithm": "greedy",
+   "time_on": false,
+   "saving_percent": 60.0,
+   "segments": 868,
+   "runtime_s": 100.55,
+   "n_av": 286,
+   "n_pv": 1143
+  },
+  {
+   "time_unit": "model units (mean speed = 1)",
+   "algorithm": "greedy",
+   "time_on": true,
+   "saving_percent": 50.434,
+   "segments": 815,
+   "runtime_s": 76.754,
+   "n_av": 286,
+   "n_pv": 1143
+  },
+  {
+   "time_unit": "model units (mean speed = 1)",
+   "algorithm": "ILA",
+   "time_on": false,
+   "saving_percent": 60.021,
+   "segments": 869,
+   "runtime_s": 1.613,
+   "n_av": 286,
+   "n_pv": 1143
+  },
+  {
+   "time_unit": "model units (mean speed = 1)",
+   "algorithm": "ILA",
+   "time_on": true,
+   "saving_percent": 51.669,
+   "segments": 921,
+   "runtime_s": 2.229,
+   "n_av": 286,
+   "n_pv": 1143
+  },
+  {
+   "time_unit": "real seconds",
+   "algorithm": "greedy",
+   "time_on": false,
+   "saving_percent": 60.0,
+   "segments": 868,
+   "runtime_s": 105.495,
+   "n_av": 286,
+   "n_pv": 1143
+  },
+  {
+   "time_unit": "real seconds",
+   "algorithm": "greedy",
+   "time_on": true,
+   "saving_percent": 24.097,
+   "segments": 443,
+   "runtime_s": 45.857,
+   "n_av": 286,
+   "n_pv": 1143
+  },
+  {
+   "time_unit": "real seconds",
+   "algorithm": "ILA",
+   "time_on": false,
+   "saving_percent": 60.021,
+   "segments": 869,
+   "runtime_s": 2.253,
+   "n_av": 286,
+   "n_pv": 1143
+  },
+  {
+   "time_unit": "real seconds",
+   "algorithm": "ILA",
+   "time_on": true,
+   "saving_percent": 24.164,
+   "segments": 461,
+   "runtime_s": 2.226,
+   "n_av": 286,
+   "n_pv": 1143
+  }
+ ]
+}

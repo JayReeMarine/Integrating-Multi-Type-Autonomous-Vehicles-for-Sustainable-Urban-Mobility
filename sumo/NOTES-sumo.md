@@ -281,59 +281,253 @@ Practical consequences:
 
 ## Open question blocking the pipeline design
 
-**How is demand generated?**
+**How is demand generated?** — body replaced with the 2026-09-17 survey.
+Mushfiq gave no specific guidance ("try it yourself"). Below are the results of
+reading (1) the `randomTrips.py` code, (2) the Victorian DTP open-data portal,
+(3) the `routeSampler.py` code, with verified facts separated from inference.
+Basis for question #1 at the 18 Sep meeting with Eunus.
 
-`randomTrips.py` samples origin and destination edges at random. If the
-scenario is built that way, only the road network is real; the demand is
-still random, and Revision Plan item #2's premise — "SUMO data concentrates
-demand on popular routes" — does not hold. Reviewer weakness #1 would then
-be addressed only cosmetically.
+### 1. `randomTrips.py` — confirmed behaviour (verified: code read directly, SUMO 1.27.1)
 
-Alternatives to check: real count data (VicRoads / DTP Victoria open traffic
-volumes — *existence and licence not yet verified*) fed through
-`routeSampler.py`, `dfrouter` or `flowrouter`, or at minimum a realistic
-temporal demand profile with ramp-weighted OD.
+File: `venv/lib/python3.14/site-packages/sumo/tools/randomTrips.py` (1096
+lines). This replaces the earlier "documentation familiarity, not confirmed"
+caveat.
 
-Jay met Mushfiq before this session; **what he advised on demand generation
-determines which way the pipeline goes** and how much weight the
-correlation-structure argument above can carry.
+- **Default origin/destination sampling is uniform over edges.** No weighting
+  by length, lanes or speed: `--length` defaults False (L111), `--lanes` False
+  (L113), `--speed-exponent` 0.0 (L117–118), `--random-factor` 1.0 (L125),
+  `typeFactors` default 1.0 (L301). So `edge_probability` (L479–541) returns 1
+  for every eligible edge and `RandomEdgeGenerator.get` (L391–394) samples by
+  cumulative weight. The 3.62 km main-line edge and a 60 m ramp stub have the
+  same origin probability.
+- **`--fringe-factor max`** (L127; applied L517–523): sets the probability of
+  non-fringe edges to 0 (L522–523). Every trip starts/ends at a fringe edge (no
+  incoming connection = origin / no outgoing = destination), but **uniformly
+  among fringe edges.**
+- **`--weights-prefix P`** (L56–58; `LoadedProps` L544–552; applied L564–569):
+  reads `P.src.xml`/`P.dst.xml`/`P.via.xml` and **replaces the probability
+  function entirely.** Edges not in the file get weight 0
+  (`defaultdict(lambda: 0)`, L547). Format is
+  `<edgedata><interval><edge id value/>` — identical to what
+  `--weights-output-prefix` exports (L396–411), so the defaults can be dumped
+  and edited.
+- **OD pairs are drawn independently** (`get_trip` L422–448): origin (L427) and
+  destination (L429) are sampled separately and accepted if the **Euclidean
+  straight-line distance** from origin from-node to destination to-node is at
+  least `--min-distance` (L441–443). Not route length. **Weights change only the
+  marginal distributions; randomTrips cannot produce a joint OD structure.**
+- **`--period`** (L188–191; L747–748): given N values, [begin,end] is split into
+  N intervals with a different period each → a stepped peak profile is
+  possible. Default `[1.0]` = one vehicle per second (L224–225). Without
+  `--random-depart` (L203) departures are equally spaced within an interval.
 
-*(The `randomTrips.py` default behaviour above is stated from documentation
-familiarity and has not yet been confirmed by reading the script in
-`$SUMO_HOME/tools/`. Confirm before relying on it.)*
+**Cause of the 72.1 exit spike (verified on `m1.net.xml`, 2026-09-17).**
+The first guess in the 2026-09-17 section ("randomTrips picks many fringe edges
+behind that ramp") does not hold — there is 1 sink-fringe edge behind 72.1
+(5.6, 15.5, 31.2, 86.8 have 2). Real cause: the network contains the outbound
+carriageway and 13 of the 26 sink-fringe edges are on the outbound side. Since
+`--fringe-factor max` samples uniformly among fringe edges, about half of the
+inbound-origin trips draw an outbound-side destination. Those trips leave the
+inbound main line at an off-ramp from which the outbound main line is reachable
+and U-turn. 700/1212 = 58% matches. → The smoke savings 64.66/64.68% sat on an
+artificial overlap of 700 vehicles exiting at one point. *(Cross-checked in the
+build session: 518 of the 708 vehicles exiting at 72.1 did continue onto the
+outbound main line; four off-ramps can reach outbound — 20.9, 37.4, 64.8, 72.1 —
+and shortest-path routing concentrates them on 72.1.)* **Fix:** list only
+inbound-side fringe edges in `.src.xml`/`.dst.xml` via `--weights-prefix`
+(everything else is automatically 0). **Applied 2026-09-17 in
+`sumo/m1/make_weights.py`; see the 2026-09-17 section for the corrected
+numbers.**
+
+### 2. Real traffic-count data (verified: portal pages opened 2026-09-17)
+
+Portal `discover.data.vic.gov.au`, search "traffic volume" → 8 hits, 4 from
+DTP. All **CC BY 4.0**, all **point counts, no OD** (as expected).
+`opendata.transport.vic.gov.au` hosts the actual files.
+
+| Dataset | URL (discover.data.vic.gov.au/dataset/…) | Spatial unit | Temporal unit | OD | Corridor coverage |
+|---|---|---|---|---|---|
+| **TIRTL Traffic Counts and Classification** | `tirtl-traffic-counts` | site (infrared detector), per direction, Austroads class and speed bins | **15 min**, monthly ZIPs (2025-11 to 2026-09), updated daily | none | **partial — below** |
+| Telemetry Traffic Counts and Classification | `telemetry-traffic-counts-and-classification` | site, 15 min | 15 min, monthly ZIPs | none | **0 sites** (all 55 sites are rural) |
+| Traffic Signal Volume Data | `traffic-signal-volume-data` | SCATS signalised intersections, loop detectors per lane | 15 min, 2014– | none | unchecked (site list not opened; TIRTL already has ramp detectors, so lower priority) |
+| Historical Annual Average Daily Traffic Volume | `historical-annual-average-daily-traffic-volume` | declared-road segments, per direction | **AADT only**, 2001–2019, one GeoJSON per year | none | unchecked (2019 file 32 MB, not opened) |
+
+**TIRTL coverage of the corridor (verified: `tirtl_sites.csv` 31 KB downloaded
+and projected onto the inbound main line. Projection computed directly from the
+UTM 55 parameters in net.xml, max error 0.01 m against 200 OSM nodes. Result
+`sumo/osm/tirtl_on_corridor.json`, gitignored.)**
+
+- **Grid 2.0–39.5 (km 0.4–8.1)**: 16 inbound main-line detectors at ~500 m
+  spacing ("M1 Inbound - CH 15860 … 23810"). Springvale (5.6) to Warrigal (37.4)
+  = the eastern 40% is densely covered.
+- **Grid 61.1–62.2**: 1 main-line detector ("Before High Street Bridge Inbound")
+  + **4 High Street on-ramp detectors** (Top/Mid/Before_Stop/After_Stop = either
+  side of the ramp-metering stop line). Immediately upstream of our ON ramp at
+  62.9 → this ramp matches for certain.
+- Further ramp detectors: Stephensons (27.3), Stanley (29.5), Atkinson (35.2)
+  Inbound. Our OSM on-ramps were unnamed; this data names them. **But which OSM
+  ramp is which needs projection onto the ramp edges themselves (not done,
+  ~30 min).**
+- **Grid 39.5–61.1 (Warrigal–High St, 4.4 km): no detectors.**
+- **Grid 62.2–100 (Burke Rd, Toorak, CityLink, 7.8 km): no detectors.** CityLink
+  is a Transurban toll road, so presumably absent from state data (inference).
+  **The former spike point 72.1 and the whole CityLink section are outside the
+  measured range.**
+
+**Further verification required:** (a) whether the AADT 2019 GeoJSON contains
+the Burke Rd–Toorak Monash main-line segment (toll-road exclusion not confirmed
+on the page; even if present it is a daily average, no peak profile), (b) the
+actual size and column layout of a TIRTL monthly ZIP (not downloaded), (c)
+whether the Traffic Signal site list includes M1 ramp-metering signals.
+
+### 3. `routeSampler.py` — confirmed behaviour (verified: code read directly)
+
+File: same path, `tools/routeSampler.py` (1527 lines).
+
+- **Input:** `-r/--route-files` **candidate route file is mandatory** (L50–51
+  `required=True`); counts via at least one of `-d/--edgedata-files` (per edge,
+  L56), `-t/--turn-files` (per turn, L52), `-O/--od-files`
+  (edgeRelation/tazRelation OD, L58). Default edge-count attribute `entered`
+  (L62) = what a detector counts.
+- **Algorithm** (`sampleRoutes` L1183–1252): pick a detector with remaining count
+  at random (L1207) → pick **uniformly** one candidate route passing it (L1208)
+  → add one vehicle and decrement every detector on that route by 1
+  (L1215–1216) → repeat until all counts are filled or no route is usable.
+  `--weighted` (L1204) samples routes by their probability. `--optimize` (L739)
+  runs a posterior LP to reduce GEH mismatch. `--geh-ok` default 5 (L141).
+- **Meaning: routeSampler does not estimate OD.** The OD structure comes from
+  (a) which routes exist in the candidate file and (b) a bias towards long
+  routes that pass many detectors (`--minimize-vehicles` L138 explicitly
+  strengthens this). **The trip-length distribution is a product of the method,
+  not of the data.** The "18% below L_min" of the 2026-09-17 section (28%
+  before the 72.1 fix) will change under this method, but the new value is not
+  a measurement either. This must be stated when it goes into the paper.
+
+**Minimal path from point counts to demand (prose, no code):**
+① Candidate routes: one explicit route per (entry, exit) pair with entry < exit
+among the 9 inbound entries × 9 exits (≈40 routes) — enumerating instead of
+randomTrips gives full control of the OD set and rules out the 72.1 problem at
+source. ② Counts: from a TIRTL monthly ZIP take one chosen morning peak hour for
+the 16 inbound main-line sites + the High St ramp site, aggregate 15 min → 1 h,
+map each site to its main-line/ramp edge via the grid position in
+`tirtl_on_corridor.json`, and write
+`<edgeData><interval begin end><edge id entered=N/>` XML.
+③ `routeSampler -r candidates.rou.xml -d counts.xml -o result.rou.xml`, with
+`--optimize full` if needed. ④ Feed the resulting route file to `sumo`. The
+western 60% with no measurements is filled by routeSampler from candidate
+routes and random choice — that section must be flagged **uncalibrated** in
+the results. GEH values via `--mismatch-output` (L75) can be reported as
+calibration quality.
+
+### 4. Options for the 18 Sep meeting
+
+| | Cost | What it buys |
+|---|---|---|
+| **(i) Keep the randomTrips placeholder** (+ inbound-only weights fix) | fix 30 min, done. No extra data | pipe works; positions are real ramps (16 points), speeds from car-following. **Times and OD still uniform** → reviewer #1's "uniformly sampled … times" remains |
+| **(ii) Partial calibration with TIRTL counts via routeSampler** | 2–3 days: download one monthly ZIP, map sites → edges, enumerate candidate routes, run, check GEH | eastern 40% main line + High St ramp **calibrated to government 15-min detector counts**; peak-hour profile is measured. Western 60%, OD and trip lengths remain method products — **must be labelled "partial calibration" honestly** |
+| **(iii) Full calibration of the whole corridor** | weeks + data we do not have (CityLink counts are Transurban's, OD needs a travel survey) | defensible whole-corridor demand. **Not possible** with current open data |
+
+**Recommendation: (ii) for the first paper iteration.** Reasons: (i) does not
+answer "times" among reviewer #1's three words ("positions, times, and
+speeds"). (ii) buys, for 2–3 days, the sentence "calibrated to DTP TIRTL
+detector counts (GEH < 5 at N sites)", which answers the meta-review directly.
+The coverage gap and the absence of OD estimation are stated as limitations,
+and stated limitations rarely reject a paper. (iii) is outside this paper's
+scope and belongs to the 2D paper.
+
+**(i) + the fix was applied immediately** — the structure measurements that do
+not depend on the demand model (D2 error, feasible-pair share) and the D6 MILP
+comparison did not need to wait for (ii), and the 72.1 bias contaminated them
+too. Done 2026-09-17.
+
+### 5. The toll boundary — a limit of both (i) and (ii) (raised by Jay, 2026-09-17)
+
+Jay: "Toorak Rd is the last free exit before the CityLink toll; I take it myself
+to avoid CityLink." **Verified in `monash-m1.osm`:** all 41 CityLink ways carry
+`toll=yes`, and so do the Toorak→CityLink on-ramp (`Toorak-Citylink In Ramp
+On` variants) and the Yarra Boulevard Off Ramp. So on the inbound carriageway
+**the last free exit is 72.1 Toorak, and 86.8 Yarra Blvd is already inside the
+tolled section.**
+
+Nothing in the simulation knows about tolls — neither `duarouter` nor
+`inbound.dst.xml` (13 edges, all weight 1.0). Consequently:
+
+- the first run (700 at 72.1) over-represented Toorak for the **wrong reason**
+  (outbound-destination U-turns, §1);
+- the re-run (244 at 72.1, applied by the other session) treats Toorak like any
+  other exit and therefore **under-represents** it. Its largest exit is now
+  Yarra Blvd at 493, a topology artefact (two sink edges → double weight) that
+  points the wrong way relative to reality (inside the toll).
+- Grid 62–100 has no TIRTL sensor, so **option (ii) cannot calibrate this
+  either.**
+
+Note also the direct count on the *current* `routes.xml`: of the 244 vehicles
+leaving at Toorak, 100% have inbound-side destinations. The earlier claim that
+the original 700 were outbound-destination U-turns rests on the topology
+argument (Toorak is the only inbound off-ramp that reaches the outbound
+carriageway) plus the 58% arithmetic; the original routes file was overwritten
+before a direct count could be made, so that magnitude is inference.
+
+**Possible responses (unverified, cheapest first):** (a) raise the Toorak sink
+weight in `inbound.dst.xml` and justify it from the AADT 2019 GeoJSON — the
+drop in daily volume between the Monash main line just before Toorak and the
+CityLink main line just after it is the toll-avoidance share (32 MB, not opened;
+whether tolled segments appear in AADT at all is unconfirmed). (b) Give toll
+edges a travel-time penalty via `duarouter --weight-files` so the router avoids
+them — both the option and whether netconvert carries the OSM `toll` tag into
+`net.xml` need checking. (c) In the paper: "toll boundary at Toorak Rd not
+modelled; western section uncalibrated."
+
+Recommendation (ii) stands, but **the limitations wording must name the toll
+boundary.** A Melbourne-based reviewer will see it immediately.
+
+**Link to meeting question #3 (physical unit of τ):** under (ii) entry times
+come from real-second detector counts, so reading τ in real seconds is the
+natural choice. Under (i) 5 model units is easier to defend. The demand
+decision partly determines the τ decision.
 
 ---
 
 ## Next
 
-- [ ] Confirm with Mushfiq's advice which demand-generation route to take
-- [ ] Read `$SUMO_HOME/tools/randomTrips.py` and confirm its default sampling
-- [ ] Pick the corridor; extract the OSM extent and import with `netconvert`
-- [ ] First scenario, one peak hour, and measure:
-      (a) the entry-time distribution — is it actually non-uniform?
-      (b) the D2 linearisation error against `time_tolerance = 5.0`
-      (c) how often the time filter rejects a pair, versus synthetic data
-- [ ] Converter: FCD → `ActiveVehicle` / `PassiveVehicle` lists matching
-      `core/data.py::generate_mock_data()`, with |AV|, |PV|, capacity and
-      corridor length as independent knobs (D3). AV/PV labelling is ours to
-      define; SUMO has no such concept.
-
+- [x] ~~Confirm with Mushfiq's advice~~ — no guidance given; decided ourselves (§4 above)
+- [x] ~~Read `randomTrips.py` and confirm its default sampling~~ — §1
+- [x] ~~Pick the corridor; extract OSM; import with `netconvert`~~ — D4/D5
+- [x] ~~First scenario, one peak hour, measure (a)(b)(c)~~ — 2026-09-17 section
+- [x] ~~Converter~~ — `sumo/convert.py`
+- [x] ~~Apply inbound-only src/dst via `--weights-prefix` and re-run~~ —
+      `sumo/m1/make_weights.py`; after re-run: 1800/1800 use the main line,
+      OD 44, 18% below L_min, exit spike gone (max exit point 493 at 86.8,
+      which has two sink edges)
+- [ ] After the meeting, if (ii) is adopted: download one TIRTL monthly ZIP and
+      check size/columns → map sites → edges (from `tirtl_on_corridor.json`;
+      re-project ramp detectors onto ramp edges) → enumerate candidate routes →
+      routeSampler → report GEH
+- [ ] Check whether the AADT 2019 GeoJSON has the Burke Rd–Toorak main-line
+      segment (to fill at least the western main-line total)
+- [ ] **Toll boundary (§5):** from AADT, volume just before vs just after Toorak
+      → basis for a Toorak sink weight; or check whether `duarouter
+      --weight-files` can penalise `toll=yes` edges
+- [ ] Draft paper wording: "demand partially calibrated to DTP TIRTL 15-min
+      counts (16 mainline + 1 ramp site, eastern 40% of corridor); western
+      section and OD structure uncalibrated" — limitations first
 ---
+## 2026-09-04 — Corridor fixed, OSM import
 
-## 2026-09-04 — 코리도어 확정 및 OSM 임포트
+### D4 — Corridor: M1 Monash Freeway, inbound (towards the CBD)
 
-### D4 — 코리도어: M1 Monash Freeway, inbound (CBD 방향)
+Jay specified "CBD ~ Clayton". Better than the original proposal
+(EastLink → Burnley): it is the Monash commuter axis, so the paper can motivate
+it as a real commuting corridor rather than "an arbitrary freeway". Tunnels
+excluded for the first iteration.
 
-Jay가 "CBD ~ Clayton"을 지정. 원래 제안(EastLink→Burnley)보다 나은 선택 —
-Monash 통근 축이라 "임의로 고른 프리웨이"가 아니라 실제 통근 코리도어로
-동기부여할 수 있다. 터널은 제외하기로 결정(1차 반복).
+**Data acquisition.** Overpass API, bbox `(-37.93, 145.00, -37.81, 145.17)`,
+filter `highway=motorway|motorway_link`. Result `sumo/osm/monash-m1.osm`,
+305 KB, 341 ways / 1811 nodes. Query kept in `sumo/osm/query.overpassql`.
+The western bbox edge at 145.00 effectively cuts off the Burnley tunnel (only
+2 tunnel ways remain).
 
-**데이터 취득.** Overpass API, bbox `(-37.93, 145.00, -37.81, 145.17)`,
-필터 `highway=motorway|motorway_link`. 결과 `sumo/osm/monash-m1.osm`,
-305 KB, way 341개 / node 1811개. 쿼리는 `sumo/osm/query.overpassql`에 보존.
-bbox 서쪽 경계 145.00이 Burnley 터널을 사실상 잘라냈다(터널 way 2개만 잔존).
-
-**변환.**
+**Conversion.**
 
 ```bash
 netconvert --osm-files monash-m1.osm \
@@ -344,32 +538,33 @@ netconvert --osm-files monash-m1.osm \
   --output.street-names true --output.original-names true
 ```
 
-`--output.street-names true`가 필수다. 없으면 엣지 이름이 전부 버려져서
-본선/램프를 구분할 수 없다(처음 시도에서 이것 때문에 본선 엣지 0개가 나왔다).
+`--output.street-names true` is mandatory. Without it every edge name is
+dropped and main line cannot be told from ramps (the first attempt produced
+zero main-line edges for exactly this reason).
 
-### 코리도어 구조
+### Corridor structure
 
-| | inbound (CBD 방향) | outbound (Clayton 방향) |
+| | inbound (to CBD) | outbound (to Clayton) |
 |---|---|---|
-| 최장 연결 체인 | **31/31 엣지 (끊김 없음)** | 36/40 (4개 끊김) |
-| 길이 | **20.53 km** | 22.60 km |
-| 램프 접속점 | 16 (ON 8 / OFF 8) | 16 |
+| Longest connected chain | **31/31 edges (unbroken)** | 36/40 (4 breaks) |
+| Length | **20.53 km** | 22.60 km |
+| Ramp junctions | 16 (ON 8 / OFF 8) | 16 |
 
-**inbound 채택.** 완전 연결이고 오전 첨두 방향과 일치한다.
+**Inbound adopted.** Fully connected and matches the morning-peak direction.
 
-차선 수가 CBD 방향으로 3 → 4 → 5 → 6으로 증가한다. 합성 데이터에 없는
-현실성이며, AV 용량 모델과 연결지을 여지가 있다.
+Lane count grows 3 → 4 → 5 → 6 towards the CBD. This is realism the synthetic
+data lacks and could be tied to the AV capacity model.
 
-### 검증 결과 (코드로 수행, netedit 육안 검사 아님)
+### Verification (done in code, not by eye in netedit)
 
-- **막다른 램프 0개.** 코리도어에 붙은 모든 램프가 도로망으로 이어진다.
-  OSM 임포트 품질 문제 없음.
-- **8.96–12.58 km 구간이 단일 엣지(3.62 km).** 갈림길이 하나도 없다.
-  Warrigal Rd와 Burke Rd 사이. 실제로 나들목이 없는 구간이며, 데이터
-  결손이 아니다. **자연 발생한 희소성 구간**으로, 균등 합성 데이터가
-  만들어낼 수 없는 구조다.
+- **0 dead-end ramps.** Every ramp attached to the corridor connects onward.
+  No OSM import quality issue.
+- **8.96–12.58 km is a single edge (3.62 km).** No junction at all, between
+  Warrigal Rd and Burke Rd. This is a real interchange-free stretch, not
+  missing data. **A naturally occurring scarcity zone** — a structure uniform
+  synthetic data cannot produce.
 
-### 램프 위치 (100단위 격자 환산) — 핵심 결과
+### Ramp positions (converted to the 100-unit grid) — key result
 
 ```
  5.6 OFF Springvale Rd    43.6 ON  Monash Fwy
@@ -382,108 +577,279 @@ netconvert --osm-files monash-m1.osm \
 37.4 OFF Warrigal Rd      92.1 ON  CityLink
 ```
 
-**합성 데이터는 0–100의 101개 정수 지점에 균등하게 위치를 뿌렸다.
-실제 M1은 진입/진출이 16개 지점에만 존재한다.** 이것이 SUMO 도입으로
-확인된 첫 번째 실질적 차이이며, `NOTES-sumo.md` 앞부분의 "1D 투영이
-숫자 4개만 통과시킨다"는 회의론에 대한 부분적 반례이기도 하다 —
-`entry_point`/`exit_point`의 주변 분포가 실제로 크게 달라진다.
+**The synthetic data spreads positions uniformly over the 101 integer points
+0–100. The real M1 has entry/exit at only 16 points.** This is the first
+substantive difference confirmed by adopting SUMO, and a partial
+counter-example to the scepticism earlier in this file that "the 1D projection
+passes through only four numbers" — the marginal distributions of
+`entry_point`/`exit_point` really do change a lot.
 
-(다만 이것이 ILA–greedy 격차를 벌리는지는 별개 문제로 남아 있다.
-격차는 경합 수준의 함수이고, 경합은 여전히 우리가 정하는 파라미터다.)
+(Whether this widens the ILA–greedy gap remains a separate question. The gap is
+a function of contention, and contention is still a parameter we set.)
 
-### D5 — 단위: 100단위 격자 유지
+### D5 — Units: keep the 100-unit grid
 
-20.53 km / 100 = **1단위 ≈ 205 m**. 따라서 `L_MIN = 10단위 ≈ 2.05 km`
-최소 견인 거리로, 물리적으로 타당하다.
+20.53 km / 100 = **1 unit ≈ 205 m**. So `L_MIN = 10 units ≈ 2.05 km` as the
+minimum towing distance, which is physically reasonable.
 
-미터 단위로 전환하지 않는 이유: 기존 48개 조합과 같은 축을 유지해야
-"합성 곡선 vs SUMO 곡선을 같은 경합 수준에서 겹쳐 그리기"가 성립한다.
-단위를 바꾸면 그 비교가 불가능해진다.
+Why not switch to metres: the existing 48 combinations must stay on the same
+axis for "synthetic curve vs SUMO curve overlaid at equal contention" to be
+meaningful. Changing units makes that comparison impossible.
 
-주의: `ActiveVehicle.entry_point`는 `int`이므로 변환기는 205 m 단위로
-양자화해야 한다. 램프 간격이 1–3 km이므로 양자화 손실은 실질적으로 없다.
+Note: `ActiveVehicle.entry_point` is an `int`, so the converter has to
+quantise to 205 m steps. Ramp spacing is 1–3 km, so quantisation loss is
+negligible in practice.
 
-### 남은 위험
+### Remaining risks
 
-- **Ramp metering.** M1은 램프 신호 제어가 있는 managed motorway인데
-  OSM 임포트는 재현하지 못한다. 1차에서는 무시하되, 진입 패턴의 현실성을
-  논할 때 리뷰어가 짚을 수 있다.
-- **On-ramp 이름 소실.** off-ramp는 이름이 살아 있으나(Blackburn, Warrigal
-  등) on-ramp는 대부분 `Monash Freeway On Ramp`로만 태깅되어 유입 도로를
-  알 수 없다. 위치만 필요한 현 단계에서는 무해하다.
-- **CityLink 유료 구간 포함.** 코리도어 서쪽 끝(75.5단위 이후)이 CityLink다.
-  통행료가 실제 경로 선택에 영향을 주지만 randomTrips는 이를 무시한다.
+- **Ramp metering.** The M1 is a managed motorway with ramp signals, which the
+  OSM import does not reproduce. Ignore in the first iteration, but a reviewer
+  may raise it when the realism of entry patterns is discussed.
+- **On-ramp names lost.** Off-ramps keep their names (Blackburn, Warrigal, …)
+  but most on-ramps are tagged only `Monash Freeway On Ramp`, so the feeder
+  road is unknown. Harmless while only positions are needed.
+- **CityLink toll section included.** The western end of the corridor (beyond
+  75.5 units) is CityLink. Tolls affect real route choice; randomTrips ignores
+  them.
 
-### 다음
+### Next
 
-- [ ] 수요 생성 방식 결정 (여전히 블로커) — Mushfiq 자문 내용 확인
-- [ ] 첫 시나리오 실행 후 D2 선형화 오차 측정
+- [ ] Decide demand generation (still the blocker) — check Mushfiq's advice
+- [ ] Run the first scenario and measure the D2 linearisation error
 
 ---
 
-## 2026-09-04 — MILP 결과가 SUMO 트랙의 질문을 바꿈
+## 2026-09-04 — The MILP results change the SUMO track's question
 
-병렬 세션이 exact solver 결과를 냈다(루트 `NOTES.md`,
-`data/results/milp/`). 이 파일 앞부분의 "go/no-go 도구는 MILP"라는 주장에
-대한 답이 나왔으므로 여기 반영한다. **아래는 MILP 세션의 결과를 읽고
-SUMO 트랙 관점에서 해석한 것이며, 원 분석은 루트 `NOTES.md` 참조.**
+The parallel session produced exact-solver results (root `NOTES.md`,
+`data/results/milp/`). They answer the claim earlier in this file that "the
+go/no-go instrument is the MILP", so they are reflected here. **What follows is
+a reading of the MILP session's results from the SUMO track's point of view;
+the original analysis is in the root `NOTES.md`.**
 
-### 결과 요약 (읽은 내용)
+> *Added 2026-09-17:* the "coin flip" reading below was written on the
+> time-free results only. Time-on results at paper scale (root `NOTES.md`,
+> "Two regimes") later showed the shipped ILA ahead of greedy by +1.3–2.5 pp in
+> all four configurations. The "heuristic vs optimum" question stays valid;
+> "the ILA–greedy gap is not worth measuring" does not.
 
-| | 최적해 대비 평균 |
+### Result summary (as read)
+
+| | mean % of optimum |
 |---|---|
 | greedy | 93.33% |
 | ILA | 93.09% |
 
-ILA 9승 / 8패 / 4무. 동전 던지기이며 평균으로는 근소하게 열세.
-남은 ~7% 중 알고리즘의 표현력 한계로 잃는 것은 0.65%뿐이고, 나머지 ~6%는
-가용한 선택지 중 잘못 고른 결과다.
+ILA 9 wins / 8 losses / 4 ties. A coin flip, marginally behind on average.
+Of the remaining ~7%, only 0.65% is lost to the algorithms' expressiveness
+limit; the other ~6% is choosing badly among available options.
 
-범위: AV 4–15 / PV 8–30, **시간 제약 없는 공간 문제만**. 기존 스윕
-(AV 10–320 / PV 50–800)과 규모가 다르므로 큰 인스턴스로의 일반화는
-아직 근거 없음.
+Scope: AV 4–15 / PV 8–30, **spatial problem without time constraints only**.
+Different scale from the existing sweep (AV 10–320 / PV 50–800), so
+generalisation to large instances is not yet supported.
 
-### 앞부분 표의 두 번째 행에 해당한다
+### This is the second row of the earlier table
 
-이 파일의 "go/no-go 도구는 MILP" 절에서 세운 두 갈래 중, **"천장은 있는데
-ILA가 못 먹고 있다"** 쪽이다. 천장이 낮아서 못 하는 게 아니라 두 휴리스틱이
-모두 평범한 것이다. 관측된 최대 ILA–greedy 격차 1.26 pp에 대해 실제 여지는
-~7 pp이므로, 더 나은 알고리즘이 들어갈 자리는 실재한다.
+Of the two branches set up in this file's "go/no-go instrument is the MILP"
+section, this is **"there is headroom and ILA is not taking it"**. The ceiling
+is not low; both heuristics are mediocre. Against the largest observed
+ILA–greedy gap of 1.26 pp the real headroom is ~7 pp, so there is genuine room
+for a better algorithm.
 
-### SUMO 트랙의 질문이 바뀐다
+### The SUMO track's question changes
 
-앞부분에서 세운 질문:
+The question set earlier:
 
-> ~~경합 수준을 맞췄을 때 SUMO 분포가 ILA–greedy 격차를 키우는가?~~
+> ~~At matched contention, do SUMO distributions widen the ILA–greedy gap?~~
 
-**폐기.** ILA와 greedy가 동전 던지기인 이상, 둘 사이 격차는 측정할 가치가
-있는 양이 아니다. 대체 질문:
+**Dropped.** If ILA and greedy are a coin flip, the gap between them is not a
+quantity worth measuring. Replacement question:
 
-> **현실적인 인스턴스 구조가 최적해 대비 여지(~7%)를 키우는가, 줄이는가?**
+> **Does realistic instance structure increase or decrease the headroom to the
+> optimum (~7%)?**
 
-즉 비교 대상이 "ILA vs greedy"에서 "휴리스틱 vs 최적해"로 이동한다.
-오늘 확인된 M1 구조 — 진입/진출이 101개가 아닌 16개 지점, 8.96–12.58 km의
-선택지 없는 3.62 km 구간 — 이 경합을 키운다면 여지가 커지고, 더 나은
-알고리즘의 가치가 커진다. 이 질문은 SUMO 없이는 답할 수 없고, MILP를
-기준선으로 써야만 답할 수 있다.
+That is, the comparison moves from "ILA vs greedy" to "heuristic vs optimum".
+If the M1 structure confirmed today — entry/exit at 16 points rather than 101,
+a 3.62 km stretch with no choices at 8.96–12.58 km — raises contention, the
+headroom grows and a better algorithm is worth more. This question cannot be
+answered without SUMO, and only with the MILP as the reference.
 
-### D6 — 변환기는 작은 인스턴스를 뽑아낼 수 있어야 한다
+### D6 — The converter must be able to extract small instances
 
-MILP는 AV 15 / PV 30에서 142초, AV 20 / PV 40은 60초 내 최적성 증명 실패.
-SUMO 첨두 1시간 시나리오는 이보다 훨씬 크다.
+The MILP takes 142 s at AV 15 / PV 30 and fails to prove optimality within 60 s
+at AV 20 / PV 40. A one-hour SUMO peak scenario is far larger.
 
-따라서 변환기는 **전체 시나리오를 통째로 내보내는 것 외에, 실제 코리도어에서
-작은 부분 인스턴스(AV ~10 / PV ~25)를 추출할 수 있어야 한다.** 예: 첨두
-1시간을 5분 시간창으로 분할. 이렇게 하면 M1의 실제 구조(16개 램프 지점,
-희소 구간, 차선 수 변화)는 보존되면서 규모만 MILP 사정권으로 내려온다.
+So besides exporting a whole scenario, the converter **must be able to extract
+small sub-instances (AV ~10 / PV ~25) from the real corridor**, e.g. by
+splitting the peak hour into 5-minute windows. That keeps the M1's real
+structure (16 ramp points, the scarcity zone, lane-count changes) while
+bringing the size within MILP reach.
 
-이것이 없으면 위의 새 질문에 답할 수 없다 — 최적해 기준선을 계산할
-방법이 없기 때문이다.
+Without this the new question above cannot be answered — there would be no
+way to compute the optimum baseline.
 
-### 주의
+### Caution
 
-MILP는 `enable_time_constraints=False`인 공간 문제만 다룬다. SUMO 데이터의
-가장 큰 기여 중 하나가 현실적인 시간 분포인데, 그 축에서는 최적해 기준선이
-아직 없다. 시간 제약이 켜진 비교를 하려면 MILP 쪽 확장이 필요하고, 그것은
-비선형(견인이 이후 도착 시각을 바꿈)이라 간단하지 않다. 1차 반복은 공간
-문제로 맞추어 비교 가능성을 확보하는 편이 안전하다.
+The MILP handles only the spatial problem with `enable_time_constraints=False`.
+One of the biggest contributions of SUMO data is a realistic time distribution,
+and on that axis there is no optimum baseline yet. A time-on comparison needs a
+MILP extension, which is non-linear (towing changes later arrival times) and
+not simple. It is safer to align the first iteration on the spatial problem so
+that comparability is secured.
+
+---
+
+## 2026-09-17 — First M1 run, converter, structure measurements (pipeline passes end to end)
+
+Purpose: before the 18 Sep meeting with Eunus, confirm the pipe works all the
+way through and put numbers on the structural differences that hold regardless
+of the demand model. **Demand is a placeholder** (`randomTrips`, uncalibrated).
+The saving figures below are evidence that the pipe works, not results.
+
+### What was built
+
+| File | Role |
+|---|---|
+| `sumo/m1/corridor.py` → `corridor.json` | Reproducible script for the inbound main-line chain + ramp positions (previously computed inline, no file). Output matches D4/D5 exactly: 31 edges, 20.53 km, 16 ramps (ON 8 / OFF 8), identical grid positions |
+| `sumo/m1/make_weights.py` → `inbound.src.xml`, `inbound.dst.xml` | Restricts randomTrips origins/destinations to the 13 + 13 fringe edges on the inbound side (see *Correction* below) |
+| `sumo/m1/trips.xml`, `routes.xml`, `m1.sumocfg`, `tripinfo.xml`, `fcd.xml` | `randomTrips.py -b 0 -e 3600 --period 2 --weights-prefix inbound --seed 42 --validate`; `sumo` runs in ~4 s, all 1800 vehicles arrive. FCD at 10 s intervals (1 s would be hundreds of MB) |
+| `sumo/convert.py` | `load_corridor_trips()` — main-line entry/exit metres from the route, least-squares `x = a + b·t` on FCD samples on the main line → speed b, `entry_time`, residuals. `label()` — AV/PV split (only `random` so far), capacity (2,4), drops trips below L_min, time-unit rescaling option. `summary()` — structure metrics |
+| `sumo/m1/structure.json` | The measurements below |
+| `sumo/ratio_sweep.py` → `sumo/m1/ratio_sweep.csv` | AV:PV ratio sweep 0.2–0.8, greedy vs ILA, time OFF/ON |
+| `sumo/smoke_match.py` → `sumo/m1/smoke_match.json` | Smoke run of greedy / ILA on the converted instance (time OFF/ON, model units vs real seconds) |
+| `analysis/plot_corridor.py` → `analysis/figures/m1_corridor.png` | Corridor schematic: 16 ramps, lane count per edge, the 3.6 km no-junction stretch |
+| `analysis/plot_entry_dist.py` → `analysis/figures/entry_dist_synth_vs_m1.png` | Synthetic (80/400, seed 42) vs M1: entry, exit and trip-length histograms with ramp positions as dashed lines |
+
+### Correction — the 72.1 exit spike in the first run (found by the demand-survey chat)
+
+The first run used `--fringe-factor max` on the whole network. 708 of 1212
+main-line vehicles exited at 72.1 (Toorak). My first explanation ("randomTrips
+picks many fringe edges behind that ramp") was **wrong**: that ramp has one
+sink edge. The real cause, verified here: `m1.net.xml` contains both
+carriageways, half of the 26 fringe sinks are on the outbound side, and
+randomTrips samples destinations uniformly over fringe edges. Trips bound for an
+outbound-side sink leave the inbound main line at the first off-ramp from which
+the router can reach the outbound carriageway — 518 of the 708 vehicles exiting
+at 72.1 continued onto the outbound main line (U-turn trips). Four off-ramps
+can reach outbound (20.9, 37.4, 64.8, 72.1); shortest-path routing concentrates
+them on 72.1.
+
+Fix: `make_weights.py` writes weight files listing only fringe sources that
+reach the inbound chain, and fringe sinks reachable from it, without touching
+the outbound chain; `--weights-prefix inbound` gives every unlisted edge weight
+0. Everything below is from the corrected run. The numbers of the first run
+(OD 43, 28% below L_min, 64.66/64.68% saving) are superseded.
+
+### Structure measurements — hold regardless of the demand model
+
+| | synthetic | M1 inbound |
+|---|---|---|
+| Vehicles using the main line | — | 1800 / 1800 → 1749 fitted (51 had < 2 FCD samples on the main line) |
+| Possible entry points | 101 | **9** (corridor start + 8 ON) |
+| Possible exit points | 101 | **9** (8 OFF + corridor end) |
+| OD pairs actually occurring | thousands | **44** |
+| Trips below L_min = 10 (≈ 2.05 km) | 0 by design | **320 / 1749 = 18%** (adjacent ramps are 0.6 km apart in places) |
+| Speed | 0.8–1.2 (arbitrary) | mean 88 km/h, range 15–120 |
+
+Residual demand artefact: exits are still uniform over sink *edges*, so a ramp
+with two sink edges (Yarra Blvd, 86.8) gets twice the share (493 vehicles).
+Placeholder, not calibrated.
+
+### D2 (constant-speed assumption) error — measured
+
+These are residuals after fitting the best constant speed, so they are a
+**lower bound on the error of any constant-speed model**. FCD sampled at 10 s.
+
+| Trip length | n | median of per-vehicle max residual | share exceeding τ = 5 s |
+|---|---|---|---|
+| < 4 km | 710 | 0.56 s | 0% |
+| 4–10 km | 435 | 2.5 s | 36% |
+| 10–15 km | 322 | 13.9 s | 95% |
+| > 15 km | 282 | 21.9 s | 100% |
+
+Reading: the error accumulates with trip length (lane count 3→6, merges,
+deceleration before exits). **If "τ = 5 s" is read as real seconds, the
+constant-speed model exceeds the tolerance for almost every trip longer than
+10 km on the M1.** So revision item #10 (temporal synchronisation semantics) is
+a model-choice problem, not only a definitions problem. Options: (a) larger τ,
+(b) piecewise speeds, (c) read τ as 5 model time units rather than 5 s — see
+below.
+
+### Time-unit problem (newly surfaced)
+
+The synthetic generator uses speed ≈ 1 grid unit per time unit, τ = 5, entry
+window 100. With 1 grid unit = 205 m and the M1 mean speed, one model time
+unit = **8.43 s**. Hence:
+
+- reading the paper's τ = 5 in **model units** gives **≈ 42 s** of real time
+- reading it as **5 real seconds** roughly halves the saving (see smoke run)
+
+The paper writes "τ = 5 s" but never fixes the physical scale of the grid, so
+both readings are self-consistent. **Decision needed at the meeting.**
+`convert.label(time_unit_s=0)` gives model units (mean speed normalised to 1);
+`time_unit_s=1` gives real seconds.
+
+### Smoke run (AV 286 / PV 1143, ratio 0.25, `av_fraction=0.2 seed=42`, capacity 2–4)
+
+| | time OFF | time ON, τ = 5 model units (≈ 42 s) | time ON, τ = 5 real s |
+|---|---|---|---|
+| greedy | 60.00% (101 s) | 50.43% | 24.10% |
+| ILA | 60.02% (1.6 s) | **51.67% (+1.24 pp)** | 24.16% |
+
+How to read this: (i) the pipe works. (ii) 60% is above the synthetic 25–52%
+range; the instance is 3.6× the paper's 80/400 and demand is uniform over
+inbound-side fringe edges, so this says nothing about realistic saving yet.
+(iii) ILA +1.24 pp with time ON points the same way as "ILA's advantage comes
+from time constraints" in the root `NOTES.md`, but **one sample, placeholder
+demand** — nothing yet. (iv) greedy 46–105 s vs ILA ≈ 2 s — the #3 runtime
+unfairness is unchanged and gets worse with instance size.
+
+### Ratio sweep — first look (`sumo/ratio_sweep.py`, one seed, random labels, placeholder demand)
+
+`--ratios 0.2 0.4 0.6 0.8`, 1429 usable vehicles split so that |AV|/|PV| = ratio,
+capacity 2–4, τ = 5 model units. Output `sumo/m1/ratio_sweep.csv`.
+
+| ratio | AV | PV | time OFF (greedy = ILA) | greedy ON | ILA ON | ILA − greedy | PV distance covered (ILA ON) |
+|---|---|---|---|---|---|---|---|
+| 0.2 | 238 | 1191 | 50.10% | 43.69% | 44.28% | **+0.60** | 53% |
+| 0.4 | 408 | 1021 | 71.23% | 58.96% | 60.82% | **+1.86** | 85% |
+| 0.6 | 536 | 893 | 62.28% | 58.82% | 59.85% | **+1.03** | 96% |
+| 0.8 | 635 | 794 | 55.65% | 54.20% | 54.69% | **+0.49** | 98% |
+
+Reading:
+1. With time constraints OFF the gap is exactly 0.00 at every ratio; it opens
+   only with time ON. Same as the synthetic finding in the root `NOTES.md`.
+2. The gap is an inverted U with its peak at 0.4 here, versus 0.8 on synthetic
+   data. Inference: the last column shows PV coverage already at 96% by ratio
+   0.6 — nothing left to compete for, so the algorithms converge. M1 trips
+   enter at 9 points, so overlap is high and saturation comes earlier.
+3. The paper's saving metric divides by AV + PV distance, so it peaks at 0.4
+   and then falls as the AV share of the denominator grows (PV share of the
+   baseline: 83% → 56%). PV coverage is monotone (53% → 98%). Which metric to
+   report is worth raising at the meeting.
+4. Direction and shape (time-only advantage, inverted U) agree with the
+   synthetic sweep and are somewhat trustworthy; magnitude and peak position
+   are one seed on placeholder demand and are not.
+
+### Verification checklist (other chat or Jay, 10 minutes)
+
+- [ ] `PYTHONPATH=. venv/bin/python sumo/m1/corridor.py` → 31 edges / 20.53 km / 16 ramps, grid positions identical to the D5 table
+- [ ] `PYTHONPATH=. venv/bin/python sumo/m1/make_weights.py` → 13 sources / 13 sinks
+- [ ] `PYTHONPATH=. venv/bin/python sumo/convert.py sumo/m1 --summary` → fitted 1749, OD 44, short 320
+- [ ] Every `label()` output satisfies `entry_point < exit_point`, `0 ≤ … ≤ 100`, `exit − entry ≥ 10`, `speed > 0`
+- [ ] With `time_unit_s=0`, mean speed ≈ 1.00
+- [ ] Re-running `analysis/plot_entry_dist.py` reproduces the figure; no single exit point above ~500
+
+### Decisions needed (promoted to meeting questions)
+
+1. Demand generation — keep the placeholder vs real counts (see the other chat's survey)
+2. AV/PV labelling rule — random fraction / vehicle class / other
+3. **Physical unit of τ** — 5 real seconds vs 5 model units (≈ 42 s); handling of the constant-speed drift on long trips
+4. The 18% below L_min — exclude (current) vs include in the baseline denominator
+
+### Next
+
+- [ ] Implement `label(rule=…)` once the labelling rule is fixed
+- [ ] Ratio sweep 0.2–1.6 (meaningful only after labelling is fixed)
+- [ ] D6: extract MILP-sized instances by splitting into 5-minute windows
+- [ ] Demand: `routeSampler` route depending on the other chat's survey

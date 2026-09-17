@@ -7,3 +7,4 @@ tripinfo.xml
 *.trips.xml
 osm/
 out/
+*.log

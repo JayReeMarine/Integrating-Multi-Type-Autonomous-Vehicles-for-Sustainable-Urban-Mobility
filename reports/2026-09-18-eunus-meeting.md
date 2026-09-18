@@ -22,13 +22,13 @@ the numbers it produces mean anything.
 | constant-speed error vs τ = 5 s | 0 by assumption | 0.6 s for < 4 km trips, **22 s for > 15 km trips** |
 
 Figures: `analysis/figures/m1_corridor.png` (the corridor), `analysis/figures/entry_dist_synth_vs_m1.png` (distributions), `analysis/figures/ratio_m1_vs_synth.png` (ratio sweep, M1 vs synthetic).
-First ratio sweep on M1 (placeholder demand, random AV/PV labels, one seed —
+First ratio sweep on M1 (placeholder demand, random AV/PV labels, 5 seeds —
 a first look, not a result):
 
 | AV:PV | 0.2 | 0.4 | 0.6 | 0.8 |
 |---|---|---|---|---|
 | ILA − greedy, time OFF | 0.00 | 0.00 | 0.00 | 0.00 |
-| ILA − greedy, time ON | +0.60 | **+1.86** | +1.03 | +0.49 |
+| ILA − greedy, time ON (mean ± sd) | +0.77 ± 0.33 | **+1.40 ± 0.40** | +1.08 ± 0.20 | +0.41 ± 0.17 |
 | PV distance covered | 53 % | 85 % | 96 % | 98 % |
 
 Same shape as the synthetic sweep (advantage only with time constraints,
@@ -36,7 +36,7 @@ inverted U), but the peak is at 0.4 rather than 0.8: on the M1, PVs are almost
 all served by ratio 0.6, so there is nothing left to compete for.
 
 ## Decisions I need
-0. **The claim.** SUMO did not widen the ILA–greedy gap: +0.5 to +1.9 pp on M1
+0. **The claim.** SUMO did not widen the ILA–greedy gap: +0.4 to +1.4 pp (5-seed means) on M1
    versus +0.2 to +1.3 pp on synthetic data, and exactly 0 without time
    constraints. Meanwhile both heuristics reach only ~93 % of the exact optimum.
    The 7 % headroom is seven times the ILA–greedy difference. My reading: the

@@ -715,7 +715,7 @@ The saving figures below are evidence that the pipe works, not results.
 | `sumo/m1/trips.xml`, `routes.xml`, `m1.sumocfg`, `tripinfo.xml`, `fcd.xml` | `randomTrips.py -b 0 -e 3600 --period 2 --weights-prefix inbound --seed 42 --validate`; `sumo` runs in ~4 s, all 1800 vehicles arrive. FCD at 10 s intervals (1 s would be hundreds of MB) |
 | `sumo/convert.py` | `load_corridor_trips()` — main-line entry/exit metres from the route, least-squares `x = a + b·t` on FCD samples on the main line → speed b, `entry_time`, residuals. `label()` — AV/PV split (only `random` so far), capacity (2,4), drops trips below L_min, time-unit rescaling option. `summary()` — structure metrics |
 | `sumo/m1/structure.json` | The measurements below |
-| `sumo/ratio_sweep.py` → `sumo/m1/ratio_sweep.csv` | AV:PV ratio sweep 0.2–0.8, greedy vs ILA, time OFF/ON |
+| `sumo/ratio_sweep.py` → `sumo/m1/ratio_sweep.csv` | AV:PV ratio sweep 0.2–0.8 × 5 seeds, greedy vs ILA, time OFF/ON; resumable |
 | `sumo/smoke_match.py` → `sumo/m1/smoke_match.json` | Smoke run of greedy / ILA on the converted instance (time OFF/ON, model units vs real seconds) |
 | `analysis/plot_corridor.py` → `analysis/figures/m1_corridor.png` | Corridor schematic: 16 ramps, lane count per edge, the 3.6 km no-junction stretch |
 | `analysis/plot_entry_dist.py` → `analysis/figures/entry_dist_synth_vs_m1.png` | Synthetic (80/400, seed 42) vs M1: entry, exit and trip-length histograms with ramp positions as dashed lines |
@@ -804,40 +804,41 @@ from time constraints" in the root `NOTES.md`, but **one sample, placeholder
 demand** — nothing yet. (iv) greedy 46–105 s vs ILA ≈ 2 s — the #3 runtime
 unfairness is unchanged and gets worse with instance size.
 
-### Ratio sweep — first look (`sumo/ratio_sweep.py`, one seed, random labels, placeholder demand)
+### Ratio sweep — first look (`sumo/ratio_sweep.py`, 5 seeds of random labels, placeholder demand)
 
-`--ratios 0.2 0.4 0.6 0.8`, 1429 usable vehicles split so that |AV|/|PV| = ratio,
-capacity 2–4, τ = 5 model units. Output `sumo/m1/ratio_sweep.csv`.
+`--ratios 0.2 0.4 0.6 0.8 --seeds 42 7 13 21 99`, 1429 usable vehicles split so
+that |AV|/|PV| = ratio, capacity 2–4, τ = 5 model units. Output
+`sumo/m1/ratio_sweep.csv` (80 rows). The script is resumable.
 
-| ratio | AV | PV | time OFF (greedy = ILA) | greedy ON | ILA ON | ILA − greedy | PV distance covered (ILA ON) |
-|---|---|---|---|---|---|---|---|
-| 0.2 | 238 | 1191 | 50.10% | 43.69% | 44.28% | **+0.60** | 53% |
-| 0.4 | 408 | 1021 | 71.23% | 58.96% | 60.82% | **+1.86** | 85% |
-| 0.6 | 536 | 893 | 62.28% | 58.82% | 59.85% | **+1.03** | 96% |
-| 0.8 | 635 | 794 | 55.65% | 54.20% | 54.69% | **+0.49** | 98% |
+| ratio | AV | PV | ILA − greedy, time OFF | ILA − greedy, time ON (mean ± sd, min…max) | ILA saving, time ON | PV distance covered (seed 42) |
+|---|---|---|---|---|---|---|
+| 0.2 | 238 | 1191 | 0.00 | **+0.77 ± 0.33** (+0.34…+1.10) | 45.1% | 53% |
+| 0.4 | 408 | 1021 | +0.01 | **+1.40 ± 0.40** (+0.79…+1.86) | 61.1% | 85% |
+| 0.6 | 536 | 893 | 0.00 | **+1.08 ± 0.20** (+0.91…+1.42) | 59.5% | 96% |
+| 0.8 | 635 | 794 | 0.00 | **+0.41 ± 0.17** (+0.25…+0.66) | 54.7% | 98% |
 
 Reading:
-1. With time constraints OFF the gap is exactly 0.00 at every ratio; it opens
-   only with time ON. Same as the synthetic finding in the root `NOTES.md`.
-2. The gap is an inverted U with its peak at 0.4 here, versus 0.8 on synthetic
-   data. Inference: the last column shows PV coverage already at 96% by ratio
-   0.6 — nothing left to compete for, so the algorithms converge. M1 trips
-   enter at 9 points, so overlap is high and saturation comes earlier.
+1. With time constraints OFF the gap is 0.00 (±0.01) at every ratio and every
+   seed; it opens only with time ON. Same as the synthetic finding in the root
+   `NOTES.md`.
+2. The gap is an inverted U with its peak at 0.4, versus 0.8 on synthetic
+   data. Inference: PV coverage is already 96% by ratio 0.6 — nothing left to
+   compete for, so the algorithms converge. M1 trips enter at 9 points, so
+   overlap is high and saturation comes earlier.
 3. The paper's saving metric divides by AV + PV distance, so it peaks at 0.4
-   and then falls as the AV share of the denominator grows (PV share of the
-   baseline: 83% → 56%). PV coverage is monotone (53% → 98%). Which metric to
-   report is worth raising at the meeting.
+   and then falls as the AV share of the denominator grows. PV coverage is
+   monotone (53% → 98%). Which metric to report is worth raising.
+
 Figure: `analysis/plot_ratio_m1_vs_synth.py` → `analysis/figures/ratio_m1_vs_synth.png`
-(M1 overlaid on the stored synthetic pv_av sweep). Against synthetic cells of
-comparable size: M1 gap is larger at 0.2 (+0.60 vs +0.17–0.40) and 0.4 (+1.86
-vs +1.12–1.25), smaller at 0.8 (+0.49 vs +1.26). Saving level is 10–15 pp higher
-on M1 at every ratio (concentrated entries → more overlap). Same algorithms;
-nothing was "improved" — only the instance distribution changed. Synthetic cells
-at the same ratio already differ by up to 1.25 pp among themselves, so one M1
-seed cannot confirm or refute Revision Plan item #2; it is consistent with it.
-4. Direction and shape (time-only advantage, inverted U) agree with the
-   synthetic sweep and are somewhat trustworthy; magnitude and peak position
-   are one seed on placeholder demand and are not.
+(M1 mean ± sd overlaid on the stored synthetic pv_av sweep). Against synthetic
+cells of comparable size: M1 is larger at 0.2 (+0.77 vs +0.17–0.40) and 0.4
+(+1.40 vs +1.12–1.25), smaller at 0.8 (+0.41 vs +1.26). Saving level is 10–15 pp
+higher on M1 at every ratio (concentrated entries → more overlap). Same
+algorithms; nothing was "improved" — only the instance distribution changed.
+The seed-to-seed spread (sd 0.2–0.4 pp) is of the same order as the
+difference from synthetic, so 5 seeds on placeholder demand neither confirm nor
+refute Revision Plan item #2; they are consistent with it. Direction and shape
+(time-only advantage, inverted U) are robust across all 5 seeds.
 
 ### Verification checklist (other chat or Jay, 10 minutes)
 

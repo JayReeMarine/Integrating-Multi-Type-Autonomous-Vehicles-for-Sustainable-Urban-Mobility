@@ -1,0 +1,861 @@
+{
+ "120": {
+  "window_s": 120,
+  "n_windows": 30,
+  "vehicles": {
+   "median": 58.0,
+   "min": 50,
+   "max": 67
+  },
+  "usable": {
+   "median": 47.5,
+   "min": 38,
+   "max": 61
+  },
+  "od_pairs": {
+   "median": 24.0,
+   "min": 20,
+   "max": 27
+  },
+  "entries_median": 8.0,
+  "exits_median": 7.0,
+  "windows_supporting": {
+   "0.01": 0,
+   "0.02": 5,
+   "0.05": 30,
+   "0.1": 30,
+   "0.2": 30
+  },
+  "rows": [
+   {
+    "t0": 22.875774780811867,
+    "n": 61,
+    "usable": 50,
+    "od_pairs": 25,
+    "entries": 8,
+    "exits": 7,
+    "ratios_ok": [
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 142.87577478081187,
+    "n": 58,
+    "usable": 41,
+    "od_pairs": 24,
+    "entries": 8,
+    "exits": 7,
+    "ratios_ok": [
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 262.87577478081187,
+    "n": 57,
+    "usable": 47,
+    "od_pairs": 24,
+    "entries": 8,
+    "exits": 7,
+    "ratios_ok": [
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 382.87577478081187,
+    "n": 58,
+    "usable": 44,
+    "od_pairs": 23,
+    "entries": 8,
+    "exits": 6,
+    "ratios_ok": [
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 502.87577478081187,
+    "n": 60,
+    "usable": 44,
+    "od_pairs": 24,
+    "entries": 7,
+    "exits": 7,
+    "ratios_ok": [
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 622.8757747808119,
+    "n": 52,
+    "usable": 41,
+    "od_pairs": 20,
+    "entries": 6,
+    "exits": 7,
+    "ratios_ok": [
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 742.8757747808119,
+    "n": 65,
+    "usable": 61,
+    "od_pairs": 24,
+    "entries": 8,
+    "exits": 7,
+    "ratios_ok": [
+     0.02,
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 862.8757747808119,
+    "n": 59,
+    "usable": 50,
+    "od_pairs": 24,
+    "entries": 8,
+    "exits": 8,
+    "ratios_ok": [
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 982.8757747808119,
+    "n": 53,
+    "usable": 42,
+    "od_pairs": 24,
+    "entries": 8,
+    "exits": 8,
+    "ratios_ok": [
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 1102.8757747808118,
+    "n": 64,
+    "usable": 53,
+    "od_pairs": 24,
+    "entries": 8,
+    "exits": 8,
+    "ratios_ok": [
+     0.02,
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 1222.8757747808118,
+    "n": 51,
+    "usable": 43,
+    "od_pairs": 25,
+    "entries": 8,
+    "exits": 7,
+    "ratios_ok": [
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 1342.8757747808118,
+    "n": 58,
+    "usable": 47,
+    "od_pairs": 27,
+    "entries": 8,
+    "exits": 7,
+    "ratios_ok": [
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 1462.8757747808118,
+    "n": 61,
+    "usable": 47,
+    "od_pairs": 25,
+    "entries": 8,
+    "exits": 7,
+    "ratios_ok": [
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 1582.8757747808118,
+    "n": 58,
+    "usable": 50,
+    "od_pairs": 24,
+    "entries": 8,
+    "exits": 8,
+    "ratios_ok": [
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 1702.8757747808118,
+    "n": 54,
+    "usable": 45,
+    "od_pairs": 25,
+    "entries": 8,
+    "exits": 7,
+    "ratios_ok": [
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 1822.8757747808118,
+    "n": 60,
+    "usable": 45,
+    "od_pairs": 25,
+    "entries": 8,
+    "exits": 8,
+    "ratios_ok": [
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 1942.8757747808118,
+    "n": 67,
+    "usable": 53,
+    "od_pairs": 26,
+    "entries": 8,
+    "exits": 8,
+    "ratios_ok": [
+     0.02,
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 2062.8757747808118,
+    "n": 50,
+    "usable": 38,
+    "od_pairs": 23,
+    "entries": 7,
+    "exits": 8,
+    "ratios_ok": [
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 2182.8757747808118,
+    "n": 62,
+    "usable": 48,
+    "od_pairs": 27,
+    "entries": 8,
+    "exits": 8,
+    "ratios_ok": [
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 2302.8757747808118,
+    "n": 56,
+    "usable": 48,
+    "od_pairs": 22,
+    "entries": 8,
+    "exits": 7,
+    "ratios_ok": [
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 2422.8757747808118,
+    "n": 60,
+    "usable": 50,
+    "od_pairs": 26,
+    "entries": 8,
+    "exits": 7,
+    "ratios_ok": [
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 2542.8757747808118,
+    "n": 60,
+    "usable": 48,
+    "od_pairs": 23,
+    "entries": 8,
+    "exits": 7,
+    "ratios_ok": [
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 2662.8757747808118,
+    "n": 58,
+    "usable": 48,
+    "od_pairs": 25,
+    "entries": 7,
+    "exits": 7,
+    "ratios_ok": [
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 2782.8757747808118,
+    "n": 53,
+    "usable": 46,
+    "od_pairs": 23,
+    "entries": 6,
+    "exits": 7,
+    "ratios_ok": [
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 2902.8757747808118,
+    "n": 62,
+    "usable": 49,
+    "od_pairs": 23,
+    "entries": 8,
+    "exits": 7,
+    "ratios_ok": [
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 3022.8757747808118,
+    "n": 58,
+    "usable": 48,
+    "od_pairs": 23,
+    "entries": 7,
+    "exits": 7,
+    "ratios_ok": [
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 3142.8757747808118,
+    "n": 52,
+    "usable": 45,
+    "od_pairs": 25,
+    "entries": 8,
+    "exits": 8,
+    "ratios_ok": [
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 3262.8757747808118,
+    "n": 63,
+    "usable": 57,
+    "od_pairs": 26,
+    "entries": 8,
+    "exits": 8,
+    "ratios_ok": [
+     0.02,
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 3382.8757747808118,
+    "n": 62,
+    "usable": 51,
+    "od_pairs": 25,
+    "entries": 7,
+    "exits": 8,
+    "ratios_ok": [
+     0.02,
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 3502.8757747808118,
+    "n": 52,
+    "usable": 45,
+    "od_pairs": 26,
+    "entries": 8,
+    "exits": 7,
+    "ratios_ok": [
+     0.05,
+     0.1,
+     0.2
+    ]
+   }
+  ],
+  "milp_sizes": [
+   {
+    "ratio": 0.02,
+    "av": 1,
+    "pv": 50,
+    "median_binaries": 865.5,
+    "n_windows": 6
+   },
+   {
+    "ratio": 0.05,
+    "av": 2,
+    "pv": 40,
+    "median_binaries": 1567.0,
+    "n_windows": 30
+   },
+   {
+    "ratio": 0.1,
+    "av": 4,
+    "pv": 40,
+    "median_binaries": 2982.0,
+    "n_windows": 30
+   },
+   {
+    "ratio": 0.2,
+    "av": 7,
+    "pv": 35,
+    "median_binaries": 5836.5,
+    "n_windows": 30
+   }
+  ]
+ },
+ "300": {
+  "window_s": 300,
+  "n_windows": 12,
+  "vehicles": {
+   "median": 145.0,
+   "min": 138,
+   "max": 151
+  },
+  "usable": {
+   "median": 119.5,
+   "min": 111,
+   "max": 126
+  },
+  "od_pairs": {
+   "median": 33.0,
+   "min": 31,
+   "max": 34
+  },
+  "entries_median": 8.0,
+  "exits_median": 8.0,
+  "windows_supporting": {
+   "0.01": 12,
+   "0.02": 12,
+   "0.05": 12,
+   "0.1": 12,
+   "0.2": 12
+  },
+  "rows": [
+   {
+    "t0": 22.875774780811867,
+    "n": 143,
+    "usable": 112,
+    "od_pairs": 33,
+    "entries": 8,
+    "exits": 8,
+    "ratios_ok": [
+     0.01,
+     0.02,
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 322.87577478081187,
+    "n": 151,
+    "usable": 114,
+    "od_pairs": 34,
+    "entries": 8,
+    "exits": 7,
+    "ratios_ok": [
+     0.01,
+     0.02,
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 622.8757747808119,
+    "n": 145,
+    "usable": 126,
+    "od_pairs": 33,
+    "entries": 8,
+    "exits": 8,
+    "ratios_ok": [
+     0.01,
+     0.02,
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 922.8757747808119,
+    "n": 148,
+    "usable": 121,
+    "od_pairs": 31,
+    "entries": 8,
+    "exits": 8,
+    "ratios_ok": [
+     0.01,
+     0.02,
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 1222.8757747808118,
+    "n": 138,
+    "usable": 111,
+    "od_pairs": 33,
+    "entries": 8,
+    "exits": 7,
+    "ratios_ok": [
+     0.01,
+     0.02,
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 1522.8757747808118,
+    "n": 144,
+    "usable": 121,
+    "od_pairs": 32,
+    "entries": 8,
+    "exits": 8,
+    "ratios_ok": [
+     0.01,
+     0.02,
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 1822.8757747808118,
+    "n": 149,
+    "usable": 117,
+    "od_pairs": 32,
+    "entries": 8,
+    "exits": 8,
+    "ratios_ok": [
+     0.01,
+     0.02,
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 2122.8757747808118,
+    "n": 146,
+    "usable": 115,
+    "od_pairs": 33,
+    "entries": 8,
+    "exits": 8,
+    "ratios_ok": [
+     0.01,
+     0.02,
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 2422.8757747808118,
+    "n": 145,
+    "usable": 118,
+    "od_pairs": 33,
+    "entries": 8,
+    "exits": 8,
+    "ratios_ok": [
+     0.01,
+     0.02,
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 2722.8757747808118,
+    "n": 148,
+    "usable": 123,
+    "od_pairs": 31,
+    "entries": 8,
+    "exits": 7,
+    "ratios_ok": [
+     0.01,
+     0.02,
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 3022.8757747808118,
+    "n": 142,
+    "usable": 122,
+    "od_pairs": 34,
+    "entries": 8,
+    "exits": 8,
+    "ratios_ok": [
+     0.01,
+     0.02,
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 3322.8757747808118,
+    "n": 145,
+    "usable": 124,
+    "od_pairs": 34,
+    "entries": 8,
+    "exits": 8,
+    "ratios_ok": [
+     0.01,
+     0.02,
+     0.05,
+     0.1,
+     0.2
+    ]
+   }
+  ],
+  "milp_sizes": [
+   {
+    "ratio": 0.01,
+    "av": 1,
+    "pv": 100,
+    "median_binaries": 2403.0,
+    "n_windows": 12
+   },
+   {
+    "ratio": 0.02,
+    "av": 2,
+    "pv": 100,
+    "median_binaries": 4413.0,
+    "n_windows": 12
+   },
+   {
+    "ratio": 0.05,
+    "av": 5,
+    "pv": 100,
+    "median_binaries": 10459.0,
+    "n_windows": 12
+   },
+   {
+    "ratio": 0.1,
+    "av": 10,
+    "pv": 100,
+    "median_binaries": 23340.0,
+    "n_windows": 12
+   },
+   {
+    "ratio": 0.2,
+    "av": 19,
+    "pv": 95,
+    "median_binaries": 39685.5,
+    "n_windows": 12
+   }
+  ]
+ },
+ "600": {
+  "window_s": 600,
+  "n_windows": 6,
+  "vehicles": {
+   "median": 293.0,
+   "min": 282,
+   "max": 295
+  },
+  "usable": {
+   "median": 236.5,
+   "min": 226,
+   "max": 247
+  },
+  "od_pairs": {
+   "median": 35.0,
+   "min": 34,
+   "max": 35
+  },
+  "entries_median": 8.0,
+  "exits_median": 8.0,
+  "windows_supporting": {
+   "0.01": 6,
+   "0.02": 6,
+   "0.05": 6,
+   "0.1": 6,
+   "0.2": 6
+  },
+  "rows": [
+   {
+    "t0": 22.875774780811867,
+    "n": 294,
+    "usable": 226,
+    "od_pairs": 35,
+    "entries": 8,
+    "exits": 8,
+    "ratios_ok": [
+     0.01,
+     0.02,
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 622.8757747808119,
+    "n": 293,
+    "usable": 247,
+    "od_pairs": 35,
+    "entries": 8,
+    "exits": 8,
+    "ratios_ok": [
+     0.01,
+     0.02,
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 1222.8757747808118,
+    "n": 282,
+    "usable": 232,
+    "od_pairs": 34,
+    "entries": 8,
+    "exits": 8,
+    "ratios_ok": [
+     0.01,
+     0.02,
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 1822.8757747808118,
+    "n": 295,
+    "usable": 232,
+    "od_pairs": 34,
+    "entries": 8,
+    "exits": 8,
+    "ratios_ok": [
+     0.01,
+     0.02,
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 2422.8757747808118,
+    "n": 293,
+    "usable": 241,
+    "od_pairs": 35,
+    "entries": 8,
+    "exits": 8,
+    "ratios_ok": [
+     0.01,
+     0.02,
+     0.05,
+     0.1,
+     0.2
+    ]
+   },
+   {
+    "t0": 3022.8757747808118,
+    "n": 287,
+    "usable": 246,
+    "od_pairs": 35,
+    "entries": 8,
+    "exits": 8,
+    "ratios_ok": [
+     0.01,
+     0.02,
+     0.05,
+     0.1,
+     0.2
+    ]
+   }
+  ],
+  "milp_sizes": [
+   {
+    "ratio": 0.01,
+    "av": 2,
+    "pv": 200,
+    "median_binaries": 9831.5,
+    "n_windows": 6
+   },
+   {
+    "ratio": 0.02,
+    "av": 4,
+    "pv": 200,
+    "median_binaries": 18765.0,
+    "n_windows": 6
+   },
+   {
+    "ratio": 0.05,
+    "av": 10,
+    "pv": 200,
+    "median_binaries": 35646.0,
+    "n_windows": 6
+   },
+   {
+    "ratio": 0.1,
+    "av": 20,
+    "pv": 200,
+    "median_binaries": 86224.5,
+    "n_windows": 6
+   },
+   {
+    "ratio": 0.2,
+    "av": 38,
+    "pv": 190,
+    "median_binaries": 156561.5,
+    "n_windows": 6
+   }
+  ]
+ }
+}

@@ -862,3 +862,146 @@ refute Revision Plan item #2; they are consistent with it. Direction and shape
 - [ ] Ratio sweep 0.2–1.6 (meaningful only after labelling is fixed)
 - [ ] D6: extract MILP-sized instances by splitting into 5-minute windows
 - [ ] Demand: `routeSampler` route depending on the other chat's survey
+
+## 2026-10-01 — Sub-instance extraction (D6) for the ILA-vs-optimum measurement
+
+Context: at the 18 Sep meeting Eunus redefined the question — greedy is dropped
+as a baseline, and what matters is how close ILA gets to the exact MILP optimum,
+especially when AVs are scarce (AV:PV = 1, 2, 5, 10, 20%). The other session is
+measuring that on synthetic uniform data. This section makes the same
+measurement possible on the real M1 corridor, which needs D6: instances small
+enough for the MILP while keeping the real ramp geometry.
+
+**Demand is still the `randomTrips` placeholder, uncalibrated** (see the
+2026-09-17 section and the "Open question" section). Everything below is about
+instance *size and structure*; none of it makes the demand realistic.
+
+### What was added — `sumo/convert.py`
+
+| Function | Role |
+|---|---|
+| `usable_trips(corr, trips)` | the `l_min` filter on its own, so callers can count a pool before building an instance |
+| `auto_time_unit(corr, trips)` | seconds per model time unit from the **whole** scenario |
+| `window_trips(trips, t0, W)` | trips whose fitted main-line entry time is in `[t0, t0+W)` |
+| `iter_windows(trips, W)` | consecutive windows across the run |
+| `resolve_counts(n_pool, ratio=…, n_av=…, n_pv=…)` | decides `(n_av, n_pv)`; raises `InstanceTooSmall` naming the pool size needed |
+| `extract_instance(corr, trips, t0=…, window_s=…, ratio=…)` | one instance, returns the same `(avs, pvs, l_min, info)` shape as `label()` |
+| `window_stats(corr, trips, W)` | the per-window table below |
+
+CLI: `PYTHONPATH=. venv/bin/python sumo/convert.py sumo/m1 --windows 120 300 600`
+(`--windows-json` to save). Report saved at `sumo/m1/window_report.json`.
+
+`ratio` means `|AV| / |PV|`, so `ratio=0.02` is 2 AV per 100 PV. With `ratio`
+alone and `exact_ratio=True` (default) the function takes the largest instance
+that hits the ratio and discards the remainder of the window; `exact_ratio=False`
+splits the whole pool instead, which uses every vehicle but drifts badly at
+small ratios (pool 150 at 1% gives 1 AV / 149 PV = 0.67%, not 1%).
+
+### Two traps that are handled, and why
+
+**One time unit for all windows.** `label(time_unit_s=0)` derives the unit from
+the mean speed of whatever list it is given. Per-window auto-scaling would give
+each window a different second-per-unit, so `τ = 5` would mean a different
+number of real seconds in each one and windows would not be comparable. Compute
+`auto_time_unit()` once on the full trip list and pass it to every window.
+*(Verified: 8.430 s/unit on the full 1749 fitted trips, matching the 8.43 s in
+the 2026-09-17 section.)*
+
+**Time rebasing is safe.** `extract_instance` subtracts `t0` by default.
+Matching only ever compares time *differences* —
+`hungarian_multi.get_overlap_with_av` tests `abs(pv_time - av_time)` against the
+tolerance and nothing tests an absolute time. *(Verified empirically: ILA with
+time ON, τ = 5, gives byte-identical savings with and without rebasing on three
+window/offset combinations — 1201.0, 2490.0, 227.0.)*
+
+### Verification (verified facts)
+
+- **186 instances** built across W ∈ {120, 300, 600} s × all t0 in the hour ×
+  ratio ∈ {1, 2, 5, 10, 20%}: every vehicle has integer `entry_point` /
+  `exit_point` in 0..100, `entry < exit`, `exit − entry ≥ l_min = 10`,
+  `speed > 0`, `capacity > 0`; realised ratio within 5% of requested. **0
+  failures.**
+- Accepted unchanged by both consumers: `milp.exact.build()` and
+  `core.hungarian_multi.hungarian_multi_av_matching()`. **`solve()` was never
+  called — the MILP runs belong to the other session.** `build()` was used only
+  to count binaries.
+- `resolve_counts` error text, e.g. `ratio 0.01 needs at least 101 usable trips
+  (1 AV + 100 PV), pool has 50`.
+
+### Per-window structure, 1 h run, 1749 fitted / 1429 usable trips
+
+Full-hour reference (2026-09-17): 9 entry points, 9 exit points, 44 OD pairs.
+
+| window | windows | vehicles (median, min–max) | usable ≥ L_min | OD pairs | entry/exit pts |
+|---|---|---|---|---|---|
+| 2 min | 30 | 58 (50–67) | 48 (38–61) | 24 (20–27) | 8 / 7 |
+| 5 min | 12 | 145 (138–151) | 120 (111–126) | 33 (31–34) | 8 / 8 |
+| 10 min | 6 | 293 (282–295) | 236 (226–247) | 35 (34–35) | 8 / 8 |
+
+Reachable ratios, and MILP problem size (`build()` binary count, median over
+windows):
+
+| window | 1% | 2% | 5% | 10% | 20% |
+|---|---|---|---|---|---|
+| **2 min** | **0/30 windows** | 5/30 — AV 1 / PV 50, 866 | 30/30 — AV 2 / PV 40, 1 567 | 30/30 — AV 4 / PV 40, 2 982 | 30/30 — AV 7 / PV 35, 5 836 |
+| **5 min** | 12/12 — AV 1 / PV 100, **2 403** | 12/12 — AV 2 / PV 100, **4 413** | 12/12 — AV 5 / PV 100, **10 459** | 12/12 — AV 10 / PV 100, 23 340 | 12/12 — AV 19 / PV 95, 39 686 |
+| **10 min** | 6/6 — AV 2 / PV 200, 9 832 | 6/6 — AV 4 / PV 200, 18 765 | 6/6 — AV 10 / PV 200, 35 646 | 6/6 — AV 20 / PV 200, 86 224 | 6/6 — AV 38 / PV 190, 156 562 |
+
+### Reading — **5 minutes is the window to use** (inference)
+
+- 2 min **cannot reach 1% at all** (needs 101 usable trips; median pool is 48)
+  and reaches 2% in only 5 of 30 windows. The scarce-AV end is exactly what
+  Eunus asked about, so 2 min is ruled out.
+- 5 min reaches **all five ratios in all twelve windows**, and keeps 33 of the
+  44 OD pairs and 8 of 9 entry/exit points.
+- 10 min reaches every ratio too but is 3–4× larger in binaries at the same
+  ratio, for no extra structure (35 vs 33 OD pairs).
+
+Against the MILP's known reference point (root `NOTES.md`: AV 15 / PV 30 ≈
+10 500 binaries, proven optimal in 142 s; AV 20 / PV 40 unproven in 60 s), the
+5-minute column suggests:
+
+- 1% and 2% (2.4 k / 4.4 k binaries) sit well below that point;
+- 5% (10.5 k) sits essentially *at* it;
+- 10% and 20% (23 k / 40 k) sit above it and may not prove optimal.
+
+**The scarce-AV end — the regime the new question is about — is the tractable
+end.** Convenient, but note that binary count is a *proxy*: solve time is not
+monotone in problem size, and these counts come from `build()`, not from
+timing a solve. The other session should time one 5-minute instance per ratio
+before committing to a sweep, and fall back to `ExactResult.upper_bound` (the
+LP bound) where optimality cannot be proven.
+
+### Caveat that affects interpretation (verified measurement, inference on impact)
+
+A window selects vehicles that **enter** the corridor in `[t0, t0+W)`. It is
+not a snapshot of traffic present during those minutes, because a corridor trip
+takes far longer than a window: median 343 s, p90 692 s, max 1078 s.
+
+| window | entering (median) | actually present at some point (median) | ratio |
+|---|---|---|---|
+| 2 min | 47 | 194 | 4.1× |
+| 5 min | 118 | 267 | 2.3× |
+| 10 min | 238 | 384 | 1.6× |
+
+So a 5-minute sub-instance is a *thinned sample* of the hour's demand restricted
+to a 5-minute entry band — roughly 2.3× fewer candidate partners than a vehicle
+would really have — not a faithful 5-minute slice of M1 traffic. Consequences
+(inference): contention is understated relative to the real corridor, and
+vehicles entering near a window edge lose partners that entered just outside it.
+Both push measured headroom in the same direction for ILA and for the optimum,
+so the *comparison* should survive; the absolute saving level should not be
+quoted from sub-instances. If this matters, the honest alternatives are to
+report the window length alongside every number, or to select co-present
+vehicles instead of entering ones — which gives up size control, since the
+present-count barely falls as the window shrinks.
+
+### Next
+
+- [ ] Other session: time one 5-minute instance per ratio before sweeping; use
+      the LP bound where the MILP does not prove optimality
+- [ ] Decide whether to report ILA/optimum per window and aggregate, or to pool
+      windows; 12 windows × 5 ratios × seeds is the natural sweep shape
+- [ ] Re-run all of this once demand is calibrated (option (ii) in the "Open
+      question" section) — the window *sizes* will change with the demand
+      profile even though the extraction code will not

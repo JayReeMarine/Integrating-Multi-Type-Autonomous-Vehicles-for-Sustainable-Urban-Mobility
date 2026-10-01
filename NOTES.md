@@ -395,3 +395,275 @@ of when coordination pays.
       regression oracle (item #3). Expect ILA's current runtime advantage to
       disappear, since it comes from SciPy's compiled LSAP rather than from the
       algorithm.
+
+---
+
+## 2026-10-01 — ILA against the exact optimum across the AV:PV ratio
+
+Eunus, 18 Sep: drop greedy as the headline baseline; the paper's question is how
+close the scalable heuristic (ILA) gets to the exact optimum, and specifically
+whether the gap widens when AVs are scarce (AV:PV = 1, 2, 5, 10, 20 %) because
+"if you give one PV the chance, maybe you lose another that would go the longer
+distance".
+
+**Scope.** `milp.exact` covers the spatial problem only
+(`enable_time_constraints=False`); there is still no optimum baseline on the
+temporal axis, which is where ILA's advantage over greedy lives. Everything
+below is the spatial problem.
+
+### What was run
+
+| script | instances |
+|---|---|
+| `milp/probe_lowratio.py` | tractability probe |
+| `milp/lowratio_sweep.py` | synthetic uniform, PV = 50 and PV = 100, ratios 1–20 %, 10 seeds each (plus 40 % at PV = 50) |
+| `milp/m1_lowratio.py` | M1 inbound corridor, 5-minute windows from `sumo/convert.py` D6, 12 windows per ratio, ratios 1–20 % |
+
+Outputs: `data/results/milp/lowratio_50.csv`, `lowratio_100.csv`,
+`m1_lowratio_300.csv`. Figures: `analysis/plot_lowratio.py` →
+`analysis/figures/ila_vs_optimum_by_ratio.png`, `analysis/plot_saturation.py` →
+`analysis/figures/av_saturation.png`.
+
+**Tractability was the opposite of what was expected.** Low ratios are *cheap*:
+the MILP has one binary per (AV, PV, unit interval), so few AVs means few
+binaries. PV 200 at 1 % proves optimal in 1.4 s, where the September work
+could not get past AV 15 / PV 30. The expensive end is 20 % and above, where
+some instances hit the 900 s limit and are recorded against the LP bound
+(so their ILA % is a lower bound). One row (PV 100, ratio 20 %, seed 46) had
+the LP relaxation itself time out, giving `optimum = inf`; it is dropped in
+analysis.
+
+### Result — the gap does **not** widen when AVs are scarce; it narrows
+
+ILA as % of the exact optimum, proven-optimal instances only:
+
+| AV:PV | synthetic PV = 50 | synthetic PV = 100 | M1 5-min windows |
+|---|---|---|---|
+| 1 % | 98.7 % (8/10 exactly optimal) | 99.2 % (8/10) | **100.00 % (12/12)** |
+| 2 % | 98.7 % (8/10) | 99.5 % (8/10) | 99.7 % (11/12) |
+| 5 % | 98.8 % (7/10) | 99.4 % (7/10) | 99.7 % (11/12) |
+| 10 % | 98.0 % (5/10) | 99.1 % (4/10) | 99.4 % |
+| 20 % | 95.9 % (1/10) | 96.8 % | — (LP bound) |
+| 40 % | 96.4 % (n = 1) | — | — |
+
+For reference, the September instances (AV 15 / PV 30, ratio ≈ 50 %) gave 93 %.
+The three data sets agree, and the real corridor is the most extreme: at 1 % ILA
+is exactly optimal in every one of the twelve windows.
+
+So Eunus's hypothesis is not supported. Contention in the sense of "many PVs per
+AV" does not hurt the heuristic.
+
+### Correction to a first explanation
+
+The first reading recorded in chat — "at low ratios the AVs saturate, so the
+optimum has no freedom either" — is **wrong**. Measured: the optimum fills
+99–100 % of the AV capacity-distance at *every* ratio from 1 % to 40 %.
+Saturation does not vary with the ratio.
+
+Towed distance *is* capacity-distance used, so "% of optimum" is exactly "how
+well the AVs were packed". Splitting the two:
+
+| AV:PV | optimum fills | ILA fills (PV = 100) |
+|---|---|---|
+| 1 % | 100.0 % | 99.2 % |
+| 5 % | 100.0 % | 99.4 % |
+| 10 % | 100.0 % | 99.1 % |
+| 20 % | 100.0 % | 97.6 % |
+
+**The AV fleet is the binding resource at every ratio; the optimum always keeps
+it essentially full. The gap is entirely ILA's packing.** With one or two AVs
+there is nothing to coordinate — tow the longest overlap available. With ten or
+twenty AVs, which PV goes to which AV becomes combinatorial, and ILA's
+discard-on-conflict step loses value it cannot recover.
+
+### What this means for the paper
+
+1. **Where the heuristic matters is where AVs are plentiful.** The headroom
+   grows with the ratio: ~0.5 pp at 1–5 %, ~2.4 pp at 20 %, ~3.6 pp at 40 %,
+   7 pp at ≈ 50 %.
+2. **The amount of energy at stake grows the same way.** The optimum tows 2 %
+   of total PV distance at ratio 1 %, 14 % at 5 %, 42–44 % at 20 %, 60 % at
+   40 %. Both the prize and the difficulty increase with the ratio.
+3. **So "what is a realistic AV:PV ratio" now directly decides the paper's
+   contribution.** If the realistic regime is 1–5 %, ILA is already optimal and
+   there is no algorithmic contribution to make — the paper has to stand on the
+   problem, the exact benchmark and the realistic evaluation. If it is 20 % or
+   more, the 2–7 pp headroom is real and a better packing step is worth
+   building. This is the question to put to Eunus and Aamir.
+4. **ILA's measured weakness is packing, not expressiveness** — consistent with
+   the September finding that restricting the model to algorithm-reachable
+   segments costs only 0.65 %. A refinement step should target reassignment
+   among AVs, not segment shape.
+
+### Caveats
+
+- Spatial problem only; no optimum baseline exists with time constraints on.
+- M1 demand is still the `randomTrips` placeholder (`sumo/NOTES-sumo.md`).
+- M1 sub-instances are a thinned sample of the hour restricted to a 5-minute
+  entry band (~2.3× fewer candidate partners than reality); the comparison
+  should survive this but absolute saving levels should not be quoted from them.
+- 20 % rows partly rest on the LP bound, which understates ILA's true ratio.
+
+### Next
+
+- [ ] Put the ratio question to Eunus and Aamir with these figures
+- [ ] If the high-ratio regime is the one that matters: prototype a reassignment
+      /local-search step after ILA and score it on these same instances
+- [ ] Extend the high-ratio synthetic sweep (40 %, 60 %, 100 %) beyond one seed
+- [ ] A temporal optimum baseline remains the open methodological gap
+
+---
+
+## 2026-10-01 (later) — A refinement step that recovers the gap
+
+Having measured *where* ILA loses (above), the obvious next question is whether
+it can be fixed. It can, and the route to the fix came from two measurements
+rather than from guessing.
+
+### Diagnosis: the lost capacity is unreachable, not unused
+
+For AV 10 / PV 50 seed 43 (ILA at 92.2 % of the optimum):
+
+| | ILA | optimum |
+|---|---|---|
+| towing segments | 21 | **53** |
+| mean segment length | 36.0 | **15.5** |
+| PVs served | 21 | **37** |
+| segments strictly inside the pair's maximal overlap | 0 by construction | 43 of 53 |
+
+ILA leaves 9.8 % of the AV capacity-distance idle, but **every idle run is
+shorter than `L_min = 10`** (longest observed: 8). Nothing can be inserted into
+it. ILA always commits the whole residual overlap, so it fills the AVs with a
+few long tows; the optimum cuts tows short and hands the capacity to other PVs.
+
+This also explains why the first refinement attempt did nothing. A pass that
+only inserts, extends and single-ejects gained 5 units on one instance and 0 on
+others, finishing in 0.00 s — by construction it cannot find anything, because
+ILA stops exactly when no insertable segment remains.
+
+### The fix: ruin and recreate, with a *randomised* rebuild
+
+`core/refine.py::refine_ils`. Each iteration removes every segment that an
+AV subset holds inside a random road window, rebuilds greedily, and keeps the
+result only if the total improved.
+
+The rebuild rule is what matters. Inserting the longest feasible run first
+reproduces ILA's own bias and gains almost nothing. Sampling a run with
+probability proportional to its length (`alpha = 1`) finds the
+many-short-segments structure the optimum uses:
+
+| AV 10 / PV 50, seed 43 | % of optimum |
+|---|---|
+| ILA | 92.20 |
+| + rebuild longest-first (`alpha = inf`) | 92.93 |
+| + rebuild sampled, `alpha = 2` | 98.41 |
+| + rebuild sampled, **`alpha = 1`** | **98.90** |
+| + rebuild uniform (`alpha = 0`) | 98.17 |
+
+Rebuilt segments may be partial (a run is limited by capacity and by what the PV
+already has), which is the degree of freedom ILA never uses.
+
+### Result — 102 synthetic + 60 M1 instances, ~2 s per instance
+
+Synthetic, mean over 10 seeds per cell (proven-optimal instances):
+
+| PV | 1 % | 2 % | 5 % | 10 % | 20 % | 40 % |
+|---|---|---|---|---|---|---|
+| 50, ILA | 98.73 | 98.73 | 98.83 | 98.04 | 95.90 | 94.02 |
+| 50, **+ refinement** | **99.86** | **99.86** | **99.92** | **99.80** | **99.48** | **97.57** |
+| 100, ILA | 99.17 | 99.53 | 99.43 | 99.12 | 97.80 | — |
+| 100, **+ refinement** | **100.00** | **100.00** | **99.85** | **99.80** | **98.68** | — |
+
+M1 corridor, 12 five-minute windows per ratio:
+
+| | 1 % | 2 % | 5 % | 10 % | 20 % |
+|---|---|---|---|---|---|
+| ILA | 100.00 | 99.73 | 99.68 | 99.01 | 99.25 |
+| **+ refinement** | **100.00** | **100.00** | **100.00** | **100.00** | **99.78** |
+
+**Over all 50 proven-optimal M1 instances the refined solution averages
+100.00 % of the optimum.** On synthetic instances the gain is largest exactly
+where ILA is weakest: +3.6 pp at 20 % and at 40 %.
+
+Figure: `analysis/plot_refine.py` → `analysis/figures/refinement_vs_optimum.png`.
+Evaluation: `milp/refine_eval.py` → `data/results/milp/refine_synthetic.csv`,
+`refine_m1.csv`.
+
+### The refinement is not specific to ILA — tested
+
+Starting the same refinement from greedy instead of ILA (5 seeds per cell,
+proven-optimal instances, PV = 50):
+
+| ratio | greedy | greedy + refinement | ILA | ILA + refinement |
+|---|---|---|---|---|
+| 10 % | 97.47 | **99.93** | 97.66 | 99.81 |
+| 20 % | 93.96 | **98.91** | 94.50 | 99.16 |
+| 40 % | 93.56 | **98.49** | 93.92 | 97.74 |
+
+Both starting points land in the same place, and greedy + refinement is ahead at
+two of the three ratios. **So the contribution is the refinement step, not ILA.**
+Claiming "ILA + refinement" as the method would overstate ILA's role; the honest
+statement is that a ruin-and-recreate post-processor takes *either* heuristic
+from 94-98 % to 98-100 % of the optimum. This is also a cleaner story than the
+one the paper had: the starting heuristic stops being the contribution.
+
+### What this gives the paper
+
+A contribution that is not "ILA beats greedy":
+
+> the problem; an exact formulation; a measurement of how far the existing
+> heuristics sit from the optimum and *why*; and a refinement step that closes
+> that gap to ~0 on real-corridor instances at ~2 s per instance, from either
+> starting heuristic.
+
+The diagnosis and the fix are linked: the fix follows from the measurement
+(long committed overlaps leave sub-`L_min` fragments), not from trial and error.
+
+### Difficulty is an inverted U in the ratio, and the refinement tracks it
+
+Extending the synthetic sweep to 40, 60 and 100 % (PV = 50, proven-optimal
+instances; n is small at the top end because some did not prove within 600 s):
+
+| ratio | AV | greedy | ILA | optimum tows this share of PV distance | ILA + refinement |
+|---|---|---|---|---|---|
+| 1-5 % | 1-2 | 98.7 | 98.8 | 5-9 % | 99.9 |
+| 10 % | 5 | 97.9 | 98.0 | 22 % | 99.8 |
+| 20 % | 10 | 95.3 | 95.9 | 44 % | 99.5 |
+| **40 %** | 20 | **93.6** | **93.9** | 67 % | **97.7** |
+| 60 % | 30 | 95.0 | 96.8 | 98 % | 97.8 |
+| 100 % | 50 | 98.4 | 99.1 | 99.9 % | 99.1 |
+
+Both ends are easy for a different reason. At a low ratio there is little to
+tow, so there is nothing to choose between. At a high ratio the AVs are so
+plentiful that essentially all PV distance gets towed anyway (99.9 % at
+ratio 1.0), so again the choice hardly matters. **The hard regime is the middle,
+around 20-40 %, where there is a lot to tow and not quite enough capacity** —
+and that is exactly where the refinement gains most (+3.6 to +3.8 pp).
+
+**Budget limitation, not a method limitation.** The gain falls away above 40 %
+because the prototype runs out of time, not because there is nothing to find:
+`_State.candidates` rescans every (AV, PV) pair over the grid for every
+insertion, so one iteration at 50 AVs costs ~100x one at 5 AVs. At ratio 1.0
+the 15 s budget buys too few iterations to accept anything (gain exactly 0.00
+in all 4 instances, all hitting the limit). Incremental candidate updates would
+fix this; it has not been done.
+
+### Caveats
+
+- Spatial problem only. The refinement does not yet handle time constraints,
+  and no exact baseline exists on the temporal axis.
+- Scored against stored optima; instances where optimality was not proven are
+  excluded from the tables above.
+- Runtime is not optimised: `_State.runs` rescans the grid for every candidate.
+  The 2 s figure is a Python prototype, not a complexity claim.
+- Greedy was not re-run with refinement; whether the same step helps greedy by
+  as much is untested, and worth knowing before claiming the step is specific
+  to ILA.
+
+### Next
+
+- [x] ~~Run the refinement on greedy too~~ — it lifts greedy equally; the
+      contribution is the refinement, not ILA (section above)
+- [ ] Sensitivity: iterations / time budget vs quality
+- [ ] Extend to the temporal problem
+- [ ] Larger instances where the MILP cannot reach, using the LP bound

@@ -20,6 +20,7 @@ from dataclasses import dataclass, field
 from typing import Optional, List, Tuple, Dict
 
 from core.models import ActiveVehicle, PassiveVehicle
+from core.timing import is_feasible, times as tow_times
 
 
 # =============================================================================
@@ -398,6 +399,17 @@ def greedy_multi_av_matching(
                 # Check AV capacity for this segment
                 if not av_state.can_accommodate_segment(cp, dp):
                     continue
+
+                # A tow placed upstream of one this PV already has shifts the
+                # PV's clock, which can break the earlier coupling. Checking the
+                # candidate's own coupling point is not enough, so replay the
+                # whole journey. (NOTES.md 2026-10-02.)
+                if enable_time_constraints:
+                    tows = [(a.cp, a.dp, a.av) for a in pv_assignments[pv.id]]
+                    tows.append((cp, dp, av))
+                    if not is_feasible(pv, tows, time_tolerance):
+                        continue
+                    coupling_time, decoupling_time = tow_times(pv, tows)[(cp, dp)]
 
                 # Valid candidate (Step 4: include time info)
                 candidates.append((

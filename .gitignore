@@ -6,3 +6,4 @@ paper/*.fls
 paper/*.fdb_latexmk
 venv/
 .venv/
+logs/

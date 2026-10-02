@@ -667,3 +667,270 @@ fix this; it has not been done.
 - [ ] Sensitivity: iterations / time budget vs quality
 - [ ] Extend to the temporal problem
 - [ ] Larger instances where the MILP cannot reach, using the LP bound
+
+---
+
+## 2026-10-01 (late) — An exact optimum WITH time constraints
+
+The open methodological gap in every section above was that `milp.exact` covers
+the spatial problem only, while ILA's advantage over greedy lives entirely on
+the temporal axis. The September note recorded this as "non-linear, because
+towing changes later arrival times". That is true of the schedule but **not of
+the model**: the PV's clock is a linear function of the towing decisions.
+
+`milp/exact_time.py` adds `build_time()` / `solve_time()`.
+
+### Formulation
+
+AV clocks are unaffected by towing, so `t_i(x)` is a constant. The PV clock
+`t[j,x]` is a variable, and over one unit interval:
+
+```
+z[i,j,x] = 1        ->  t[j,x+1] = t_i(x+1)        (a constant)
+sum_i z[i,j,x] = 0  ->  t[j,x+1] = t[j,x] + 1/v_j
+```
+
+Both written with an indicator (big-M). The tolerance is checked only where a
+tow starts, which is what `core/hungarian_multi.py` does
+(`abs(pv_time_at_cp - av_time_at_cp) > time_tolerance` rejects a pair):
+
+```
+|t[j,x] - t_i(x)| <= tau + M (1 - s[i,j,x])
+```
+
+Big-M is sized from the instance (entry-time horizon + span / slowest speed +
+tau), not guessed.
+
+### A modelling error the validation caught
+
+The first version advanced the PV clock at the *AV's rate* while carrying the
+coupling discrepancy forward, instead of snapping the PV's clock to the AV's.
+On 1 of 12 validation instances the heuristics then beat the "optimum" — which
+is impossible for a correct model. The heuristics are right: a towed PV rides
+the AV, and `hungarian_multi` sets the downstream segment start to
+`decoupling_time`, the AV's time at the decoupling point. After the fix, 9 of 9
+re-run instances satisfy `heuristic <= optimum`, and the optima rose (82 -> 103,
+185 -> 196, 120 -> 123), confirming the first model was wrongly restrictive.
+
+**The invariant `no heuristic may exceed the optimum` is the cheap check for
+this class of error, and `milp/time_sweep.py` records it per row
+(`invariant_ok`) rather than averaging it away.**
+
+### First numbers — the temporal gap is much larger than the spatial one
+
+| AV / PV / seed | time optimum | greedy | ILA | ILA % of optimum |
+|---|---|---|---|---|
+| 8 / 16 / 42 | 113 | 103 | 103 | 91.2 |
+| 8 / 16 / 44 | 44 | 34 | 34 | 77.3 |
+| 10 / 25 / 42 | 123 | 89 | 89 | 72.4 |
+| 10 / 25 / 43 | 121 | 121 | 121 | 100.0 |
+| 15 / 30 / 42 | 316 | 272 | 272 | 86.1 |
+| 15 / 30 / 44 | 196 | 144 | 144 | 73.5 |
+
+Against the spatial optimum the heuristics sit at 93-99 %. **With time
+constraints on they range from 72 % to 100 %.** If this holds across a proper
+sweep it is a far bigger result than anything in the spatial sections: the
+headroom the paper should be chasing is temporal, not spatial, and it is 10-28
+pp rather than 2-7 pp.
+
+Treat the table as preliminary — six instances, one tau, one time window.
+`milp/time_sweep.py` is running PV in {20, 30, 50} x ratio in {0.1, 0.2, 0.4,
+0.6} x 5 seeds, recording greedy, ILA, the temporal optimum and the spatial
+optimum side by side.
+
+### What this changes
+
+1. The refinement in `core/refine.py` is **spatial only**. If the temporal gap
+   is confirmed, the refinement has to be extended to the temporal problem
+   before it can be the paper's method — right now it improves the easier axis.
+2. ILA vs greedy can finally be scored on the axis where they differ. In the
+   six instances above they are identical in five and differ by 3 units in one,
+   which is consistent with every earlier finding.
+3. The paper gains the thing reviewers asked for and the project did not have:
+   an exact optimum for the problem as actually defined, time constraints
+   included.
+
+### Caveats
+
+- Big-M weakens the LP relaxation; expect this to scale worse than the spatial
+  MILP. AV 20 / PV 40 took 105 s under the first (wrong) model and has not been
+  re-timed under the corrected one.
+- Only tau = 5 model units and time window 100 are tested so far. Both are the
+  paper's defaults; neither has been varied.
+- The semantics modelled are the ones the heuristics implement. If the paper
+  changes the waiting model (Revision Plan item 10), this MILP changes with it.
+
+---
+
+## 2026-10-02 — Temporal semantics: one false alarm, one real bug, one design hole
+
+Three separate things turned up while building an exact optimum with time
+constraints. They are easy to confuse, so they are separated here.
+
+### (a) A false alarm — retracted
+
+Earlier today I claimed both heuristics return time-infeasible solutions, based
+on AV 12 / PV 20 seed 46 where they reported 187 against a "proven optimum" of
+179. **That claim was wrong.** My checker assumed the PV's clock snaps to the
+AV's at coupling; the implementation instead models *waiting*
+(`coupling_time = max(pv_time, av_time)`). Under its own convention that
+instance is fine:
+
+```
+PV1 reaches 67 at 56.861; AV2 is at 67 at 52.627  -> |diff| 4.23 <= tau   OK
+coupling = max(...) = 56.861                      <- the AV waits
+decoupling = 56.861 + 11/1.015 = 67.696
+AV11 is at 78 at 70.518 -> |67.696 - 70.518| = 2.82 <= tau                OK
+```
+
+The MILP was solving a *narrower* problem, so its optimum was legitimately
+below the heuristic value. `milp/exact_time.py` now takes
+`waiting={"either","pv_only","none"}`; `"either"` matches the implementation and
+is the only setting under which heuristic-vs-optimum is apples to apples.
+
+### (b) A real bug — a second tow is checked against the pre-tow schedule
+
+Re-auditing under the correct convention still leaves violations, and a small
+instance makes the cause unambiguous (AV 5 / PV 10, seed 43, greedy):
+
+```
+PV3 towed by AV5 [13,38)      -> decoupling 44.27
+free-runs 38 -> 63            -> 44.27 + 25/1.177 = 65.52   (true clock)
+AV3 is at 63 at 51.41         -> |65.52 - 51.41| = 14.11 > tau = 5
+but the recorded coupling is 54.56
+  and PV3's *un-towed* time at 63 is 6.12 + 57/1.177 = 54.55
+```
+
+The second coupling was evaluated against PV3's **original** schedule, ignoring
+that the first tow had delayed it by about 11. `PVRoutingState` stores the
+updated time correctly; something upstream decides before applying.
+
+**Rate, 60 instances x 2 algorithms (PV 20/50/100, ratio 10-80 %, 5 seeds,
+tau = 5), checked under `waiting="either"`:**
+
+| | instances affected | infeasible couplings | towed distance in affected PVs |
+|---|---|---|---|
+| greedy | 8 / 60 | 15 of 1370 segments (1.09 %) | 2.08 % |
+| ILA | 10 / 60 | 17 of 1457 segments (1.17 %) | 2.37 % |
+
+By ratio the rate climbs with the number of AVs (greedy 1/15 at 10 %, 5/15 at
+80 %; ILA 0/15 at 10 %, 5/15 at 80 %) — more AVs, more hand-overs, more chances
+to use a stale clock.
+
+**Why ~1 % matters here:** the ILA-greedy differences this project reports are
+1-2.5 pp, the same order as the contamination. Any time-constrained comparison
+of the two is unsafe until this is fixed, including the 18 Sep update to Eunus
+and the September "two regimes" argument for keeping ILA. The spatial results
+are untouched (no clocks, no hand-overs), which covers the exact-optimum work,
+the low-ratio sweep and the refinement.
+
+### (c) A design hole — waiting is not propagated to the AV
+
+Separately from the bug: when an AV waits, **its own timetable is never
+updated**. `av.time_at_point(x)` keeps returning the un-waited time for every
+other pairing, so an AV that waited 4 units at one point still claims its
+original arrival everywhere downstream.
+
+Over 948 segments (greedy and ILA, AV/PV from 12/20 to 40/100, 5 seeds):
+
+| | |
+|---|---|
+| segments where the AV waits for the PV | **457 (48.2 %)** |
+| mean wait | **2.54 time units** (about 21 s at the M1 scale) |
+| AVs waiting for one PV while carrying others on the un-shifted timetable | **180** |
+
+Waiting happens in about half of all tows, so this is not an edge case. It is
+reviewer item 10 — "the tolerance permits different arrival times, but waiting
+and its effect on subsequent route-state updates are not modelled" — with a
+number attached.
+
+### What has to happen
+
+1. **Fix (b).** Evaluate a candidate coupling against the clock the PV actually
+   has at that moment. Add `milp/check_feasible.py` to the experiment harness so
+   it cannot regress.
+2. **Decide the convention for (c)**, then make the model and the implementation
+   agree. Options: no waiting; PV waits only (keeps the AV timetable exact);
+   or either waits with the AV's schedule propagated to all its passengers (most
+   faithful, most work).
+3. **Re-run everything time-constrained** and re-state the 18 Sep numbers.
+4. The time-constrained optimum numbers recorded earlier today (greedy 85.2 %,
+   ILA 85.7 %) were computed under `waiting="none"` and compare against the
+   wrong problem. **Discard them.**
+
+### Solver note
+
+Under `waiting="either"` the LP relaxation is weak enough to be useless unless
+the clock variables are given per-variable windows (a PV cannot arrive before
+travelling at the fastest speed available, nor later than riding the slowest,
+give or take one tolerance per coupling). Without them an LP bound of 240.9
+appeared against a true optimum of 63. With them, 18 of 20 validation instances
+prove optimality in under 5 s; the two that do not are at AV 12 / PV 20.
+
+### Lesson
+
+The invariant `heuristic <= optimum` fired three times today: on a genuine MILP
+error (the clock recursion), on my own wrong assumption (the waiting
+convention), and on a genuine implementation bug (the stale clock). It tells you
+something is wrong, never which side. Each time the answer came from tracing one
+small instance by hand.
+
+---
+
+## 2026-10-02 (later) — The stale-clock bug: fixed, and its effect measured
+
+### The fix
+
+`core/timing.py` is now the single place that knows how a towed PV's clock
+behaves. `simulate()` replays a PV's whole journey under the "either side waits"
+convention; `is_feasible()` answers whether every coupling in a proposed set of
+tows still satisfies the tolerance. Both matchers call it before committing a
+candidate, instead of checking only the candidate's own coupling point.
+
+Verification: 30 instances (AV 5-80, PV 10-200, 5 seeds, tau = 5) checked with
+`milp/check_feasible.py` — **0 violations for greedy and 0 for ILA**, against
+8/60 and 10/60 before.
+
+### Effect on the results — much smaller than I warned
+
+Re-running the stored `pv_av_sweep` (128 comparable cells, both algorithms,
+`analysis/rerun_gap_after_fix.py` → `data/results/gap_after_fix.csv`):
+
+| | mean change | worst cell |
+|---|---|---|
+| greedy saving | **-0.034 pp** | -0.640 pp |
+| ILA saving | **-0.039 pp** | -0.650 pp |
+
+| | before fix | after fix |
+|---|---|---|
+| mean ILA - greedy gap | +0.263 pp | **+0.259 pp** |
+
+Per ratio, the curve is unchanged in shape and almost unchanged in value:
+
+| ratio | 0.05 | 0.1 | 0.2 | 0.4 | 0.8 | 1.6 | 3.2 |
+|---|---|---|---|---|---|---|---|
+| gap before | +0.030 | +0.075 | +0.197 | +0.712 | **+0.933** | +0.389 | +0.115 |
+| gap after | +0.030 | +0.071 | +0.193 | +0.692 | **+0.918** | +0.391 | +0.115 |
+
+**Correction to what I wrote earlier today.** I said every time-constrained
+comparison was "unsafe until this is fixed", including the 18 Sep update to
+Eunus and the September two-regimes argument. Measured, the effect on the
+*difference* between the two heuristics is 0.004 pp — negligible. The reason is
+that the infeasible tows were rare (~1 % of segments) and occurred at
+essentially the same rate in both algorithms, so they cancel in the comparison.
+
+So: the bug was real, the fix is right, and **no earlier conclusion changes**.
+The inverted U, the peak at ratio 0.8, and ILA's small advantage all survive.
+Nothing needs retracting to the supervisors; the honest framing is "found a
+correctness bug, fixed it, measured the impact, conclusions unchanged".
+
+### What is still open
+
+- The *design* hole (c) stands: an AV that waits does not have its own timetable
+  updated, and waiting happens in 48 % of tows. That is a modelling decision for
+  the paper, not a bug, and it is reviewer item 10.
+- `milp/exact_time.py` now has the correct convention (`waiting="either"`), but
+  the time-constrained optimum numbers have to be recomputed with it; the ones
+  recorded earlier today used `waiting="none"` and compare against a different
+  problem.
+- `core/refine.py` is still spatial only.

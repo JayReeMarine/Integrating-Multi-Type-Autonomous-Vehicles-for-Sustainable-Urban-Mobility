@@ -40,6 +40,7 @@ import numpy as np
 from scipy.optimize import linear_sum_assignment
 
 from core.models import ActiveVehicle, PassiveVehicle
+from core.timing import is_feasible, times as tow_times
 
 # Step 4: Default time tolerance for coupling
 DEFAULT_TIME_TOLERANCE: float = 5.0
@@ -479,6 +480,20 @@ def hungarian_multi_av_matching(
             av_state = av_states[av_id]
             if not av_state.can_accommodate_segment(cp, dp):
                 continue
+
+            # A tow placed upstream of one this PV already has shifts the PV's
+            # clock and can break the earlier coupling, so replay the whole
+            # journey rather than trusting the per-coupling check made when the
+            # cost matrix was built. (NOTES.md 2026-10-02.)
+            if enable_time_constraints:
+                tows = [(a.cp, a.dp, a.av) for a in pv_assignments[pv_id]]
+                tows.append((cp, dp, assignment.av))
+                if not is_feasible(assignment.pv, tows, time_tolerance):
+                    continue
+                coupling_time, decoupling_time = tow_times(assignment.pv, tows)[(cp, dp)]
+                assignment = SegmentAssignment(
+                    pv=assignment.pv, av=assignment.av, cp=cp, dp=dp,
+                    coupling_time=coupling_time, decoupling_time=decoupling_time)
 
             # Valid - apply
             assigned_pvs_this_round.add(pv_id)
